@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./remaleh-protect-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=production
+      - DEBUG=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/scam/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./remaleh-protect-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:5001
+
