@@ -1,35 +1,4 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button.jsx'
-import { Textarea } from '@/components/ui/textarea.jsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
-import { Alert, AlertDescription } from '@/components/ui/alert.jsx'
-import { Input } from '@/components/ui/input.jsx'
-import { 
-  Shield, 
-  ShieldAlert, 
-  ShieldCheck, 
-  Loader2, 
-  AlertTriangle, 
-  MessageSquare, 
-  Key, 
-  BookOpen, 
-  HelpCircle,
-  Mail,
-  CheckCircle,
-  XCircle,
-  Info,
-  Home,
-  Lock,
-  Users,
-  Globe,
-  Smartphone,
-  Eye,
-  Brain,
-  Zap,
-  Star,
-  ArrowRight
-} from 'lucide-react'
 import './App.css'
 
 function App() {
@@ -163,473 +132,447 @@ function App() {
 
   const getRiskColor = (level) => {
     switch (level) {
-      case 'HIGH': return 'text-red-600 bg-red-50 border-red-200'
-      case 'MEDIUM': return 'text-orange-600 bg-orange-50 border-orange-200'
-      case 'LOW': return 'text-yellow-600 bg-yellow-50 border-yellow-200'
-      case 'VERY_LOW': return 'text-green-600 bg-green-50 border-green-200'
-      default: return 'text-gray-600 bg-gray-50 border-gray-200'
-    }
-  }
-
-  const getRiskIcon = (level) => {
-    switch (level) {
-      case 'HIGH': return <ShieldAlert className="h-5 w-5 text-red-600" />
-      case 'MEDIUM': return <AlertTriangle className="h-5 w-5 text-orange-600" />
-      case 'LOW': return <Info className="h-5 w-5 text-yellow-600" />
-      case 'VERY_LOW': return <ShieldCheck className="h-5 w-5 text-green-600" />
-      default: return <Shield className="h-5 w-5 text-gray-600" />
+      case 'HIGH': return 'risk-high'
+      case 'MEDIUM': return 'risk-medium'
+      case 'LOW': return 'risk-low'
+      case 'VERY_LOW': return 'risk-very-low'
+      default: return 'risk-unknown'
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
+    <div className="app">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="max-w-md mx-auto px-4 py-4">
-          <div className="flex items-center justify-center space-x-3">
-            <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-2.5 w-2.5 text-white" />
-              </div>
+      <div className="header">
+        <div className="header-content">
+          <div className="logo">
+            <div className="logo-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
             </div>
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
-                Remaleh Protect
-              </h1>
-              <p className="text-xs text-gray-600">Your Digital Safety Companion</p>
+            <div className="logo-text">
+              <h1>Remaleh Protect</h1>
+              <p>Your Digital Safety Companion</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-md mx-auto px-4 pb-20">
+      <div className="main-content">
         {/* Hero Section */}
-        <div className="py-6 text-center">
-          <div className="relative mb-4">
-            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
-              <Shield className="h-10 w-10 text-white" />
-            </div>
-            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full flex items-center justify-center shadow-lg">
-              <Zap className="h-4 w-4 text-white" />
-            </div>
+        <div className="hero">
+          <div className="hero-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Stay Safe in Our Connected World
-          </h2>
-          <p className="text-gray-600 text-sm leading-relaxed">
-            Your Digital Well-Being Is Our Paramount Commitment
-          </p>
+          <h2>Stay Safe in Our Connected World</h2>
+          <p>Your Digital Well-Being Is Our Paramount Commitment</p>
         </div>
 
         {/* Tab Content */}
-        <div className="space-y-4">
+        <div className="tab-content">
           {activeTab === 'checker' && (
-            <div className="space-y-4">
-              <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                      <MessageSquare className="h-4 w-4 text-white" />
-                    </div>
-                    <CardTitle className="text-lg text-gray-900">Check Text Message</CardTitle>
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  Check Text Message
+                </div>
+                <p>Analyze messages for scams and threats using advanced AI</p>
+              </div>
+              <div className="card-content">
+                <textarea
+                  placeholder="Paste your message here to check for scams..."
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  className="textarea"
+                />
+                <button 
+                  onClick={analyzeText} 
+                  disabled={isAnalyzing}
+                  className="btn btn-primary"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                      </svg>
+                      Analyzing with AI...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                      Check Message
+                    </>
+                  )}
+                </button>
+
+                {error && (
+                  <div className="alert alert-error">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                      <path d="M12 9v4"/>
+                      <path d="m12 17 .01 0"/>
+                    </svg>
+                    {error}
                   </div>
-                  <CardDescription className="text-gray-600">
-                    Analyze messages for scams and threats using advanced AI
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Textarea
-                    placeholder="Paste your message here to check for scams..."
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    className="min-h-[100px] border-gray-200 focus:border-cyan-500 focus:ring-cyan-500/20"
-                  />
-                  <Button 
-                    onClick={analyzeText} 
-                    disabled={isAnalyzing}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing with AI...
-                      </>
-                    ) : (
-                      <>
-                        <Shield className="mr-2 h-4 w-4" />
-                        Check Message
-                      </>
-                    )}
-                  </Button>
+                )}
 
-                  {error && (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-700">{error}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  {result && (
-                    <div className="space-y-3">
-                      <div className={`p-4 rounded-xl border-2 ${getRiskColor(result.overall_assessment?.risk_level)}`}>
-                        <div className="flex items-center space-x-2 mb-2">
-                          {getRiskIcon(result.overall_assessment?.risk_level)}
-                          <span className="font-semibold">
-                            {result.overall_assessment?.risk_level} Risk
-                          </span>
-                          <Badge variant="outline" className="ml-auto">
-                            {result.overall_assessment?.risk_score}/100
-                          </Badge>
-                        </div>
-                        <p className="text-sm">{result.overall_assessment?.message}</p>
+                {result && (
+                  <div className="results">
+                    <div className={`risk-card ${getRiskColor(result.overall_assessment?.risk_level)}`}>
+                      <div className="risk-header">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        <span>{result.overall_assessment?.risk_level} Risk</span>
+                        <span className="risk-score">{result.overall_assessment?.risk_score}/100</span>
                       </div>
-
-                      {result.threats_detected && result.threats_detected.length > 0 && (
-                        <Card className="border-orange-200 bg-orange-50">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-orange-800 flex items-center">
-                              <AlertTriangle className="h-4 w-4 mr-2" />
-                              Threats Detected
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-1">
-                              {result.threats_detected.map((threat, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                  <XCircle className="h-3 w-3 text-orange-600" />
-                                  <span className="text-sm text-orange-800">{threat}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
+                      <p>{result.overall_assessment?.message}</p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+
+                    {result.threats_detected && result.threats_detected.length > 0 && (
+                      <div className="threats-card">
+                        <div className="threats-header">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                          </svg>
+                          Threats Detected
+                        </div>
+                        <div className="threats-list">
+                          {result.threats_detected.map((threat, index) => (
+                            <div key={index} className="threat-item">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="m15 9-6 6"/>
+                                <path d="m9 9 6 6"/>
+                              </svg>
+                              {threat}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {activeTab === 'passwords' && (
-            <div className="space-y-4">
-              <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                      <Key className="h-4 w-4 text-white" />
-                    </div>
-                    <CardTitle className="text-lg text-gray-900">Password Safety Check</CardTitle>
-                  </div>
-                  <CardDescription className="text-gray-600">
-                    Check if your email appears in known data breaches
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Input
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-                  />
-                  <Button 
-                    onClick={checkEmail} 
-                    disabled={isCheckingEmail}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    {isCheckingEmail ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Checking Breaches...
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="mr-2 h-4 w-4" />
-                        Check My Passwords
-                      </>
-                    )}
-                  </Button>
-
-                  {emailResult && (
-                    <div className={`p-4 rounded-xl border-2 ${emailResult.breaches_found > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
-                      <div className="flex items-center space-x-2 mb-2">
-                        {emailResult.breaches_found > 0 ? (
-                          <XCircle className="h-5 w-5 text-red-600" />
-                        ) : (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                        )}
-                        <span className={`font-semibold ${emailResult.breaches_found > 0 ? 'text-red-700' : 'text-green-700'}`}>
-                          {emailResult.breaches_found > 0 ? 'Breaches Found' : 'No Breaches Found'}
-                        </span>
-                      </div>
-                      <p className={`text-sm ${emailResult.breaches_found > 0 ? 'text-red-700' : 'text-green-700'}`}>
-                        {emailResult.message}
-                      </p>
-                      {emailResult.breaches_found > 0 && (
-                        <div className="mt-3 text-red-600 text-sm">
-                          <p><strong>Recommendation:</strong> Change passwords for accounts associated with this email immediately.</p>
-                        </div>
-                      )}
-                    </div>
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                    <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  Password Safety Check
+                </div>
+                <p>Check if your email appears in known data breaches</p>
+              </div>
+              <div className="card-content">
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input"
+                />
+                <button 
+                  onClick={checkEmail} 
+                  disabled={isCheckingEmail}
+                  className="btn btn-secondary"
+                >
+                  {isCheckingEmail ? (
+                    <>
+                      <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                      </svg>
+                      Checking Breaches...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                        <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                      Check My Passwords
+                    </>
                   )}
+                </button>
 
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-start space-x-2">
-                      <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                      <div className="text-sm text-blue-700">
-                        <p className="font-medium mb-1">Privacy Notice</p>
-                        <p>Your email is never stored. We only check against known breach databases.</p>
-                      </div>
+                {emailResult && (
+                  <div className={`breach-result ${emailResult.breaches_found > 0 ? 'breach-found' : 'breach-safe'}`}>
+                    <div className="breach-header">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        {emailResult.breaches_found > 0 ? (
+                          <>
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="m15 9-6 6"/>
+                            <path d="m9 9 6 6"/>
+                          </>
+                        ) : (
+                          <>
+                            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                            <path d="m9 12 2 2 4-4"/>
+                          </>
+                        )}
+                      </svg>
+                      <span>{emailResult.breaches_found > 0 ? 'Breaches Found' : 'No Breaches Found'}</span>
                     </div>
+                    <p>{emailResult.message}</p>
+                    {emailResult.breaches_found > 0 && (
+                      <div className="breach-recommendation">
+                        <strong>Recommendation:</strong> Change passwords for accounts associated with this email immediately.
+                      </div>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+                )}
+
+                <div className="privacy-notice">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="m9 9 1.5 1.5L16 6"/>
+                  </svg>
+                  <div>
+                    <strong>Privacy Notice</strong>
+                    <p>Your email is never stored. We only check against known breach databases.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
           {activeTab === 'learn' && (
-            <div className="space-y-4">
-              <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-                      <BookOpen className="h-4 w-4 text-white" />
-                    </div>
-                    <CardTitle className="text-lg text-gray-900">Get Cyber Savvy</CardTitle>
-                  </div>
-                  <CardDescription className="text-gray-600">
-                    Essential cybersecurity knowledge for everyone
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Essential Tips */}
-                  <div className="space-y-3">
-                    <Card className="border-cyan-200 bg-cyan-50">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-cyan-800 flex items-center">
-                          <Lock className="h-4 w-4 mr-2" />
-                          Password Safety
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm text-cyan-700 space-y-2">
-                        <p>• Use unique passwords for each account</p>
-                        <p>• Enable two-factor authentication</p>
-                        <p>• Use a password manager</p>
-                        <p>• Never share passwords via email or text</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-blue-200 bg-blue-50">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-blue-800 flex items-center">
-                          <Mail className="h-4 w-4 mr-2" />
-                          Email Scam Detection
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm text-blue-700 space-y-2">
-                        <p>• Check sender's email address carefully</p>
-                        <p>• Be wary of urgent requests for money</p>
-                        <p>• Verify links before clicking</p>
-                        <p>• Don't download unexpected attachments</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-emerald-200 bg-emerald-50">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-emerald-800 flex items-center">
-                          <Smartphone className="h-4 w-4 mr-2" />
-                          Phone & SMS Protection
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm text-emerald-700 space-y-2">
-                        <p>• Don't answer calls from unknown numbers</p>
-                        <p>• Never give personal info over the phone</p>
-                        <p>• Be suspicious of prize notifications</p>
-                        <p>• Verify caller identity independently</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-purple-200 bg-purple-50">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-purple-800 flex items-center">
-                          <Globe className="h-4 w-4 mr-2" />
-                          Safe Browsing
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm text-purple-700 space-y-2">
-                        <p>• Look for HTTPS (lock icon) on websites</p>
-                        <p>• Keep your browser updated</p>
-                        <p>• Use reputable antivirus software</p>
-                        <p>• Be cautious with public Wi-Fi</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-indigo-200 bg-indigo-50">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-indigo-800 flex items-center">
-                          <Users className="h-4 w-4 mr-2" />
-                          Social Media Safety
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm text-indigo-700 space-y-2">
-                        <p>• Review privacy settings regularly</p>
-                        <p>• Think before you share personal info</p>
-                        <p>• Be selective with friend requests</p>
-                        <p>• Report suspicious accounts</p>
-                      </CardContent>
-                    </Card>
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                  </svg>
+                  Get Cyber Savvy
+                </div>
+                <p>Essential cybersecurity knowledge for everyone</p>
+              </div>
+              <div className="card-content">
+                <div className="learn-sections">
+                  <div className="learn-card learn-passwords">
+                    <h3>🔒 Password Safety</h3>
+                    <ul>
+                      <li>Use unique passwords for each account</li>
+                      <li>Enable two-factor authentication</li>
+                      <li>Use a password manager</li>
+                      <li>Never share passwords via email or text</li>
+                    </ul>
                   </div>
 
-                  {/* Current Threats */}
-                  <Card className="border-orange-200 bg-orange-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-orange-800 flex items-center">
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Current Threat Alerts
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm text-orange-700 space-y-2">
-                      <p>• AI deepfake scams increasing</p>
-                      <p>• Fake delivery notifications</p>
-                      <p>• Romance scams on dating apps</p>
-                      <p>• Cryptocurrency investment frauds</p>
-                      <p className="font-medium">Stay vigilant and verify everything!</p>
-                    </CardContent>
-                  </Card>
-                </CardContent>
-              </Card>
+                  <div className="learn-card learn-email">
+                    <h3>📧 Email Scam Detection</h3>
+                    <ul>
+                      <li>Check sender's email address carefully</li>
+                      <li>Be wary of urgent requests for money</li>
+                      <li>Verify links before clicking</li>
+                      <li>Don't download unexpected attachments</li>
+                    </ul>
+                  </div>
+
+                  <div className="learn-card learn-phone">
+                    <h3>📱 Phone & SMS Protection</h3>
+                    <ul>
+                      <li>Don't answer calls from unknown numbers</li>
+                      <li>Never give personal info over the phone</li>
+                      <li>Be suspicious of prize notifications</li>
+                      <li>Verify caller identity independently</li>
+                    </ul>
+                  </div>
+
+                  <div className="learn-card learn-browsing">
+                    <h3>🌐 Safe Browsing</h3>
+                    <ul>
+                      <li>Look for HTTPS (lock icon) on websites</li>
+                      <li>Keep your browser updated</li>
+                      <li>Use reputable antivirus software</li>
+                      <li>Be cautious with public Wi-Fi</li>
+                    </ul>
+                  </div>
+
+                  <div className="learn-card learn-social">
+                    <h3>👥 Social Media Safety</h3>
+                    <ul>
+                      <li>Review privacy settings regularly</li>
+                      <li>Think before you share personal info</li>
+                      <li>Be selective with friend requests</li>
+                      <li>Report suspicious accounts</li>
+                    </ul>
+                  </div>
+
+                  <div className="learn-card learn-threats">
+                    <h3>⚠️ Current Threat Alerts</h3>
+                    <ul>
+                      <li>AI deepfake scams increasing</li>
+                      <li>Fake delivery notifications</li>
+                      <li>Romance scams on dating apps</li>
+                      <li>Cryptocurrency investment frauds</li>
+                    </ul>
+                    <p><strong>Stay vigilant and verify everything!</strong></p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
           {activeTab === 'help' && (
-            <div className="space-y-4">
-              <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-rose-500 to-pink-600 rounded-lg flex items-center justify-center">
-                      <HelpCircle className="h-4 w-4 text-white" />
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <path d="M12 17h.01"/>
+                  </svg>
+                  Get Expert Help
+                </div>
+                <p>Chat with our AI assistant or connect with cybersecurity experts</p>
+              </div>
+              <div className="card-content">
+                <div className="chat-container">
+                  {chatMessages.length === 0 ? (
+                    <div className="chat-empty">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44L5.5 19H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2.5l1.54-.44A2.5 2.5 0 0 1 9.5 2Z"/>
+                        <path d="M14 6h7v12h-1"/>
+                        <path d="M14 9h4"/>
+                        <path d="M14 12h2"/>
+                      </svg>
+                      <p>Start a conversation with our AI assistant</p>
+                      <small>We're here to help with any cybersecurity concerns</small>
                     </div>
-                    <CardTitle className="text-lg text-gray-900">Get Expert Help</CardTitle>
-                  </div>
-                  <CardDescription className="text-gray-600">
-                    Chat with our AI assistant or connect with cybersecurity experts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="h-64 border border-gray-200 rounded-lg p-3 overflow-y-auto bg-gray-50">
-                    {chatMessages.length === 0 ? (
-                      <div className="text-center text-gray-500 mt-8">
-                        <Brain className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm">Start a conversation with our AI assistant</p>
-                        <p className="text-xs text-gray-400 mt-1">We're here to help with any cybersecurity concerns</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {chatMessages.map((message, index) => (
-                          <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[80%] p-3 rounded-lg text-sm ${
-                              message.type === 'user' 
-                                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white' 
-                                : message.type === 'expert'
-                                ? 'bg-gradient-to-r from-emerald-500 to-cyan-600 text-white'
-                                : message.type === 'system'
-                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                                : 'bg-white text-gray-800 border border-gray-200'
-                            }`}>
-                              {message.type === 'expert' && (
-                                <div className="flex items-center space-x-1 mb-1">
-                                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                  <span className="text-xs font-medium">Human Expert</span>
-                                </div>
-                              )}
-                              <p>{message.content}</p>
-                              {message.actions && message.actions.length > 0 && (
-                                <div className="mt-2 space-y-1">
-                                  {message.actions.map((action, actionIndex) => (
-                                    <div key={actionIndex} className="flex items-center space-x-1 text-xs">
-                                      <CheckCircle className="h-3 w-3" />
-                                      <span>{action}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                  ) : (
+                    <div className="chat-messages">
+                      {chatMessages.map((message, index) => (
+                        <div key={index} className={`chat-message ${message.type}`}>
+                          {message.type === 'expert' && (
+                            <div className="expert-badge">
+                              <div className="expert-indicator"></div>
+                              Human Expert
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Input
-                      placeholder="Describe your cybersecurity concern..."
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                      className="border-gray-200 focus:border-rose-500 focus:ring-rose-500/20"
-                    />
-                    <Button 
-                      onClick={sendChatMessage}
-                      className="bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-start space-x-2">
-                      <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                      <div className="text-sm text-blue-700">
-                        <p className="font-medium mb-1">How it works</p>
-                        <p>Our AI assistant will help with initial questions and connect you with human experts for complex issues.</p>
-                      </div>
+                          )}
+                          <p>{message.content}</p>
+                          {message.actions && message.actions.length > 0 && (
+                            <div className="chat-actions">
+                              {message.actions.map((action, actionIndex) => (
+                                <div key={actionIndex} className="chat-action">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                                    <path d="m9 12 2 2 4-4"/>
+                                  </svg>
+                                  {action}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
+                  )}
+                </div>
+                
+                <div className="chat-input-container">
+                  <input
+                    placeholder="Describe your cybersecurity concern..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                    className="input"
+                  />
+                  <button 
+                    onClick={sendChatMessage}
+                    className="btn btn-help"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14"/>
+                      <path d="m12 5 7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="help-info">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                  <div>
+                    <strong>How it works</strong>
+                    <p>Our AI assistant will help with initial questions and connect you with human experts for complex issues.</p>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
         {/* Privacy Notice */}
-        <div className="mt-6 text-center">
-          <div className="inline-flex items-center space-x-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-200/50">
-            <Shield className="h-4 w-4 text-cyan-600" />
-            <span className="text-sm text-gray-700">Powered by local AI - Your data stays secure</span>
+        <div className="privacy-footer">
+          <div className="privacy-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Powered by local AI - Your data stays secure
           </div>
-          <p className="text-xs text-gray-500 mt-2">Connected to live Remaleh Protect API</p>
+          <p>Connected to live Remaleh Protect API</p>
         </div>
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200/50">
-        <div className="max-w-md mx-auto px-4">
-          <div className="flex justify-around py-2">
-            {[
-              { id: 'checker', icon: MessageSquare, label: 'Check Text', gradient: 'from-cyan-500 to-blue-600' },
-              { id: 'passwords', icon: Key, label: 'Passwords', gradient: 'from-emerald-500 to-cyan-600' },
-              { id: 'learn', icon: BookOpen, label: 'Learn', gradient: 'from-purple-500 to-blue-600' },
-              { id: 'help', icon: HelpCircle, label: 'Get Help', gradient: 'from-rose-500 to-pink-600' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-all duration-200 ${
-                  activeTab === tab.id 
-                    ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg` 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <tab.icon className="h-5 w-5" />
-                <span className="text-xs font-medium">{tab.label}</span>
-              </button>
-            ))}
-          </div>
+      <div className="bottom-nav">
+        <div className="nav-container">
+          {[
+            { id: 'checker', icon: 'message', label: 'Check Text' },
+            { id: 'passwords', icon: 'lock', label: 'Passwords' },
+            { id: 'learn', icon: 'book', label: 'Learn' },
+            { id: 'help', icon: 'help', label: 'Get Help' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`nav-tab ${activeTab === tab.id ? 'active' : ''} nav-${tab.id}`}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                {tab.icon === 'message' && <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>}
+                {tab.icon === 'lock' && (
+                  <>
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                    <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
+                  </>
+                )}
+                {tab.icon === 'book' && (
+                  <>
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                  </>
+                )}
+                {tab.icon === 'help' && (
+                  <>
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <path d="M12 17h.01"/>
+                  </>
+                )}
+              </svg>
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
       </div>
     </div>
