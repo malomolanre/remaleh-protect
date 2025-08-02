@@ -1,7 +1,5 @@
 from flask import Blueprint, request, jsonify
 import re
-import math
-from urllib.parse import urlparse
 
 scam_bp = Blueprint('scam', __name__ )
 
@@ -10,7 +8,6 @@ def analyze_text_patterns(text):
     threats = []
     risk_score = 0
     
-    # Convert to lowercase for analysis
     text_lower = text.lower()
     
     # Urgency indicators
