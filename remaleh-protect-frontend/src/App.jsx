@@ -545,9 +545,9 @@ function App() {
                 objectFit: 'contain'
               }}
             />
-            Remaleh Protect - Your Digital Guardian
+            Powered by Remaleh - Your Digital Guardian
           </div>
-          <p>24/7 Cybersecurity Monitoring</p>
+          <p>Real-time Threat Detection Active</p>
         </div>
       </div>
 
