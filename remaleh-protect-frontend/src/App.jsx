@@ -147,10 +147,15 @@ function App() {
         <div className="header-content">
           <div className="logo">
             <div className="logo-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                <path d="m9 12 2 2 4-4"/>
-              </svg>
+              <img 
+                src="/remaleh-logo.png" 
+                alt="Remaleh Logo" 
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  objectFit: 'contain'
+                }}
+              />
             </div>
             <div className="logo-text">
               <h1>Remaleh Protect</h1>
@@ -165,9 +170,15 @@ function App() {
         {/* Hero Section */}
         <div className="hero">
           <div className="hero-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
+            <img 
+              src="/remaleh-logo.png" 
+              alt="Remaleh Logo" 
+              style={{
+                width: '40px',
+                height: '40px',
+                objectFit: 'contain'
+              }}
+            />
           </div>
           <h2>Stay Safe in Our Connected World</h2>
           <p>Your Digital Well-Being Is Our Paramount Commitment</p>
@@ -525,12 +536,18 @@ function App() {
         {/* Privacy Notice */}
         <div className="privacy-footer">
           <div className="privacy-badge">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            Powered by Remaleh - Your Digital Guardian
+            <img 
+              src="/remaleh-logo.png" 
+              alt="Remaleh Logo" 
+              style={{
+                width: '16px',
+                height: '16px',
+                objectFit: 'contain'
+              }}
+            />
+            Remaleh Protect - Your Digital Guardian
           </div>
-          <p>Real-time Threat Detection Active</p>
+          <p>24/7 Cybersecurity Monitoring</p>
         </div>
       </div>
 
@@ -580,3 +597,4 @@ function App() {
 }
 
 export default App
+
