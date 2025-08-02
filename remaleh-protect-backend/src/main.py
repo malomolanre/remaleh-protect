@@ -4,8 +4,12 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
-# Configure CORS to allow requests from any origin
-CORS(app, origins=['*'])
+# Configure CORS properly for frontend connection
+CORS(app, 
+     origins=['*'], 
+     allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Origin'],
+     methods=['GET', 'POST', 'OPTIONS'],
+     supports_credentials=False)
 
 # Import and register blueprints
 try:
@@ -29,6 +33,14 @@ try:
 except ImportError as e:
     print(f"⚠️ Could not import chat routes: {e}")
 
+# Add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 # Health check endpoint
 @app.route('/health')
 @app.route('/api/health')
@@ -36,7 +48,8 @@ def health_check():
     return {
         'status': 'healthy',
         'message': 'Remaleh Protect API is running',
-        'version': '2.0'
+        'version': '2.0',
+        'cors': 'enabled'
     }
 
 # Root endpoint
@@ -50,7 +63,8 @@ def root():
             '/api/breach/check', 
             '/api/chat/message',
             '/health'
-        ]
+        ],
+        'cors': 'enabled'
     }
 
 if __name__ == '__main__':
@@ -59,5 +73,6 @@ if __name__ == '__main__':
     
     print(f"🚀 Starting Remaleh Protect API on port {port}")
     print(f"🔧 Debug mode: {debug}")
+    print(f"🌐 CORS enabled for all origins")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
