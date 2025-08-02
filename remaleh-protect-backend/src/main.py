@@ -1,15 +1,34 @@
 import os
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 
-app = Flask(__name__)
+app = Flask(__name__ )
 
-# Configure CORS properly for frontend connection
+# Configure CORS to allow all origins and methods
 CORS(app, 
-     origins=['*'], 
-     allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Origin'],
-     methods=['GET', 'POST', 'OPTIONS'],
+     origins=['*'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials'],
      supports_credentials=False)
+
+# Handle preflight requests
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
+
+# Add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'false')
+    return response
 
 # Import and register blueprints
 try:
@@ -32,14 +51,6 @@ try:
     print("✅ Chat routes registered")
 except ImportError as e:
     print(f"⚠️ Could not import chat routes: {e}")
-
-# Add CORS headers to all responses
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
 
 # Health check endpoint
 @app.route('/health')
