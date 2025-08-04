@@ -12,6 +12,7 @@ function App() {
   const [error, setError] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
 
   const analyzeText = async () => {
     if (!text.trim()) {
@@ -85,11 +86,16 @@ function App() {
   const sendChatMessage = async () => {
     if (!chatInput.trim()) return
 
-    const userMessage = { type: 'user', content: chatInput, timestamp: new Date() }
+    const userMessage = { 
+      type: 'user', 
+      content: chatInput, 
+      timestamp: new Date() 
+    }
     setChatMessages(prev => [...prev, userMessage])
     
     const currentInput = chatInput
     setChatInput('')
+    setIsTyping(true)
 
     try {
       const response = await fetch('https://remaleh-protect-api.onrender.com/api/chat/message', {
@@ -99,7 +105,7 @@ function App() {
         },
         body: JSON.stringify({ 
           message: currentInput,
-          conversation_history: chatMessages.slice(-5)
+          conversation_history: chatMessages.slice(-6) // Last 6 messages for context
         })
       })
 
@@ -109,13 +115,22 @@ function App() {
 
       const data = await response.json()
       
+      // Determine message type based on source
+      let messageType = 'ai'
+      if (data.source === 'llm') {
+        messageType = 'llm'
+      } else if (data.source === 'error') {
+        messageType = 'system'
+      }
+      
       const aiMessage = { 
-        type: data.escalated ? 'expert' : 'ai', 
+        type: messageType,
         content: data.response, 
         timestamp: new Date(),
-        category: data.category,
-        urgency: data.urgency,
-        actions: data.suggested_actions
+        source: data.source,
+        confidence: data.confidence,
+        showGuardian: data.show_guardian,
+        escalated: data.escalated
       }
       
       setChatMessages(prev => [...prev, aiMessage])
@@ -123,11 +138,27 @@ function App() {
       console.error('Chat error:', err)
       const errorMessage = { 
         type: 'system', 
-        content: 'Sorry, I\'m having trouble connecting. Please try again.', 
-        timestamp: new Date() 
+        content: 'I\'m having trouble connecting right now. For immediate cybersecurity assistance, please connect with a Remaleh Guardian.', 
+        timestamp: new Date(),
+        showGuardian: true
       }
       setChatMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsTyping(false)
     }
+  }
+
+  const connectToGuardian = () => {
+    // Open Remaleh contact page in new tab
+    window.open('https://www.remaleh.com.au/contact-us', '_blank')
+    
+    // Add a message to chat confirming the action
+    const guardianMessage = {
+      type: 'system',
+      content: "🛡️ **Connecting you to a Remaleh Guardian...**\n\nI've opened our contact page where you can reach our cybersecurity experts directly. They'll provide personalized assistance for your specific situation.",
+      timestamp: new Date()
+    }
+    setChatMessages(prev => [...prev, guardianMessage])
   }
 
   const getRiskColor = (level) => {
@@ -138,6 +169,21 @@ function App() {
       case 'VERY_LOW': return 'risk-very-low'
       default: return 'risk-unknown'
     }
+  }
+
+  const formatChatMessage = (content) => {
+    // Split content by lines and format appropriately
+    return content.split('\n').map((line, index) => {
+      if (line.startsWith('**') && line.endsWith('**')) {
+        return <div key={index} className="chat-bold">{line.slice(2, -2)}</div>
+      } else if (line.startsWith('• ')) {
+        return <div key={index} className="chat-bullet">{line}</div>
+      } else if (line.trim() === '') {
+        return <div key={index} className="chat-spacer"></div>
+      } else {
+        return <div key={index} className="chat-line">{line}</div>
+      }
+    })
   }
 
   return (
@@ -432,54 +478,79 @@ function App() {
                   </svg>
                   Get Expert Help
                 </div>
-                <p>Chat with our AI assistant or connect with cybersecurity experts</p>
+                <p>Hybrid AI + Expert cybersecurity assistance</p>
               </div>
               <div className="card-content">
                 <div className="chat-container">
                   {chatMessages.length === 0 ? (
                     <div className="chat-empty">
                       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44L5.5 19H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2.5l1.54-.44A2.5 2.5 0 0 1 9.5 2Z"/>
-                        <path d="M14 6h7v12h-1"/>
-                        <path d="M14 9h4"/>
-                        <path d="M14 12h2"/>
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                       </svg>
-                      <p>Start a conversation with our AI assistant</p>
-                      <small>We're here to help with any cybersecurity concerns</small>
+                      <p><strong>Remaleh Hybrid Cybersecurity Assistant</strong></p>
+                      <small>🧠 Instant expert responses + 🤖 AI for complex questions</small>
                     </div>
                   ) : (
                     <div className="chat-messages">
                       {chatMessages.map((message, index) => (
                         <div key={index} className={`chat-message ${message.type}`}>
-                          {message.type === 'expert' && (
-                            <div className="expert-badge">
-                              <div className="expert-indicator"></div>
-                              Human Expert
+                          <div className="message-content">
+                            {formatChatMessage(message.content)}
+                          </div>
+                          
+                          {/* Source indicator */}
+                          {message.source && (
+                            <div className="message-source">
+                              {message.source === 'rule_based' && (
+                                <span className="source-badge expert">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                  </svg>
+                                  Expert Knowledge
+                                </span>
+                              )}
+                              {message.source === 'llm' && (
+                                <span className="source-badge ai">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M12 1v6m0 6v6"/>
+                                    <path d="m21 12-6 0m-6 0-6 0"/>
+                                  </svg>
+                                  AI Analysis
+                                </span>
+                              )}
                             </div>
                           )}
-                          <p>{message.content}</p>
-                          {message.actions && message.actions.length > 0 && (
-                            <div className="chat-actions">
-                              {message.actions.map((action, actionIndex) => (
-                                <div key={actionIndex} className="chat-action">
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-                                    <path d="m9 12 2 2 4-4"/>
-                                  </svg>
-                                  {action}
-                                </div>
-                              ))}
-                            </div>
+                          
+                          {message.showGuardian && (
+                            <button 
+                              onClick={connectToGuardian}
+                              className="guardian-button"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                              </svg>
+                              Connect with Remaleh Guardian
+                            </button>
                           )}
                         </div>
                       ))}
+                      {isTyping && (
+                        <div className="chat-message ai typing">
+                          <div className="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
                 
                 <div className="chat-input-container">
                   <input
-                    placeholder="Describe your cybersecurity concern..."
+                    placeholder="Ask about cybersecurity: passwords, phishing, malware, etc..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
@@ -488,6 +559,7 @@ function App() {
                   <button 
                     onClick={sendChatMessage}
                     className="btn btn-help"
+                    disabled={isTyping}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M5 12h14"/>
@@ -503,8 +575,8 @@ function App() {
                     <path d="M12 8h.01"/>
                   </svg>
                   <div>
-                    <strong>How it works</strong>
-                    <p>Our AI assistant will help with initial questions and connect you with human experts for complex issues.</p>
+                    <strong>Hybrid Intelligence</strong>
+                    <p>Expert knowledge for common topics, AI analysis for complex questions, and human Guardians for critical issues.</p>
                   </div>
                 </div>
               </div>
