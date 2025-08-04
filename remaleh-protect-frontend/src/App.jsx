@@ -168,18 +168,6 @@ function App() {
       {/* Main Content */}
       <div className="main-content">
         {/* Hero Section */}
-        <div className="hero">
-          <div className="hero-icon">
-            <img 
-              src="/remaleh-logo.png" 
-              alt="Remaleh Logo" 
-              style={{
-                width: '40px',
-                height: '40px',
-                objectFit: 'contain'
-              }}
-            />
-          </div>
           <h2>Stay Safe in Our Connected World</h2>
           <p>Your Digital Well-Being Is Our Paramount Commitment</p>
         </div>
