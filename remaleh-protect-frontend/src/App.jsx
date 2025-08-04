@@ -142,25 +142,15 @@ function App() {
 
   return (
     <div className="app">
-      {/* Header */}
+      {/* Header with Remaleh Logo */}
       <div className="header">
         <div className="header-content">
-          <div className="logo">
-            <div className="logo-icon">
-              <img 
-                src="/remaleh-logo.png" 
-                alt="Remaleh Logo" 
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  objectFit: 'contain'
-                }}
-              />
-            </div>
-            <div className="logo-text">
-              <h1>Remaleh Protect</h1>
-              <p>Your Digital Safety Companion</p>
-            </div>
+          <div className="remaleh-logo-container">
+            <img 
+              src="/remaleh-logo-full.png" 
+              alt="Remaleh" 
+              className="remaleh-logo"
+            />
           </div>
         </div>
       </div>
@@ -525,16 +515,10 @@ function App() {
         {/* Privacy Notice */}
         <div className="privacy-footer">
           <div className="privacy-badge">
-            <img 
-              src="/remaleh-logo.png" 
-              alt="Remaleh Logo" 
-              style={{
-                width: '16px',
-                height: '16px',
-                objectFit: 'contain'
-              }}
-            />
-            Remaleh Protect - Your Digital Guardian
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Remaleh - Your Digital Guardian
           </div>
           <p>24/7 Cybersecurity Monitoring</p>
         </div>
