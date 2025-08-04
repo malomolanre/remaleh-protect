@@ -520,7 +520,7 @@ function App() {
             </svg>
             Remaleh - Your Digital Guardian
           </div>
-          <p>24/7 Cybersecurity Monitoring</p>
+          <p>Copyright © 2025 Remaleh</p>
         </div>
       </div>
 
