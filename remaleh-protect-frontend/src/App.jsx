@@ -167,7 +167,8 @@ function App() {
 
       {/* Main Content */}
       <div className="main-content">
-        {/* Hero Section */}
+        {/* Hero Section - Text Only */}
+        <div className="hero">
           <h2>Stay Safe in Our Connected World</h2>
           <p>Your Digital Well-Being Is Our Paramount Commitment</p>
         </div>
@@ -533,9 +534,9 @@ function App() {
                 objectFit: 'contain'
               }}
             />
-            Powered by Remaleh - Your Digital Guardian
+            Remaleh Protect - Your Digital Guardian
           </div>
-          <p>Real-time Threat Detection Active</p>
+          <p>24/7 Cybersecurity Monitoring</p>
         </div>
       </div>
 
