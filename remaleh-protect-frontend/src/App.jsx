@@ -14,6 +14,94 @@ function App() {
   const [chatInput, setChatInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
 
+  // Hybrid chatbot rule-based responses (frontend)
+  const getRuleBasedResponse = (message) => {
+    const lowerMessage = message.toLowerCase()
+    
+    // Password-related queries
+    if (lowerMessage.includes('password') || lowerMessage.includes('2fa') || lowerMessage.includes('authentication')) {
+      return {
+        response: "🔐 **Password Security Best Practices:**\n\n• Use unique passwords for each account\n• Enable two-factor authentication (2FA)\n• Use a reputable password manager\n• Passwords should be 12+ characters with mixed case, numbers, and symbols\n• Never share passwords via email or text\n• Change passwords immediately if you suspect a breach\n\nWould you like specific help with password management tools or setting up 2FA?",
+        source: "rule_based",
+        showGuardian: false
+      }
+    }
+    
+    // Phishing/scam queries
+    if (lowerMessage.includes('phishing') || lowerMessage.includes('scam') || lowerMessage.includes('suspicious email')) {
+      return {
+        response: "🎣 **Phishing & Scam Protection:**\n\n• Check sender's email address carefully\n• Look for urgent language or threats\n• Verify links before clicking (hover to see real URL)\n• Don't download unexpected attachments\n• When in doubt, contact the organization directly\n• Use our 'Check Text' feature to analyze suspicious messages\n\nIf you're dealing with an active threat or need immediate assistance, I can connect you with a Remaleh Guardian.",
+        source: "rule_based",
+        showGuardian: true
+      }
+    }
+    
+    // Malware/virus queries
+    if (lowerMessage.includes('malware') || lowerMessage.includes('virus') || lowerMessage.includes('infected') || lowerMessage.includes('ransomware')) {
+      return {
+        response: "🦠 **Malware Protection & Response:**\n\n• Keep your antivirus software updated\n• Run regular system scans\n• Avoid downloading software from untrusted sources\n• Keep your operating system updated\n• If infected: disconnect from internet, run antivirus scan\n• For ransomware: DO NOT pay - contact authorities\n\n⚠️ **If you suspect active malware infection, this requires immediate expert assistance.**",
+        source: "rule_based",
+        showGuardian: true
+      }
+    }
+    
+    // Data breach queries
+    if (lowerMessage.includes('breach') || lowerMessage.includes('hacked') || lowerMessage.includes('compromised')) {
+      return {
+        response: "🚨 **Data Breach Response:**\n\n• Change passwords for affected accounts immediately\n• Enable 2FA on all important accounts\n• Monitor your accounts for suspicious activity\n• Check credit reports for unauthorized activity\n• Use our 'Password Safety Check' to see if your email appears in known breaches\n\nFor business data breaches or complex incidents, expert guidance is essential.",
+        source: "rule_based",
+        showGuardian: true
+      }
+    }
+    
+    // Social media security
+    if (lowerMessage.includes('social media') || lowerMessage.includes('facebook') || lowerMessage.includes('instagram') || lowerMessage.includes('twitter')) {
+      return {
+        response: "📱 **Social Media Security:**\n\n• Review privacy settings regularly\n• Be selective with friend/connection requests\n• Think before sharing personal information\n• Use strong, unique passwords\n• Enable 2FA on all social accounts\n• Be cautious of suspicious links in messages\n• Report and block suspicious accounts\n\nNeed help securing specific social media accounts?",
+        source: "rule_based",
+        showGuardian: false
+      }
+    }
+    
+    // WiFi/network security
+    if (lowerMessage.includes('wifi') || lowerMessage.includes('network') || lowerMessage.includes('router') || lowerMessage.includes('vpn')) {
+      return {
+        response: "📶 **Network & WiFi Security:**\n\n• Avoid sensitive activities on public WiFi\n• Use a VPN when on public networks\n• Change default router passwords\n• Use WPA3 encryption on home WiFi\n• Regularly update router firmware\n• Hide your network name (SSID) if possible\n• Monitor connected devices regularly\n\nFor business network security, professional assessment is recommended.",
+        source: "rule_based",
+        showGuardian: true
+      }
+    }
+    
+    // Mobile security
+    if (lowerMessage.includes('mobile') || lowerMessage.includes('phone') || lowerMessage.includes('smartphone') || lowerMessage.includes('app')) {
+      return {
+        response: "📱 **Mobile Device Security:**\n\n• Keep your OS and apps updated\n• Only download apps from official stores\n• Use screen locks (PIN, password, biometric)\n• Enable remote wipe capabilities\n• Be cautious with app permissions\n• Avoid clicking suspicious text message links\n• Use mobile antivirus if available\n\nConcerned about a specific mobile security issue?",
+        source: "rule_based",
+        showGuardian: false
+      }
+    }
+    
+    // Business/enterprise security
+    if (lowerMessage.includes('business') || lowerMessage.includes('company') || lowerMessage.includes('enterprise') || lowerMessage.includes('employee')) {
+      return {
+        response: "🏢 **Business Cybersecurity:**\n\n• Implement employee security training\n• Use endpoint protection on all devices\n• Regular security audits and assessments\n• Backup data regularly and test recovery\n• Implement access controls and monitoring\n• Have an incident response plan\n• Consider cyber insurance\n\n**Business security requires professional consultation for proper implementation.**",
+        source: "rule_based",
+        showGuardian: true
+      }
+    }
+    
+    // General help or greeting
+    if (lowerMessage.includes('help') || lowerMessage.includes('hello') || lowerMessage.includes('hi') || message.trim().length < 10) {
+      return {
+        response: "👋 **Welcome to Remaleh Cybersecurity Support!**\n\nI'm here to help with:\n• Password security and management\n• Phishing and scam identification\n• Malware protection and response\n• Data breach guidance\n• Social media security\n• Network and WiFi security\n• Mobile device protection\n• Business cybersecurity advice\n\n**What cybersecurity topic can I help you with today?**",
+        source: "rule_based",
+        showGuardian: false
+      }
+    }
+    
+    return null // No rule-based match, use backend LLM
+  }
+
   const analyzeText = async () => {
     if (!text.trim()) {
       setError('Please enter some text to check')
@@ -97,6 +185,28 @@ function App() {
     setChatInput('')
     setIsTyping(true)
 
+    // First try rule-based response (instant)
+    const ruleResponse = getRuleBasedResponse(currentInput)
+    
+    if (ruleResponse) {
+      // Rule-based response found
+      setTimeout(() => {
+        const aiMessage = { 
+          type: 'expert',
+          content: ruleResponse.response, 
+          timestamp: new Date(),
+          source: ruleResponse.source,
+          confidence: 'high',
+          showGuardian: ruleResponse.showGuardian,
+          escalated: false
+        }
+        setChatMessages(prev => [...prev, aiMessage])
+        setIsTyping(false)
+      }, 500) // Small delay for better UX
+      return
+    }
+
+    // No rule-based match, use backend LLM
     try {
       const response = await fetch('https://remaleh-protect-api.onrender.com/api/chat/message', {
         method: 'POST',
@@ -169,6 +279,31 @@ function App() {
       case 'VERY_LOW': return 'risk-very-low'
       default: return 'risk-unknown'
     }
+  }
+
+  const getSourceBadge = (message) => {
+    if (message.source === 'rule_based' || message.type === 'expert') {
+      return (
+        <div className="source-badge expert-knowledge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          Expert Knowledge
+        </div>
+      )
+    } else if (message.source === 'llm' || message.type === 'llm') {
+      return (
+        <div className="source-badge ai-analysis">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <path d="M12 17h.01"/>
+          </svg>
+          AI Analysis
+        </div>
+      )
+    }
+    return null
   }
 
   const formatChatMessage = (content) => {
@@ -425,42 +560,21 @@ function App() {
                   <div className="learn-card learn-phone">
                     <h3>📱 Phone & SMS Protection</h3>
                     <ul>
-                      <li>Don't answer calls from unknown numbers</li>
-                      <li>Never give personal info over the phone</li>
-                      <li>Be suspicious of prize notifications</li>
-                      <li>Verify caller identity independently</li>
-                    </ul>
-                  </div>
-
-                  <div className="learn-card learn-browsing">
-                    <h3>🌐 Safe Browsing</h3>
-                    <ul>
-                      <li>Look for HTTPS (lock icon) on websites</li>
-                      <li>Keep your browser updated</li>
-                      <li>Use reputable antivirus software</li>
-                      <li>Be cautious with public Wi-Fi</li>
+                      <li>Don't click suspicious links in texts</li>
+                      <li>Verify caller identity before sharing info</li>
+                      <li>Be skeptical of urgent payment requests</li>
+                      <li>Use official apps and websites</li>
                     </ul>
                   </div>
 
                   <div className="learn-card learn-social">
-                    <h3>👥 Social Media Safety</h3>
+                    <h3>🌐 Social Media Safety</h3>
                     <ul>
                       <li>Review privacy settings regularly</li>
-                      <li>Think before you share personal info</li>
-                      <li>Be selective with friend requests</li>
+                      <li>Think before sharing personal information</li>
+                      <li>Be cautious with friend requests</li>
                       <li>Report suspicious accounts</li>
                     </ul>
-                  </div>
-
-                  <div className="learn-card learn-threats">
-                    <h3>⚠️ Current Threat Alerts</h3>
-                    <ul>
-                      <li>AI deepfake scams increasing</li>
-                      <li>Fake delivery notifications</li>
-                      <li>Romance scams on dating apps</li>
-                      <li>Cryptocurrency investment frauds</li>
-                    </ul>
-                    <p><strong>Stay vigilant and verify everything!</strong></p>
                   </div>
                 </div>
               </div>
@@ -472,7 +586,6 @@ function App() {
               <div className="card-header">
                 <div className="card-title">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
                     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
                     <path d="M12 17h.01"/>
                   </svg>
@@ -482,100 +595,106 @@ function App() {
               </div>
               <div className="card-content">
                 <div className="chat-container">
-                  {chatMessages.length === 0 ? (
-                    <div className="chat-empty">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      </svg>
-                      <p><strong>Remaleh Hybrid Cybersecurity Assistant</strong></p>
-                      <small>🧠 Instant expert responses + 🤖 AI for complex questions</small>
-                    </div>
-                  ) : (
-                    <div className="chat-messages">
-                      {chatMessages.map((message, index) => (
-                        <div key={index} className={`chat-message ${message.type}`}>
-                          <div className="message-content">
-                            {formatChatMessage(message.content)}
+                  <div className="chat-messages">
+                    {chatMessages.length === 0 && (
+                      <div className="chat-welcome">
+                        <div className="chat-welcome-icon">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                          </svg>
+                        </div>
+                        <h3>Remaleh Hybrid Cybersecurity Assistant</h3>
+                        <p>Expert knowledge for common topics, AI analysis for complex questions, and human Guardians for critical issues.</p>
+                        <div className="chat-features">
+                          <div className="chat-feature">
+                            <span className="feature-badge expert">🧠 Expert Knowledge</span>
+                            <span>Instant responses</span>
                           </div>
-                          
-                          {/* Source indicator */}
-                          {message.source && (
-                            <div className="message-source">
-                              {message.source === 'rule_based' && (
-                                <span className="source-badge expert">
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                  </svg>
-                                  Expert Knowledge
-                                </span>
-                              )}
-                              {message.source === 'llm' && (
-                                <span className="source-badge ai">
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="12" cy="12" r="3"/>
-                                    <path d="M12 1v6m0 6v6"/>
-                                    <path d="m21 12-6 0m-6 0-6 0"/>
-                                  </svg>
-                                  AI Analysis
-                                </span>
-                              )}
+                          <div className="chat-feature">
+                            <span className="feature-badge ai">🤖 AI Analysis</span>
+                            <span>Complex questions</span>
+                          </div>
+                          <div className="chat-feature">
+                            <span className="feature-badge guardian">🛡️ Human Guardians</span>
+                            <span>Critical issues</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {chatMessages.map((message, index) => (
+                      <div key={index} className={`chat-message ${message.type}`}>
+                        {message.type === 'user' ? (
+                          <div className="message-content user-message">
+                            <div className="message-text">{message.content}</div>
+                          </div>
+                        ) : (
+                          <div className="message-content ai-message">
+                            {getSourceBadge(message)}
+                            <div className="message-text">
+                              {formatChatMessage(message.content)}
                             </div>
-                          )}
-                          
-                          {message.showGuardian && (
-                            <button 
-                              onClick={connectToGuardian}
-                              className="guardian-button"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                              </svg>
-                              Connect with Remaleh Guardian
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      {isTyping && (
-                        <div className="chat-message ai typing">
+                            {message.showGuardian && (
+                              <button 
+                                onClick={connectToGuardian}
+                                className="guardian-button"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                </svg>
+                                Connect with Remaleh Guardian
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {isTyping && (
+                      <div className="chat-message ai">
+                        <div className="message-content ai-message">
                           <div className="typing-indicator">
-                            <span></span>
-                            <span></span>
-                            <span></span>
+                            <div className="typing-dots">
+                              <span></span>
+                              <span></span>
+                              <span></span>
+                            </div>
+                            <span className="typing-text">Analyzing your question...</span>
                           </div>
                         </div>
-                      )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="chat-input-container">
+                    <input
+                      type="text"
+                      placeholder="Ask about cybersecurity: passwords, phishing, malware, etc..."
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                      className="chat-input"
+                    />
+                    <button 
+                      onClick={sendChatMessage}
+                      disabled={!chatInput.trim() || isTyping}
+                      className="chat-send-btn"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="m22 2-7 20-4-9-9-4Z"/>
+                        <path d="M22 2 11 13"/>
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="chat-info">
+                    <div className="hybrid-intelligence">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="m9 9 1.5 1.5L16 6"/>
+                      </svg>
+                      <span>Hybrid Intelligence</span>
                     </div>
-                  )}
-                </div>
-                
-                <div className="chat-input-container">
-                  <input
-                    placeholder="Ask about cybersecurity: passwords, phishing, malware, etc..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                    className="input"
-                  />
-                  <button 
-                    onClick={sendChatMessage}
-                    className="btn btn-help"
-                    disabled={isTyping}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14"/>
-                      <path d="m12 5 7 7-7 7"/>
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="help-info">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 16v-4"/>
-                    <path d="M12 8h.01"/>
-                  </svg>
-                  <div>
-                    <strong>Hybrid Intelligence</strong>
                     <p>Expert knowledge for common topics, AI analysis for complex questions, and human Guardians for critical issues.</p>
                   </div>
                 </div>
@@ -583,59 +702,63 @@ function App() {
             </div>
           )}
         </div>
-
-        {/* Privacy Notice */}
-        <div className="privacy-footer">
-          <div className="privacy-badge">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            Remaleh - Your Digital Guardian
-          </div>
-          <p>Copyright © 2025 Remaleh</p>
-        </div>
       </div>
 
       {/* Bottom Navigation */}
       <div className="bottom-nav">
-        <div className="nav-container">
-          {[
-            { id: 'checker', icon: 'message', label: 'Check Text' },
-            { id: 'passwords', icon: 'lock', label: 'Passwords' },
-            { id: 'learn', icon: 'book', label: 'Learn' },
-            { id: 'help', icon: 'help', label: 'Get Help' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`nav-tab ${activeTab === tab.id ? 'active' : ''} nav-${tab.id}`}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                {tab.icon === 'message' && <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>}
-                {tab.icon === 'lock' && (
-                  <>
-                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-                    <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
-                  </>
-                )}
-                {tab.icon === 'book' && (
-                  <>
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                  </>
-                )}
-                {tab.icon === 'help' && (
-                  <>
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                    <path d="M12 17h.01"/>
-                  </>
-                )}
-              </svg>
-              <span>{tab.label}</span>
-            </button>
-          ))}
+        <button 
+          className={`nav-item ${activeTab === 'checker' ? 'active' : ''}`}
+          onClick={() => setActiveTab('checker')}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span>Check Text</span>
+        </button>
+        
+        <button 
+          className={`nav-item ${activeTab === 'passwords' ? 'active' : ''}`}
+          onClick={() => setActiveTab('passwords')}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>Passwords</span>
+        </button>
+        
+        <button 
+          className={`nav-item ${activeTab === 'learn' ? 'active' : ''}`}
+          onClick={() => setActiveTab('learn')}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          <span>Learn</span>
+        </button>
+        
+        <button 
+          className={`nav-item ${activeTab === 'help' ? 'active' : ''}`}
+          onClick={() => setActiveTab('help')}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <path d="M12 17h.01"/>
+          </svg>
+          <span>Get Help</span>
+        </button>
+      </div>
+
+      {/* Privacy Footer */}
+      <div className="privacy-footer">
+        <div className="privacy-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Remaleh - Your Digital Guardian
         </div>
+        <p>Copyright © 2025 Remaleh</p>
       </div>
     </div>
   )
