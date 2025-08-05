@@ -977,3 +977,225 @@ function App() {
 
 export default App;
 
+
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">App Safety Tips</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Only download apps from official app stores (Google Play, Apple App Store)</li>
+                    <li>Check app permissions before installing</li>
+                    <li>Read reviews and research the developer</li>
+                    <li>Keep apps updated</li>
+                    <li>Delete apps you no longer use</li>
+                    <li>Be wary of free apps that seem too good to be true</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Mobile Device Security</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Use a strong PIN, password, or biometric lock</li>
+                    <li>Keep your operating system updated</li>
+                    <li>Enable remote tracking and wiping features</li>
+                    <li>Use a security app to scan for malware</li>
+                    <li>Back up your data regularly</li>
+                    <li>Be cautious when connecting to public Wi-Fi</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
+                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                    <p className="mb-2"><strong>SIM swapping scenario:</strong> A scammer calls Telstra pretending to be you, claims to have lost their phone, and requests your number be transferred to a new SIM.</p>
+                    <p><strong>Protection strategy:</strong> Add a PIN to your mobile account that must be provided for any account changes, and use authenticator apps instead of SMS for two-factor authentication.</p>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-500">
+                      Learn more about mobile security on our blog at{" "}
+                      <a 
+                        href="https://www.remaleh.com.au/blog" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[#21a1ce] hover:underline"
+                      >
+                        remaleh.com.au/blog
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'help' && (
+        <div className="p-4">
+          <div className="bg-white rounded-lg shadow p-5">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                <MessageSquare className="text-white" size={24} />
+              </div>
+              <h2 className="text-xl font-bold">Get Help</h2>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Chat with our cybersecurity assistant for instant help
+            </p>
+
+            <div className="border border-gray-200 rounded-lg mb-4 h-64 overflow-y-auto p-4">
+              {chatMessages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center text-gray-400">
+                  <div className="bg-gray-100 p-4 rounded-full mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+                      <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+                      <path d="M19 11h2"></path>
+                      <path d="M13 13v2"></path>
+                    </svg>
+                  </div>
+                  <p className="text-lg font-medium">Ask me anything about cybersecurity!</p>
+                  <p className="text-sm">I can help with passwords, phishing, malware, and more.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {chatMessages.map((msg, index) => (
+                    <div 
+                      key={index} 
+                      className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div 
+                        className={`max-w-[80%] rounded-lg p-3 ${
+                          msg.sender === 'user' 
+                            ? 'bg-[#21a1ce] text-white rounded-br-none' 
+                            : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                        }`}
+                      >
+                        <div 
+                          className="prose prose-sm"
+                          dangerouslySetInnerHTML={{ 
+                            __html: msg.sender === 'assistant' 
+                              ? msg.text.replace(/^#+\s*(.*)/gm, '<strong>$1</strong>')
+                                      .replace(/\n\n/g, '<br/><br/>')
+                                      .replace(/\n-\s(.*)/g, '<br/>• $1')
+                              : msg.text 
+                          }}
+                        />
+                        {msg.sender === 'assistant' && msg.source && (
+                          <div className={`mt-2 text-xs inline-flex items-center px-2 py-1 rounded-full ${
+                            msg.source === 'Expert Knowledge' 
+                              ? 'bg-green-100 text-green-800' 
+                              : msg.source === 'System'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {msg.source === 'Expert Knowledge' ? (
+                              <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              </>
+                            ) : msg.source === 'System' ? (
+                              <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </>
+                            ) : (
+                              <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                                </svg>
+                              </>
+                            )}
+                            {msg.source}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-100 rounded-lg p-3 rounded-bl-none">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {chatError && (
+                    <div className="text-center text-sm text-red-500 mt-2">
+                      There was an error processing your request. Please try again.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={handleChatSubmit} className="flex">
+              <input
+                type="text"
+                className="flex-1 border border-gray-300 rounded-l-lg p-3"
+                placeholder="Type your cybersecurity question..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-4 rounded-r-lg font-medium"
+                disabled={isTyping}
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center p-2">
+        <button
+          onClick={() => handleTabChange('check')}
+          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
+            activeTab === 'check' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+          }`}
+        >
+          <MessageSquare size={20} />
+          <span className="text-xs mt-1">Check that Text</span>
+        </button>
+        <button
+          onClick={() => handleTabChange('passwords')}
+          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
+            activeTab === 'passwords' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+          }`}
+        >
+          <Lock size={20} />
+          <span className="text-xs mt-1">Password Still Safe?</span>
+        </button>
+        <button
+          onClick={() => handleTabChange('learn')}
+          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
+            activeTab === 'learn' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+          }`}
+        >
+          <BookOpen size={20} />
+          <span className="text-xs mt-1">Cyber Sensei</span>
+        </button>
+        <button
+          onClick={() => handleTabChange('help')}
+          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
+            activeTab === 'help' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+          }`}
+        >
+          <MessageSquare size={20} />
+          <span className="text-xs mt-1">Help Me!</span>
+        </button>
+      </div>
+
+      <footer className="text-center text-gray-500 text-xs py-4 mt-20">
+        <div className="flex justify-center items-center mb-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#21a1ce" />
+          </svg>
+          <span>Remaleh - Your Digital Guardian</span>
+        </div>
+        <p>Copyright © 2025 Remaleh</p>
+      </footer>
+
