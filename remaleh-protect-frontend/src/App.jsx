@@ -1004,10 +1004,10 @@ function App() {
         <div className="max-w-md mx-auto px-4 py-3">
           <div className="flex justify-around">
             {[
-              { id: 'checker', icon: MessageSquare, label: 'Check Text' },
-              { id: 'passwords', icon: Key, label: 'Passwords' },
-              { id: 'learn', icon: BookOpen, label: 'Learn' },
-              { id: 'help', icon: HelpCircle, label: 'Get Help' }
+              { id: 'checker', icon: MessageSquare, label: 'Check that Text' },
+              { id: 'passwords', icon: Key, label: 'Password Still Safe?' },
+              { id: 'learn', icon: BookOpen, label: 'Cyber Sensei' },
+              { id: 'help', icon: HelpCircle, label: 'Help Me!' }
             ].map((tab) => (
               <button
                 key={tab.id}
