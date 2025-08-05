@@ -1,28 +1,12 @@
-/* LOGO SIZE FIX - Critical fixes first */
-img[alt="Remaleh Logo"] {
-  max-height: 32px !important;
-  height: 32px !important;
-  width: auto !important;
-  object-fit: contain !important;
-  display: block !important;
-}
-
-img[src="/remaleh-logo-full.png"] {
-  max-height: 32px !important;
-  height: 32px !important;
-  width: auto !important;
-  object-fit: contain !important;
-}
-
-/* Import Google Fonts for better typography */
+/* Import Google Fonts for professional typography */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Tailwind CSS imports */
+/* Tailwind CSS imports - ESSENTIAL for styling */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom Remaleh Brand Styling */
+/* Custom Remaleh Brand Variables */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -48,6 +32,7 @@ img[src="/remaleh-logo-full.png"] {
   }
 }
 
+/* Base styles */
 @layer base {
   * {
     @apply border-border;
@@ -75,46 +60,12 @@ img[src="/remaleh-logo-full.png"] {
   }
 }
 
-/* App-specific styles */
+/* App component styles */
 .App {
   text-align: center;
 }
 
-/* Header and Logo Fixes */
-.bg-white\/80.backdrop-blur-sm.border-b {
-  min-height: auto !important;
-  height: auto !important;
-}
-
-.max-w-md.mx-auto.px-4.py-4 {
-  padding-top: 1rem !important;
-  padding-bottom: 1rem !important;
-}
-
-.flex.items-center.justify-center.space-x-3 {
-  height: auto !important;
-  min-height: auto !important;
-}
-
-.w-10.h-10.bg-gradient-to-br {
-  width: 2.5rem !important;
-  height: 2.5rem !important;
-  flex-shrink: 0 !important;
-}
-
-.sticky.top-0.z-50 {
-  height: auto !important;
-  min-height: auto !important;
-}
-
-/* Prevent any image from being too large */
-header img {
-  max-height: 40px !important;
-  max-width: 200px !important;
-  object-fit: contain !important;
-}
-
-/* Custom animations and effects */
+/* Custom animations */
 @keyframes float {
   0%, 100% {
     transform: translateY(0px);
@@ -185,12 +136,31 @@ header img {
   @apply bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105;
 }
 
+/* Enhanced button and card animations */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.button-hover {
+  transition: all 0.3s ease;
+}
+
+.button-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 /* Safe area for mobile devices */
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Bottom Navigation Improvements */
+/* Bottom Navigation */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -203,7 +173,7 @@ header img {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Ensure content doesn't get hidden behind bottom nav */
+/* Main content spacing */
 .main-content {
   padding-bottom: 100px; /* Space for bottom navigation */
   animation: fadeIn 0.6s ease-out;
@@ -503,25 +473,6 @@ header img {
   @apply from-cyan-600 to-blue-700;
 }
 
-/* Enhanced button and card animations */
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.button-hover {
-  transition: all 0.3s ease;
-}
-
-.button-hover:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
 /* Mobile optimizations */
 @media (max-width: 640px) {
   .mobile-optimized {
@@ -530,17 +481,6 @@ header img {
   
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
-  }
-
-  /* Mobile logo fixes */
-  img[alt="Remaleh Logo"] {
-    max-height: 28px !important;
-    height: 28px !important;
-  }
-  
-  .max-w-md.mx-auto.px-4.py-4 {
-    padding-top: 0.75rem !important;
-    padding-bottom: 0.75rem !important;
   }
 
   .chat-container {
