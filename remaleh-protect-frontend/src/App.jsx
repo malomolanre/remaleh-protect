@@ -13,15 +13,12 @@ import {
   CheckCircle,
   XCircle,
   Info,
-  Home,
   Lock,
   Users,
   Globe,
   Smartphone,
-  Eye,
   Brain,
   Zap,
-  Star,
   ArrowRight,
   Crown,
   Send
@@ -85,81 +82,6 @@ function App() {
           '• Be cautious with email attachments and USB drives',
           '• Regular system backups to secure locations',
           '• Enable firewall protection on all devices'
-        ]
-      }
-    },
-    breaches: {
-      keywords: ['data breach', 'breach', 'hacked', 'compromised', 'stolen data', 'identity theft'],
-      response: {
-        source: 'expert-knowledge',
-        title: '**Data Breach Response Steps:**',
-        content: [
-          '• Change passwords for affected accounts immediately',
-          '• Monitor bank and credit card statements closely',
-          '• Enable fraud alerts with credit bureaus',
-          '• Consider credit monitoring services',
-          '• Report identity theft to relevant authorities',
-          '• Document all suspicious activities and communications'
-        ]
-      }
-    },
-    social: {
-      keywords: ['social media', 'facebook', 'instagram', 'twitter', 'privacy settings', 'social engineering'],
-      response: {
-        source: 'expert-knowledge',
-        title: '**Social Media Security Tips:**',
-        content: [
-          '• Review and tighten privacy settings regularly',
-          '• Be selective about friend/connection requests',
-          '• Avoid sharing personal information publicly',
-          '• Be cautious of social engineering attempts',
-          '• Use strong, unique passwords for social accounts',
-          '• Enable two-factor authentication where available'
-        ]
-      }
-    },
-    network: {
-      keywords: ['wifi', 'network security', 'public wifi', 'router', 'vpn', 'network'],
-      response: {
-        source: 'expert-knowledge',
-        title: '**Network Security Best Practices:**',
-        content: [
-          '• Avoid sensitive activities on public WiFi',
-          '• Use VPN when connecting to untrusted networks',
-          '• Change default router passwords and settings',
-          '• Keep router firmware updated',
-          '• Use WPA3 encryption for home networks',
-          '• Regularly monitor connected devices'
-        ]
-      }
-    },
-    mobile: {
-      keywords: ['mobile security', 'smartphone', 'app security', 'mobile device', 'phone security'],
-      response: {
-        source: 'expert-knowledge',
-        title: '**Mobile Device Security:**',
-        content: [
-          '• Keep mobile OS and apps updated',
-          '• Download apps only from official stores',
-          '• Review app permissions before installing',
-          '• Use screen locks and biometric authentication',
-          '• Enable remote wipe capabilities',
-          '• Be cautious with public charging stations'
-        ]
-      }
-    },
-    business: {
-      keywords: ['business security', 'enterprise', 'company security', 'workplace', 'corporate'],
-      response: {
-        source: 'expert-knowledge',
-        title: '**Business Cybersecurity Essentials:**',
-        content: [
-          '• Implement comprehensive security policies',
-          '• Provide regular cybersecurity training for employees',
-          '• Use endpoint detection and response (EDR) solutions',
-          '• Maintain secure backup and disaster recovery plans',
-          '• Conduct regular security assessments and penetration testing',
-          '• Establish incident response procedures'
         ]
       }
     }
@@ -248,8 +170,7 @@ function App() {
   const shouldEscalateToGuardian = (message) => {
     const urgentKeywords = [
       'hacked', 'compromised', 'stolen', 'fraud', 'scammed', 'emergency',
-      'urgent', 'help', 'attacked', 'breach', 'suspicious activity',
-      'identity theft', 'financial loss', 'blackmail', 'extortion'
+      'urgent', 'help', 'attacked', 'breach', 'suspicious activity'
     ]
     
     return urgentKeywords.some(keyword => 
@@ -275,7 +196,6 @@ function App() {
     const ruleResponse = findRuleBasedResponse(currentInput)
     
     if (ruleResponse) {
-      // Simulate typing delay for better UX
       setTimeout(() => {
         const assistantMessage = {
           type: 'assistant',
@@ -361,17 +281,13 @@ function App() {
   }
 
   const formatMessageContent = (content) => {
-    // Split content into lines and format
     const lines = content.split('\n')
     return lines.map((line, index) => {
       if (line.startsWith('**') && line.endsWith(':**')) {
-        // Bold headers
         return <div key={index} className="font-semibold text-gray-900 mb-2">{line.replace(/\*\*/g, '')}</div>
       } else if (line.startsWith('•')) {
-        // Bullet points
         return <div key={index} className="ml-4 mb-1">{line}</div>
       } else if (line.trim()) {
-        // Regular text
         return <div key={index} className="mb-1">{line}</div>
       }
       return null
@@ -379,7 +295,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-md mx-auto px-4 py-4">
@@ -389,7 +305,6 @@ function App() {
               alt="Remaleh Logo" 
               className="h-8 w-auto object-contain"
               onError={(e) => {
-                // Fallback to shield icon if logo fails to load
                 e.target.style.display = 'none'
                 e.target.nextSibling.style.display = 'flex'
               }}
@@ -411,8 +326,8 @@ function App() {
         </p>
       </div>
 
-      {/* Main Content - Flex grow to fill space */}
-      <div className="flex-1 max-w-md mx-auto px-4 pb-24">
+      {/* Main Content */}
+      <div className="max-w-md mx-auto px-4 pb-24">
         {/* Tab Content */}
         <div className="space-y-4">
           {activeTab === 'checker' && (
@@ -740,8 +655,8 @@ function App() {
         <p className="text-xs text-gray-500 mt-2">Copyright © 2025 Remaleh</p>
       </div>
 
-      {/* Bottom Navigation - Fixed positioning */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200/50 safe-area-inset-bottom">
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200/50 z-50">
         <div className="max-w-md mx-auto px-4">
           <div className="flex justify-around py-3">
             {[
