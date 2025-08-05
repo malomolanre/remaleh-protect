@@ -2,17 +2,18 @@ from flask import Blueprint, request, jsonify, make_response
 import os
 import openai
 import logging
+from flask_cors import cross_origin
 
-# Set up minimal logging for production
-logging.basicConfig(level=logging.WARNING)
+# Set up enhanced logging for debugging
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 chat_bp = Blueprint('chat', __name__)
 
-# Configure OpenAI
+# Configure OpenAI - but we'll check the key for each request
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Rule-based knowledge base
+# Rule-based knowledge base - keeping your comprehensive categories
 CYBERSECURITY_KNOWLEDGE = {
     'passwords': {
         'keywords': ['password', 'passwords', 'strong password', 'password security', 'password manager', '2fa', 'two-factor'],
@@ -111,12 +112,14 @@ def get_rule_based_response(message):
     for category, data in CYBERSECURITY_KNOWLEDGE.items():
         for keyword in data['keywords']:
             if keyword in message_lower:
+                logger.debug(f"Found rule-based match in category: {category}")
                 return {
                     'response': data['response'],
                     'source': 'expert_knowledge',
                     'category': category
                 }
     
+    logger.debug("No rule-based match found")
     return None
 
 def should_escalate_to_guardian(message):
@@ -129,58 +132,81 @@ def should_escalate_to_guardian(message):
     message_lower = message.lower()
     for keyword in escalation_keywords:
         if keyword in message_lower:
+            logger.debug(f"Guardian escalation triggered by keyword: {keyword}")
             return True
     
     return False
 
 def get_openai_response(message):
-    """Get response from OpenAI API"""
+    """Get response from OpenAI API with enhanced error handling"""
+    # Check if OpenAI API key is set
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        logger.error("OpenAI API key not found in environment variables")
+        return {
+            'response': "I'm sorry, but I'm having trouble accessing my advanced AI capabilities. For complex questions, please check resources like the Australian Cyber Security Centre (cyber.gov.au) or contact a cybersecurity professional.",
+            'source': 'ai_analysis',
+            'error': 'api_key_missing'
+        }
+    
     try:
-        if not openai.api_key:
-            return None
-            
+        # Set the API key
+        openai.api_key = api_key
+        
+        # Log that we're making an API call
+        logger.debug("Making OpenAI API call")
+        
+        # Make the API call
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {
-                    "role": "system",
-                    "content": "You are a cybersecurity expert assistant. Provide helpful, accurate information about cybersecurity topics. Keep responses concise but informative."
-                },
-                {
-                    "role": "user",
-                    "content": message
-                }
+                {"role": "system", "content": "You are a cybersecurity expert assistant. Provide concise, accurate information about cybersecurity topics. Focus on practical advice for everyday users in Australia. Keep responses under 150 words and use bullet points where appropriate."},
+                {"role": "user", "content": message}
             ],
             max_tokens=300,
             temperature=0.7
         )
         
-        return response.choices[0].message.content.strip()
+        # Log successful response (but not the full content)
+        logger.debug(f"OpenAI API call successful, received {len(response.choices[0].message.content)} characters")
+        
+        # Return the response
+        return {
+            'response': response.choices[0].message.content.strip(),
+            'source': 'ai_analysis',
+            'success': True
+        }
         
     except Exception as e:
-        logger.error(f"OpenAI API error: {str(e)}")
-        return None
+        # Log the error
+        logger.error(f"Error calling OpenAI API: {str(e)}")
+        
+        # Return a user-friendly error message
+        return {
+            'response': "I'm sorry, but I'm having trouble connecting to my advanced AI capabilities right now. For complex questions like this, you might want to check resources like the Australian Cyber Security Centre (cyber.gov.au) or contact a cybersecurity professional.",
+            'source': 'ai_analysis',
+            'error': str(e)
+        }
 
 @chat_bp.route('/', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def chat_message():
     # Handle preflight requests
     if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "*")
-        response.headers.add('Access-Control-Allow-Methods', "*")
-        return response
+        return jsonify({"status": "ok"})
     
     try:
         data = request.get_json()
         
         if not data or 'message' not in data:
+            logger.warning("No message provided in request")
             return jsonify({
                 'error': 'No message provided',
                 'success': False
             }), 400
         
         message = data['message']
+        logger.debug(f"Received chat request with message: {message}")
         
         # Try rule-based response first
         rule_response = get_rule_based_response(message)
@@ -191,18 +217,16 @@ def chat_message():
                 'success': True
             }
             
-            response = make_response(jsonify(response_data))
-            response.headers.add("Access-Control-Allow-Origin", "*")
-            response.headers.add('Access-Control-Allow-Headers', "*")
-            response.headers.add('Access-Control-Allow-Methods', "*")
-            return response
+            logger.debug(f"Sending rule-based response for category: {rule_response.get('category')}")
+            return jsonify(response_data)
         
         # Try OpenAI for complex questions
+        logger.debug("No rule-based match, attempting to use OpenAI")
         openai_response = get_openai_response(message)
         
-        if openai_response:
+        if openai_response and 'error' not in openai_response:
             response_data = {
-                'response': openai_response,
+                'response': openai_response['response'],
                 'source': 'ai_analysis',
                 'success': True
             }
@@ -211,14 +235,13 @@ def chat_message():
             if should_escalate_to_guardian(message):
                 response_data['show_guardian'] = True
                 response_data['guardian_url'] = 'https://www.remaleh.com.au/contact-us'
+                logger.debug("Adding guardian escalation to response")
             
-            response = make_response(jsonify(response_data))
-            response.headers.add("Access-Control-Allow-Origin", "*")
-            response.headers.add('Access-Control-Allow-Headers', "*")
-            response.headers.add('Access-Control-Allow-Methods', "*")
-            return response
+            logger.debug("Sending OpenAI response")
+            return jsonify(response_data)
         
         # Fallback response
+        logger.debug("Using fallback response")
         response_data = {
             'response': "I'm here to help with cybersecurity questions. Could you please rephrase your question or ask about topics like passwords, phishing, malware, or data breaches?",
             'source': 'fallback',
@@ -227,11 +250,7 @@ def chat_message():
             'guardian_url': 'https://www.remaleh.com.au/contact-us'
         }
         
-        response = make_response(jsonify(response_data))
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "*")
-        response.headers.add('Access-Control-Allow-Methods', "*")
-        return response
+        return jsonify(response_data)
         
     except Exception as e:
         logger.error(f"Chat processing error: {str(e)}")
@@ -240,18 +259,18 @@ def chat_message():
             'success': False
         }
         
-        response = make_response(jsonify(error_response), 500)
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "*")
-        response.headers.add('Access-Control-Allow-Methods', "*")
-        return response
+        return jsonify(error_response), 500
 
 @chat_bp.route('/health', methods=['GET'])
+@cross_origin()
 def health_check():
     """Health check endpoint"""
+    api_key_status = bool(os.getenv('OPENAI_API_KEY'))
+    logger.debug(f"Health check: OpenAI API key configured: {api_key_status}")
+    
     return jsonify({
         'status': 'healthy',
         'service': 'chat',
-        'openai_configured': bool(os.getenv('OPENAI_API_KEY'))
+        'openai_configured': api_key_status
     })
 
