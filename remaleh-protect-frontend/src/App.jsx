@@ -318,7 +318,7 @@ function App() {
 
       {/* Hero Section */}
       <div className="py-6 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 remaleh-text-gradient">
           Stay Safe in Our Connected World
         </h2>
         <p className="text-gray-600 text-sm leading-relaxed">
@@ -327,12 +327,12 @@ function App() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-md mx-auto px-4 pb-24">
+      <div className="max-w-md mx-auto px-4 pb-24 main-content">
         {/* Tab Content */}
         <div className="space-y-4">
           {activeTab === 'checker' && (
             <div className="space-y-4">
-              <div className="border-0 shadow-lg bg-white/70 backdrop-blur-sm rounded-lg p-6">
+              <div className="border-0 shadow-lg bg-white/70 backdrop-blur-sm rounded-lg p-6 card-hover">
                 <div className="pb-3">
                   <div className="flex items-center space-x-2 mb-2">
                     <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -349,12 +349,12 @@ function App() {
                     placeholder="Paste your message here to check for scams..."
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    className="w-full min-h-[100px] p-3 border border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none resize-none"
+                    className="w-full min-h-[100px] p-3 border border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none resize-none transition-all duration-200"
                   />
                   <button 
                     onClick={analyzeText} 
                     disabled={isAnalyzing}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 button-hover"
                   >
                     {isAnalyzing ? (
                       <>
@@ -416,7 +416,7 @@ function App() {
 
           {activeTab === 'passwords' && (
             <div className="space-y-4">
-              <div className="border-0 shadow-lg bg-white/70 backdrop-blur-sm rounded-lg p-6">
+              <div className="border-0 shadow-lg bg-white/70 backdrop-blur-sm rounded-lg p-6 card-hover">
                 <div className="pb-3">
                   <div className="flex items-center space-x-2 mb-2">
                     <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-cyan-600 rounded-lg flex items-center justify-center">
@@ -434,12 +434,12 @@ function App() {
                     placeholder="Enter your email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full p-3 border border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                    className="w-full p-3 border border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all duration-200"
                   />
                   <button 
                     onClick={checkEmail} 
                     disabled={isCheckingEmail}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50"
+                    className="w-full bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 button-hover"
                   >
                     {isCheckingEmail ? (
                       <>
@@ -493,7 +493,7 @@ function App() {
 
           {activeTab === 'learn' && (
             <div className="space-y-4">
-              <div className="border-0 shadow-lg bg-white/70 backdrop-blur-sm rounded-lg p-6">
+              <div className="border-0 shadow-lg bg-white/70 backdrop-blur-sm rounded-lg p-6 card-hover">
                 <div className="pb-3">
                   <div className="flex items-center space-x-2 mb-2">
                     <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -515,7 +515,7 @@ function App() {
                     { icon: Users, title: 'Social Engineering', desc: 'Recognize manipulation tactics', color: 'from-teal-500 to-cyan-600' },
                     { icon: Smartphone, title: 'Mobile Security', desc: 'Keep your mobile devices safe', color: 'from-indigo-500 to-purple-600' }
                   ].map((item, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 bg-white/50 rounded-lg border border-gray-200/50 hover:bg-white/70 transition-colors">
+                    <div key={index} className="flex items-center space-x-3 p-3 bg-white/50 rounded-lg border border-gray-200/50 hover:bg-white/70 transition-all duration-200 cursor-pointer card-hover">
                       <div className={`w-10 h-10 bg-gradient-to-r ${item.color} rounded-lg flex items-center justify-center`}>
                         <item.icon className="h-5 w-5 text-white" />
                       </div>
@@ -533,7 +533,7 @@ function App() {
 
           {activeTab === 'help' && (
             <div className="space-y-4">
-              <div className="border-0 shadow-lg bg-white/70 backdrop-blur-sm rounded-lg p-6">
+              <div className="border-0 shadow-lg bg-white/70 backdrop-blur-sm rounded-lg p-6 card-hover">
                 <div className="pb-3">
                   <div className="flex items-center space-x-2 mb-2">
                     <div className="w-8 h-8 bg-gradient-to-r from-rose-500 to-pink-600 rounded-lg flex items-center justify-center">
@@ -656,7 +656,7 @@ function App() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200/50 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200/50 z-50 bottom-nav">
         <div className="max-w-md mx-auto px-4">
           <div className="flex justify-around py-3">
             {[
@@ -668,7 +668,7 @@ function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-all duration-200 min-w-0 ${
+                className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-all duration-300 min-w-0 touch-target ${
                   activeTab === tab.id 
                     ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg transform scale-105` 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
