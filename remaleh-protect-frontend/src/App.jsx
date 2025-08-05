@@ -40,7 +40,7 @@ function App() {
     },
     identity: {
       keywords: ['identity theft', 'identity protection', 'stolen identity', 'fraud', 'identity fraud'],
-      response: "# Preventing Identity Theft\n\n## Protect Your Information\n- Secure your Social Security number and government IDs\n- Shred sensitive documents\n- Use strong, unique passwords for financial accounts\n- Be cautious about sharing personal details online\n\n## Monitoring\n- Check credit reports regularly\n- Review financial statements monthly\n- Consider identity theft protection services\n- Set up fraud alerts or credit freezes\n\n## If You're a Victim\n- Report to the police and financial institutions\n- Contact credit bureaus to place fraud alerts\n- Change all passwords\n- Monitor accounts closely",
+      response: "# Preventing Identity Theft\n\n## Protect Your Information\n- Secure your Tax File Number and government IDs\n- Shred sensitive documents\n- Use strong, unique passwords for financial accounts\n- Be cautious about sharing personal details online\n\n## Monitoring\n- Check credit reports regularly\n- Review financial statements monthly\n- Consider identity theft protection services\n- Set up fraud alerts with your bank\n\n## If You're a Victim\n- Report to the police and financial institutions\n- Contact credit bureaus to place fraud alerts\n- Change all passwords\n- Monitor accounts closely",
       source: "Expert Knowledge"
     },
     social: {
@@ -210,7 +210,7 @@ function App() {
               <h2 className="text-xl font-bold">Stay Safe Online</h2>
             </div>
             <p className="text-gray-600">
-              Protect yourself from the latest cyber threats targeting families
+              Protect yourself from the latest cyber threats targeting Australian families
             </p>
           </div>
 
@@ -220,7 +220,7 @@ function App() {
               <div>
                 <h3 className="font-bold text-red-700">2025 Threat Alert</h3>
                 <p className="text-red-600">
-                  Scammers are using AI to create more convincing fake emails, texts, and voice calls.
+                  Scammers are using AI to create more convincing fake emails, texts, and voice calls targeting Australians.
                   Stay vigilant!
                 </p>
               </div>
@@ -279,7 +279,7 @@ function App() {
                   </div>
                   <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-2 text-sm">
                     <p className="text-yellow-800">
-                      <span className="font-bold">⚠️ Current threat:</span> AI-generated phishing emails and fake delivery/banking texts
+                      <span className="font-bold">⚠️ Current threat:</span> AI-generated phishing emails and fake Australia Post/banking texts
                     </p>
                   </div>
                 </div>
@@ -307,7 +307,7 @@ function App() {
                   </div>
                   <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-2 text-sm">
                     <p className="text-yellow-800">
-                      <span className="font-bold">⚠️ Current threat:</span> Malware targeting smart home devices and fake software updates
+                      <span className="font-bold">⚠️ Current threat:</span> Malware targeting NBN routers and smart home devices
                     </p>
                   </div>
                 </div>
@@ -391,7 +391,7 @@ function App() {
                   </div>
                   <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-2 text-sm">
                     <p className="text-yellow-800">
-                      <span className="font-bold">⚠️ Current threat:</span> SIM swapping attacks and fake mobile apps
+                      <span className="font-bold">⚠️ Current threat:</span> SIM swapping attacks on Telstra, Optus, and Vodafone customers
                     </p>
                   </div>
                 </div>
@@ -491,7 +491,369 @@ function App() {
                 </div>
               )}
 
-              {/* Other learning topics content would go here */}
+              {/* Email & Text Scams Content */}
+              {selectedLearningTopic === 'email_scams' && (
+                <div className="bg-white rounded-lg shadow p-5">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                      <Mail className="text-white" size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold">Email & Text Scams</h2>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
+                      <div>
+                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
+                        <p className="text-red-600">
+                          AI-generated phishing emails now perfectly mimic Australian companies like Australia Post, major banks, and the ATO. Fake delivery texts with malicious links are targeting Australians daily.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="font-bold text-lg mb-2">Common Australian Scams to Watch For</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li><strong>ATO scams:</strong> Fake tax refunds or threats of arrest for tax evasion</li>
+                    <li><strong>Australia Post/StarTrack scams:</strong> Fake delivery notifications with malicious links</li>
+                    <li><strong>Banking scams:</strong> Fake messages from Commonwealth Bank, ANZ, Westpac, or NAB</li>
+                    <li><strong>myGov scams:</strong> Fake government messages about benefits or payments</li>
+                    <li><strong>NBN scams:</strong> Fake messages about internet connection issues</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">How to Spot Scams</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Check the sender's email address carefully (not just the display name)</li>
+                    <li>Hover over links before clicking to see the actual URL</li>
+                    <li>Be suspicious of urgent requests or threats</li>
+                    <li>Look for poor grammar or unusual phrasing</li>
+                    <li>Never provide personal information via email or text</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">What to Do If You Receive a Suspicious Message</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Don't click any links or download attachments</li>
+                    <li>Use the "Check Text Message" feature in this app</li>
+                    <li>Report scams to <a href="https://www.scamwatch.gov.au" className="text-[#21a1ce] hover:underline">Scamwatch.gov.au</a></li>
+                    <li>Forward suspicious emails to the company they claim to be from</li>
+                    <li>Delete the message after reporting</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
+                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                    <p className="mb-2"><strong>Scam message:</strong> "Your Australia Post package is held at our depot. Last delivery attempt tomorrow. Confirm delivery address: [malicious link]"</p>
+                    <p><strong>Red flags:</strong> Urgency, request to click link, no specific package details, no official Australia Post branding</p>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-500">
+                      Learn more about email and text scams on our blog at{" "}
+                      <a 
+                        href="https://www.remaleh.com.au/blog" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[#21a1ce] hover:underline"
+                      >
+                        remaleh.com.au/blog
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Device & Home Security Content */}
+              {selectedLearningTopic === 'device_security' && (
+                <div className="bg-white rounded-lg shadow p-5">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                      <Shield className="text-white" size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold">Device & Home Security</h2>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
+                      <div>
+                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
+                        <p className="text-red-600">
+                          Hackers are targeting NBN routers and smart home devices to steal personal information and create botnets. Fake software updates are being used to install malware.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="font-bold text-lg mb-2">Securing Your Home Network</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Change default router passwords and admin credentials</li>
+                    <li>Update router firmware regularly</li>
+                    <li>Use WPA3 encryption if available (at least WPA2)</li>
+                    <li>Set up a guest network for visitors and IoT devices</li>
+                    <li>Consider using a VPN for additional protection</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Smart Home Device Security</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Change default passwords on all devices</li>
+                    <li>Keep devices updated with the latest firmware</li>
+                    <li>Disable features you don't use</li>
+                    <li>Check privacy settings and data collection policies</li>
+                    <li>Consider using a dedicated IoT security hub</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Protecting Your Computers and Phones</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Keep operating systems and apps updated</li>
+                    <li>Use reputable antivirus/anti-malware software</li>
+                    <li>Back up important data regularly</li>
+                    <li>Be cautious about downloading apps and software</li>
+                    <li>Use screen locks and encryption</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Family Tips</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Create a family security plan and discuss it regularly</li>
+                    <li>Help elderly family members set up automatic updates</li>
+                    <li>Teach children about safe downloading practices</li>
+                    <li>Consider parental controls for younger family members</li>
+                  </ul>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-500">
+                      Learn more about device security on our blog at{" "}
+                      <a 
+                        href="https://www.remaleh.com.au/blog" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[#21a1ce] hover:underline"
+                      >
+                        remaleh.com.au/blog
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Social Media & Privacy Content */}
+              {selectedLearningTopic === 'social_media' && (
+                <div className="bg-white rounded-lg shadow p-5">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                      <Users className="text-white" size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold">Social Media & Privacy</h2>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
+                      <div>
+                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
+                        <p className="text-red-600">
+                          Identity thieves are using information shared on social media to answer security questions, create targeted phishing attacks, and impersonate Australians online.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="font-bold text-lg mb-2">What Not to Share on Social Media</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Full date of birth</li>
+                    <li>Home address or detailed location information</li>
+                    <li>Phone numbers</li>
+                    <li>Travel plans (until after you return)</li>
+                    <li>Children's full names and schools</li>
+                    <li>Financial information</li>
+                    <li>Identity documents (even partially visible)</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Privacy Settings to Check</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Who can see your posts (friends only vs. public)</li>
+                    <li>Who can tag you in photos</li>
+                    <li>Who can see your friends list</li>
+                    <li>Whether your profile appears in search engines</li>
+                    <li>Location sharing settings</li>
+                    <li>App permissions and connected apps</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Protecting Your Family Online</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Talk to children about what's appropriate to share online</li>
+                    <li>Use privacy settings on children's accounts</li>
+                    <li>Be cautious about sharing photos of children</li>
+                    <li>Help elderly family members review their privacy settings</li>
+                    <li>Consider using family sharing features for oversight</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
+                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                    <p className="mb-2"><strong>Oversharing scenario:</strong> Posting "Just landed in Sydney for our two-week holiday! House is all locked up back in Melbourne."</p>
+                    <p><strong>Risk:</strong> Tells criminals your home is empty and exactly where it is located</p>
+                    <p><strong>Better approach:</strong> Share your holiday photos after you return home</p>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-500">
+                      Learn more about social media privacy on our blog at{" "}
+                      <a 
+                        href="https://www.remaleh.com.au/blog" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[#21a1ce] hover:underline"
+                      >
+                        remaleh.com.au/blog
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Phone & Romance Scams Content */}
+              {selectedLearningTopic === 'phone_scams' && (
+                <div className="bg-white rounded-lg shadow p-5">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                      <Phone className="text-white" size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold">Phone & Romance Scams</h2>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
+                      <div>
+                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
+                        <p className="text-red-600">
+                          AI voice cloning technology is being used to impersonate family members in emergency scams targeting elderly Australians. Romance scammers are using AI-generated photos and sophisticated scripts.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="font-bold text-lg mb-2">Common Phone Scams in Australia</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li><strong>ATO scams:</strong> Fake tax officials threatening arrest for unpaid taxes</li>
+                    <li><strong>NBN scams:</strong> Callers claiming your internet will be disconnected</li>
+                    <li><strong>Bank scams:</strong> Fake security alerts about suspicious transactions</li>
+                    <li><strong>Grandparent scams:</strong> Impersonating relatives in emergency situations</li>
+                    <li><strong>Tech support scams:</strong> Claiming your computer has a virus</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Romance Scam Warning Signs</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Professing love quickly without meeting in person</li>
+                    <li>Unable to video chat or always having technical issues</li>
+                    <li>Claims to be Australian but working overseas</li>
+                    <li>Stories about sudden emergencies requiring money</li>
+                    <li>Requests for unusual payment methods (gift cards, cryptocurrency)</li>
+                    <li>Too-perfect profile photos that may be AI-generated</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">How to Protect Yourself and Family</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Establish a family code word for emergency situations</li>
+                    <li>Never send money to someone you haven't met in person</li>
+                    <li>Hang up and call organizations directly using official numbers</li>
+                    <li>Talk to elderly family members about current scams</li>
+                    <li>Report scams to <a href="https://www.scamwatch.gov.au" className="text-[#21a1ce] hover:underline">Scamwatch.gov.au</a></li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
+                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                    <p className="mb-2"><strong>Voice cloning scam:</strong> "Grandma, it's me. I've been in an accident in Brisbane and need $3,000 for hospital bills. Please don't tell mum and dad."</p>
+                    <p><strong>Protection strategy:</strong> Ask questions only the real person would know, call your family member on their known number, or use your family code word.</p>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-500">
+                      Learn more about phone and romance scams on our blog at{" "}
+                      <a 
+                        href="https://www.remaleh.com.au/blog" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[#21a1ce] hover:underline"
+                      >
+                        remaleh.com.au/blog
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Phone & App Safety Content */}
+              {selectedLearningTopic === 'app_safety' && (
+                <div className="bg-white rounded-lg shadow p-5">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                      <Smartphone className="text-white" size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold">Phone & App Safety</h2>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
+                      <div>
+                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
+                        <p className="text-red-600">
+                          SIM swapping attacks are targeting Telstra, Optus, and Vodafone customers to take over phone numbers and bypass SMS-based two-factor authentication. Fake mobile apps in unofficial app stores are stealing personal information.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="font-bold text-lg mb-2">Protecting Against SIM Swapping</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Add a PIN or password to your mobile account</li>
+                    <li>Use app-based two-factor authentication instead of SMS</li>
+                    <li>Be alert for unexpected "SIM not provisioned" messages</li>
+                    <li>Contact your provider immediately if you lose mobile service unexpectedly</li>
+                    <li>Consider using a separate email for account recovery</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">App Safety Tips</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Only download apps from official app stores (Google Play, Apple App Store)</li>
+                    <li>Check app permissions before installing</li>
+                    <li>Read reviews and research the developer</li>
+                    <li>Keep apps updated</li>
+                    <li>Delete apps you no longer use</li>
+                    <li>Be wary of free apps that seem too good to be true</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Mobile Device Security</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Use a strong PIN, password, or biometric lock</li>
+                    <li>Keep your operating system updated</li>
+                    <li>Enable remote tracking and wiping features</li>
+                    <li>Use a security app to scan for malware</li>
+                    <li>Back up your data regularly</li>
+                    <li>Be cautious when connecting to public Wi-Fi</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
+                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                    <p className="mb-2"><strong>SIM swapping scenario:</strong> A scammer calls Telstra pretending to be you, claims to have lost their phone, and requests your number be transferred to a new SIM.</p>
+                    <p><strong>Protection strategy:</strong> Add a PIN to your mobile account that must be provided for any account changes, and use authenticator apps instead of SMS for two-factor authentication.</p>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-500">
+                      Learn more about mobile security on our blog at{" "}
+                      <a 
+                        href="https://www.remaleh.com.au/blog" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[#21a1ce] hover:underline"
+                      >
+                        remaleh.com.au/blog
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -660,3 +1022,4 @@ function App() {
 }
 
 export default App;
+
