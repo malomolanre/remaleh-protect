@@ -28,13 +28,38 @@ function App() {
     setScamResult(null);
 
     try {
-      // Real scam analysis instead of random
+      // Enhanced scam analysis with delivery scam detection
       const analyzeMessage = (message) => {
         const lowerMessage = message.toLowerCase();
         let riskScore = 0;
         let riskFactors = [];
 
-        // High-risk keywords and phrases
+        // DELIVERY SCAM KEYWORDS (High Risk - 20 points each)
+        const deliveryScamKeywords = [
+          'parcel', 'package', 'delivery', 'shipment', 'courier',
+          'held', 'delayed', 'cannot be delivered', 'delivery failed',
+          'postal code', 'address verification', 'invalid address',
+          'tracking', 'redelivery', 'customs fee', 'delivery fee',
+          'warehouse', 'sorting facility', 'dispatch center'
+        ];
+
+        // BRAND IMPERSONATION (High Risk - 25 points each)
+        const brandImpersonation = [
+          'auspost', 'australia post', 'dhl', 'fedex', 'ups',
+          'toll', 'startrack', 'tnt', 'aramex', 'fastway',
+          'amazon', 'ebay', 'paypal', 'apple', 'microsoft',
+          'google', 'facebook', 'instagram', 'netflix'
+        ];
+
+        // SUSPICIOUS DOMAINS (High Risk - 30 points each)
+        const suspiciousDomainPatterns = [
+          '.buzz', '.tk', '.ml', '.ga', '.cf',
+          'bit.ly', 'tinyurl', 'short.link', 'click.me',
+          'secure-', 'verify-', 'update-', 'confirm-',
+          'account-', 'service-', 'support-'
+        ];
+
+        // High-risk keywords (15 points each)
         const highRiskKeywords = [
           'urgent', 'immediate', 'act now', 'limited time', 'expires',
           'congratulations', 'winner', 'won', 'prize', 'lottery',
@@ -49,19 +74,34 @@ function App() {
           'bitcoin', 'cryptocurrency', 'investment opportunity'
         ];
 
-        // Medium-risk keywords
+        // Medium-risk keywords (5 points each)
         const mediumRiskKeywords = [
           'offer', 'deal', 'discount', 'sale', 'promotion',
           'reply stop', 'unsubscribe', 'opt out',
-          'delivery', 'package', 'shipment', 'tracking',
           'update', 'confirm', 'verify', 'validate'
         ];
+
+        // Check for delivery scam keywords
+        deliveryScamKeywords.forEach(keyword => {
+          if (lowerMessage.includes(keyword)) {
+            riskScore += 20;
+            riskFactors.push(`Delivery scam indicator: "${keyword}"`);
+          }
+        });
+
+        // Check for brand impersonation
+        brandImpersonation.forEach(brand => {
+          if (lowerMessage.includes(brand)) {
+            riskScore += 25;
+            riskFactors.push(`Brand impersonation: "${brand}"`);
+          }
+        });
 
         // Check for high-risk keywords
         highRiskKeywords.forEach(keyword => {
           if (lowerMessage.includes(keyword)) {
             riskScore += 15;
-            riskFactors.push(`Contains high-risk keyword: "${keyword}"`);
+            riskFactors.push(`High-risk keyword: "${keyword}"`);
           }
         });
 
@@ -69,27 +109,41 @@ function App() {
         mediumRiskKeywords.forEach(keyword => {
           if (lowerMessage.includes(keyword)) {
             riskScore += 5;
-            riskFactors.push(`Contains suspicious keyword: "${keyword}"`);
+            riskFactors.push(`Suspicious keyword: "${keyword}"`);
           }
         });
 
-        // Check for suspicious URLs
+        // Enhanced URL analysis
         const urlPattern = /https?:\/\/[^\s]+/gi;
         const urls = message.match(urlPattern);
         if (urls) {
           urls.forEach(url => {
-            // Check for suspicious domains
-            const suspiciousDomains = [
-              'bit.ly', 'tinyurl', 'short.link', 'click.me',
-              'secure-bank', 'bank-security', 'verify-account',
-              'lottery', 'winner', 'prize', 'claim'
-            ];
-            
             const domain = url.toLowerCase();
-            if (suspiciousDomains.some(suspicious => domain.includes(suspicious))) {
-              riskScore += 20;
-              riskFactors.push(`Suspicious URL detected: ${url}`);
-            } else if (urls.length > 0) {
+            
+            // Check for suspicious domain patterns
+            let domainSuspicious = false;
+            suspiciousDomainPatterns.forEach(pattern => {
+              if (domain.includes(pattern)) {
+                riskScore += 30;
+                riskFactors.push(`Highly suspicious domain: ${url}`);
+                domainSuspicious = true;
+              }
+            });
+
+            // Check for random character domains (like Hlgv.buzz)
+            const domainMatch = domain.match(/\/\/([^\/]+)/);
+            if (domainMatch) {
+              const domainName = domainMatch[1];
+              // Check for random character patterns
+              if (/^[a-z]{4,8}\.(buzz|tk|ml|ga|cf)/.test(domainName)) {
+                riskScore += 35;
+                riskFactors.push(`Random character domain: ${url}`);
+                domainSuspicious = true;
+              }
+            }
+
+            // If not already flagged as suspicious, add general link points
+            if (!domainSuspicious) {
               riskScore += 10;
               riskFactors.push(`Contains external links`);
             }
@@ -100,7 +154,8 @@ function App() {
         const personalInfoRequests = [
           'bank account', 'credit card', 'social security', 'ssn',
           'password', 'pin', 'date of birth', 'mother maiden name',
-          'account number', 'routing number', 'sort code'
+          'account number', 'routing number', 'sort code',
+          'postal code', 'address details', 'personal details'
         ];
         
         personalInfoRequests.forEach(request => {
@@ -110,10 +165,11 @@ function App() {
           }
         });
 
-        // Check for urgency indicators
+        // Enhanced urgency detection
         const urgencyIndicators = [
-          'within 24 hours', 'expires today', 'act immediately',
-          'limited time', 'hurry', 'don\'t delay', 'time sensitive'
+          'within 24 hours', 'within 48 hours', 'expires today', 'act immediately',
+          'limited time', 'hurry', 'don\'t delay', 'time sensitive',
+          'before midnight', 'expires in', 'deadline', 'final notice'
         ];
         
         urgencyIndicators.forEach(indicator => {
@@ -123,12 +179,38 @@ function App() {
           }
         });
 
+        // Check for delivery scam patterns
+        const deliveryScamPatterns = [
+          'invalid postal code', 'delivery failed', 'customs fee required',
+          'redelivery fee', 'address incomplete', 'delivery attempt failed',
+          'parcel held', 'package delayed', 'shipment suspended'
+        ];
+        
+        deliveryScamPatterns.forEach(pattern => {
+          if (lowerMessage.includes(pattern)) {
+            riskScore += 25;
+            riskFactors.push(`Delivery scam pattern: ${pattern}`);
+          }
+        });
+
+        // Check for suspicious instructions
+        const suspiciousInstructions = [
+          'reply with y', 'reply with yes', 'text back', 'send reply',
+          'exit and reopen', 'copy and paste', 'open in browser'
+        ];
+        
+        suspiciousInstructions.forEach(instruction => {
+          if (lowerMessage.includes(instruction)) {
+            riskScore += 15;
+            riskFactors.push(`Suspicious instruction: ${instruction}`);
+          }
+        });
+
         // Check for too-good-to-be-true offers
         const moneyPattern = /\$[\d,]+|\d+\s*dollars?|\d+\s*pounds?/gi;
         const moneyMatches = message.match(moneyPattern);
         if (moneyMatches) {
           moneyMatches.forEach(amount => {
-            // Extract number from amount
             const number = parseInt(amount.replace(/[^\d]/g, ''));
             if (number > 1000) {
               riskScore += 20;
@@ -137,7 +219,7 @@ function App() {
           });
         }
 
-        // Check for poor grammar/spelling (simplified check)
+        // Check for poor grammar/spelling
         const grammarIssues = [
           'recieve', 'seperate', 'occured', 'definately',
           'loose' // when should be 'lose'
@@ -158,12 +240,16 @@ function App() {
           riskFactors.push(`Uses generic greeting instead of your name`);
         }
 
-        // Determine risk level based on score
+        // Determine risk level based on enhanced scoring
         let riskLevel, explanation, color;
         
-        if (riskScore >= 50) {
+        if (riskScore >= 70) {
           riskLevel = 'High Risk';
-          explanation = `This message shows strong indicators of a scam. Risk factors: ${riskFactors.slice(0, 3).join(', ')}. Do not click links or provide personal information.`;
+          explanation = `This message shows strong indicators of a scam. Risk factors: ${riskFactors.slice(0, 4).join(', ')}. This is likely a phishing attempt. Do not click links or provide personal information.`;
+          color = 'red';
+        } else if (riskScore >= 40) {
+          riskLevel = 'Medium-High Risk';
+          explanation = `This message has significant suspicious elements. Risk factors: ${riskFactors.slice(0, 3).join(', ')}. Exercise extreme caution and verify through official channels.`;
           color = 'red';
         } else if (riskScore >= 25) {
           riskLevel = 'Medium Risk';
@@ -184,7 +270,8 @@ function App() {
           risk: riskLevel,
           explanation: explanation,
           color: color,
-          riskFactors: riskFactors
+          riskFactors: riskFactors,
+          totalScore: riskScore
         };
       };
 
@@ -524,6 +611,9 @@ function App() {
                   </div>
                   <p className="mb-2">
                     <span className="font-medium">Risk Score:</span> {scamResult.score}
+                    {scamResult.totalScore && (
+                      <span className="text-sm text-gray-600 ml-2">({scamResult.totalScore} points)</span>
+                    )}
                   </p>
                   <p>{scamResult.explanation}</p>
                 </div>
@@ -1303,4 +1393,3 @@ function App() {
 }
 
 export default App;
-
