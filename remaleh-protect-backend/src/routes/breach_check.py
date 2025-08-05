@@ -1,18 +1,13 @@
 """
-HaveIBeenPwned API integration for checking email breaches
+HaveIBeenPwned API integration for checking email breaches - FIXED VERSION
 """
 from flask import Blueprint, request, jsonify
 import requests
 import time
 import hashlib
 import os
-import logging
 
 breach_bp = Blueprint('breach', __name__)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 @breach_bp.route('/check', methods=['POST'])
 def check_email_breaches():
@@ -22,204 +17,142 @@ def check_email_breaches():
     try:
         data = request.get_json()
         
-        # Handle both single email and multiple emails
-        emails = []
-        if 'email' in data:
-            emails = [data['email']]
-        elif 'emails' in data:
-            emails = data['emails']
-        else:
-            return jsonify({'error': 'Email or emails array is required'}), 400
+        # Handle both single email and emails array for compatibility
+        email = None
+        if data:
+            if 'email' in data:
+                email = data['email'].strip().lower()
+            elif 'emails' in data and len(data['emails']) > 0:
+                email = data['emails'][0].strip().lower()  # Use first email for now
         
-        if not emails:
-            return jsonify({'error': 'At least one email address is required'}), 400
+        if not email or '@' not in email:
+            return jsonify({'error': 'Valid email address is required'}), 400
         
-        results = []
+        # Get API key from environment variable
+        api_key = os.getenv('HIBP_API_KEY')
         
-        for email in emails:
-            email = email.strip().lower()
+        if not api_key or api_key == 'your-api-key-here':
+            # No valid API key, use enhanced simulation
+            return simulate_breach_check_enhanced(email)
+        
+        # Real HaveIBeenPwned API call
+        try:
+            url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{email}"
             
-            if not email or '@' not in email:
-                results.append({
-                    'email': email,
-                    'error': 'Invalid email format'
-                })
-                continue
-            
-            # Check if we have API key
-            api_key = os.getenv('HIBP_API_KEY')
-            
-            if api_key and api_key != 'your-api-key-here':
-                # Use real Have I Been Pwned API
-                result = check_hibp_api(email, api_key)
-            else:
-                # Fallback to simulation mode
-                logger.warning(f"No HIBP API key found, using simulation mode for {email}")
-                result = simulate_breach_check(email)
-            
-            results.append(result)
-        
-        # Return aggregated results
-        total_breached = sum(1 for r in results if r.get('breached', False))
-        total_breaches = sum(r.get('breach_count', 0) for r in results)
-        
-        return jsonify({
-            'results': results,
-            'summary': {
-                'emails_checked': len(emails),
-                'emails_breached': total_breached,
-                'total_breaches': total_breaches,
-                'all_clear': total_breached == 0
+            headers = {
+                'User-Agent': 'Remaleh-Protect-App',
+                'hibp-api-key': api_key
             }
-        })
+            
+            # Add delay to respect rate limiting
+            time.sleep(1.5)
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                # Email found in breaches
+                breaches_data = response.json()
+                
+                # Format response to match frontend expectations
+                formatted_breaches = []
+                for breach in breaches_data[:5]:  # Limit to 5 most recent
+                    formatted_breaches.append({
+                        'name': breach.get('Name', 'Unknown Breach'),
+                        'domain': breach.get('Domain', 'unknown.com'),
+                        'date': breach.get('BreachDate', '2023-01-01'),
+                        'data': breach.get('DataClasses', ['Email', 'Password']),
+                        'description': breach.get('Description', 'Data breach detected')
+                    })
+                
+                return jsonify({
+                    'breached': True,
+                    'breach_count': len(breaches_data),
+                    'breaches': formatted_breaches,
+                    'breached_emails': [email],
+                    'message': f'Your email was found in {len(breaches_data)} data breach(es). Consider changing passwords for affected accounts.',
+                    'demo_mode': False
+                })
+                
+            elif response.status_code == 404:
+                # Email not found in breaches - good news!
+                return jsonify({
+                    'breached': False,
+                    'breach_count': 0,
+                    'breaches': [],
+                    'breached_emails': [],
+                    'message': 'Good news! Your email was not found in any known data breaches.',
+                    'demo_mode': False
+                })
+                
+            elif response.status_code == 429:
+                # Rate limited
+                return jsonify({
+                    'error': 'Rate limited. Please try again in a moment.',
+                    'demo_mode': False
+                }), 429
+                
+            else:
+                # Other API error, fall back to simulation
+                return simulate_breach_check_enhanced(email)
+                
+        except requests.exceptions.RequestException as e:
+            # Network error, fall back to simulation
+            return simulate_breach_check_enhanced(email)
             
     except Exception as e:
-        logger.error(f"Error in breach check: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
-def check_hibp_api(email, api_key):
+def simulate_breach_check_enhanced(email):
     """
-    Check email against real Have I Been Pwned API
+    Enhanced simulation that matches frontend expectations exactly
     """
-    try:
-        # HaveIBeenPwned API endpoint
-        url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{email}"
-        
-        headers = {
-            'User-Agent': 'Remaleh-Protect-App',
-            'hibp-api-key': api_key
-        }
-        
-        logger.info(f"Checking {email} against HIBP API")
-        
-        response = requests.get(url, headers=headers, timeout=10)
-        
-        if response.status_code == 200:
-            # Email found in breaches
-            breaches_data = response.json()
-            
-            # Format breach data
-            formatted_breaches = []
-            for breach in breaches_data:
-                formatted_breaches.append({
-                    'name': breach.get('Name', 'Unknown'),
-                    'date': breach.get('BreachDate', 'Unknown'),
-                    'domain': breach.get('Domain', 'Unknown'),
-                    'description': breach.get('Description', 'No description available'),
-                    'data_classes': breach.get('DataClasses', []),
-                    'verified': breach.get('IsVerified', False),
-                    'pwn_count': breach.get('PwnCount', 0)
-                })
-            
-            return {
-                'email': email,
-                'breached': True,
-                'breach_count': len(formatted_breaches),
-                'breaches': formatted_breaches,
-                'message': f'Your email was found in {len(formatted_breaches)} data breach(es). Consider changing passwords for affected accounts.',
-                'api_source': 'Have I Been Pwned'
-            }
-            
-        elif response.status_code == 404:
-            # Email not found in breaches (good news!)
-            return {
-                'email': email,
-                'breached': False,
-                'breach_count': 0,
-                'breaches': [],
-                'message': 'Good news! Your email was not found in any known data breaches.',
-                'api_source': 'Have I Been Pwned'
-            }
-            
-        elif response.status_code == 429:
-            # Rate limited
-            logger.warning(f"Rate limited by HIBP API for {email}")
-            return {
-                'email': email,
-                'error': 'Rate limited by API. Please try again later.',
-                'api_source': 'Have I Been Pwned'
-            }
-            
-        else:
-            # Other error
-            logger.error(f"HIBP API error {response.status_code} for {email}")
-            return simulate_breach_check(email)
-            
-    except requests.exceptions.Timeout:
-        logger.error(f"Timeout checking {email}")
-        return simulate_breach_check(email)
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request error checking {email}: {str(e)}")
-        return simulate_breach_check(email)
-    except Exception as e:
-        logger.error(f"Unexpected error checking {email}: {str(e)}")
-        return simulate_breach_check(email)
-
-def simulate_breach_check(email):
-    """
-    Simulate breach checking for demo purposes when API is not available
-    """
-    try:
-        # Simple simulation based on email characteristics
-        email_hash = hashlib.md5(email.encode()).hexdigest()
-        
-        # Use hash to determine if email should be "breached" for demo
-        if int(email_hash[:2], 16) % 3 == 0:  # ~33% chance of being "breached"
-            return {
-                'email': email,
-                'breached': True,
-                'breach_count': 2,
-                'breaches': [
-                    {
-                        'name': 'Example Data Breach',
-                        'date': '2023-01-15',
-                        'domain': 'example.com',
-                        'description': 'A simulated data breach for demonstration purposes. This is not real breach data.',
-                        'data_classes': ['Email addresses', 'Passwords'],
-                        'verified': True,
-                        'pwn_count': 150000
-                    },
-                    {
-                        'name': 'Demo Service Leak',
-                        'date': '2022-08-22',
-                        'domain': 'demoservice.com',
-                        'description': 'Another simulated breach entry for testing the application functionality.',
-                        'data_classes': ['Email addresses', 'Usernames', 'IP addresses'],
-                        'verified': False,
-                        'pwn_count': 50000
-                    }
-                ],
-                'message': 'Your email was found in 2 data breach(es). Consider changing passwords for affected accounts.',
-                'api_source': 'Simulation Mode'
-            }
-        else:
-            return {
-                'email': email,
-                'breached': False,
-                'breach_count': 0,
-                'breaches': [],
-                'message': 'Good news! Your email was not found in any known data breaches.',
-                'api_source': 'Simulation Mode'
-            }
-    except Exception as e:
-        logger.error(f"Error in simulation for {email}: {str(e)}")
-        return {
-            'email': email,
-            'error': 'Unable to check email',
-            'api_source': 'Simulation Mode'
-        }
+    # Use email hash for consistent results
+    email_hash = hashlib.md5(email.encode()).hexdigest()
+    
+    # Use hash to determine if email should be "breached" for demo
+    if int(email_hash[:2], 16) % 3 == 0:  # ~33% chance of being "breached"
+        return jsonify({
+            'breached': True,
+            'breach_count': 2,
+            'breaches': [
+                {
+                    'name': 'ExampleSite',
+                    'domain': 'example.com',
+                    'date': '2023-01-15',
+                    'data': ['Email', 'Password', 'Username']
+                },
+                {
+                    'name': 'AnotherBreach',
+                    'domain': 'anotherbreach.com',
+                    'date': '2022-08-22',
+                    'data': ['Email', 'Password', 'IP Address']
+                }
+            ],
+            'breached_emails': [email],
+            'message': f'Your email was found in 2 data breach(es). Consider changing passwords for affected accounts.',
+            'demo_mode': True
+        })
+    else:
+        return jsonify({
+            'breached': False,
+            'breach_count': 0,
+            'breaches': [],
+            'breached_emails': [],
+            'message': 'Good news! Your email was not found in any known data breaches.',
+            'demo_mode': True
+        })
 
 @breach_bp.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint for breach checker"""
     api_key = os.getenv('HIBP_API_KEY')
-    api_status = 'configured' if api_key and api_key != 'your-api-key-here' else 'simulation_mode'
+    has_api_key = bool(api_key and api_key != 'your-api-key-here')
     
     return jsonify({
         'status': 'healthy',
         'service': 'breach_checker',
         'version': '2.0.0',
-        'api_status': api_status,
-        'endpoints': ['/check']
+        'api_key_configured': has_api_key,
+        'mode': 'production' if has_api_key else 'simulation'
     })
 
