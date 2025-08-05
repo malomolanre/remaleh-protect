@@ -1,16 +1,20 @@
 from flask import Blueprint, request, jsonify, make_response
-import openai
 import os
-import re
+import openai
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 chat_bp = Blueprint('chat', __name__)
 
 # Configure OpenAI
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Rule-based cybersecurity knowledge base
+# Rule-based knowledge base
 CYBERSECURITY_KNOWLEDGE = {
-    'password': {
+    'passwords': {
         'keywords': ['password', 'passwords', 'strong password', 'password security', 'password manager', '2fa', 'two-factor'],
         'response': """**Password Security Best Practices:**
 
@@ -22,233 +26,268 @@ CYBERSECURITY_KNOWLEDGE = {
 • **Change passwords immediately if you suspect a breach**"""
     },
     'phishing': {
-        'keywords': ['phishing', 'phish', 'suspicious email', 'fake email', 'email scam', 'verify email'],
-        'response': """**How to Spot Phishing Emails:**
+        'keywords': ['phishing', 'phish', 'suspicious email', 'fake email', 'scam email', 'email scam'],
+        'response': """**Phishing Detection Tips:**
 
-• **Check sender's email address carefully**
-• **Look for urgent language and pressure tactics**
-• **Hover over links to see real destination**
+• **Check sender email address carefully**
+• **Look for urgent language and threats**
+• **Verify links before clicking (hover to see URL)**
 • **Be suspicious of unexpected attachments**
-• **Verify requests through official channels**
+• **Contact the organization directly to verify**
 • **Never provide personal info via email**"""
     },
     'malware': {
-        'keywords': ['malware', 'virus', 'ransomware', 'trojan', 'spyware', 'infected', 'antivirus'],
-        'response': """**Malware Protection Guide:**
+        'keywords': ['malware', 'virus', 'ransomware', 'trojan', 'spyware', 'infected'],
+        'response': """**Malware Protection:**
 
-• **Keep operating system and software updated**
+• **Keep software and OS updated**
 • **Use reputable antivirus software**
 • **Avoid downloading from untrusted sources**
 • **Be cautious with email attachments**
-• **Regular system backups are essential**
-• **If infected, disconnect from internet immediately**"""
+• **Regular system backups**
+• **If infected: disconnect from internet, run antivirus scan**"""
     },
     'breach': {
-        'keywords': ['data breach', 'breach', 'hacked', 'compromised', 'stolen data', 'identity theft'],
-        'response': """**Data Breach Response Steps:**
+        'keywords': ['data breach', 'breach', 'hacked', 'compromised', 'stolen data'],
+        'response': """**Data Breach Response:**
 
-• **Change passwords for affected accounts immediately**
-• **Enable 2FA on all important accounts**
-• **Monitor bank and credit card statements**
-• **Consider credit monitoring services**
-• **Report to relevant authorities if needed**
-• **Document everything for potential legal action**"""
+• **Change passwords immediately**
+• **Enable 2FA on all accounts**
+• **Monitor financial statements**
+• **Check credit reports**
+• **Report to relevant authorities**
+• **Document the incident**"""
     },
     'social_media': {
-        'keywords': ['social media', 'facebook', 'instagram', 'twitter', 'linkedin', 'privacy settings'],
-        'response': """**Social Media Security Tips:**
+        'keywords': ['social media', 'facebook', 'instagram', 'twitter', 'privacy settings'],
+        'response': """**Social Media Security:**
 
-• **Review and tighten privacy settings regularly**
-• **Be selective about friend/connection requests**
-• **Avoid sharing personal information publicly**
-• **Think before posting location data**
+• **Review privacy settings regularly**
+• **Limit personal information sharing**
+• **Be cautious with friend requests**
+• **Avoid posting location in real-time**
 • **Use strong, unique passwords**
-• **Enable login alerts and 2FA**"""
+• **Enable two-factor authentication**"""
     },
     'network': {
-        'keywords': ['wifi', 'network', 'router', 'vpn', 'public wifi', 'network security'],
-        'response': """**Network Security Best Practices:**
+        'keywords': ['wifi', 'network', 'router', 'vpn', 'public wifi'],
+        'response': """**Network Security:**
 
 • **Use WPA3 encryption on home WiFi**
 • **Change default router passwords**
 • **Avoid public WiFi for sensitive activities**
-• **Use VPN when on public networks**
+• **Use VPN on public networks**
 • **Keep router firmware updated**
-• **Hide network name (SSID) if possible**"""
+• **Hide network name (SSID) if needed**"""
     },
     'mobile': {
         'keywords': ['mobile', 'smartphone', 'phone security', 'app security', 'mobile device'],
         'response': """**Mobile Device Security:**
 
 • **Keep OS and apps updated**
-• **Use screen lock with PIN/biometric**
+• **Use screen lock (PIN, password, biometric)**
 • **Download apps only from official stores**
 • **Review app permissions carefully**
 • **Enable remote wipe capability**
-• **Avoid charging at public USB ports**"""
+• **Use mobile security software**"""
     },
     'business': {
-        'keywords': ['business security', 'company', 'enterprise', 'employee training', 'business'],
-        'response': """**Business Cybersecurity Essentials:**
+        'keywords': ['business security', 'company', 'enterprise', 'workplace', 'employee'],
+        'response': """**Business Cybersecurity:**
 
-• **Implement comprehensive security policies**
-• **Regular employee cybersecurity training**
-• **Use endpoint detection and response (EDR)**
-• **Maintain offline backups**
-• **Conduct regular security audits**
-• **Have an incident response plan ready**"""
+• **Implement security awareness training**
+• **Use endpoint protection software**
+• **Regular security audits and assessments**
+• **Backup data regularly and test restores**
+• **Implement access controls and least privilege**
+• **Have an incident response plan**"""
     }
 }
 
-# Guardian escalation keywords
-GUARDIAN_KEYWORDS = [
-    'hacked', 'breach', 'stolen', 'compromised', 'attacked', 'emergency',
-    'urgent', 'help', 'crisis', 'incident', 'threat', 'suspicious activity',
-    'identity theft', 'fraud', 'scammed', 'malware infected', 'ransomware'
-]
-
 def get_rule_based_response(message):
     """Check if message matches rule-based knowledge"""
+    logger.info(f"Checking rule-based response for: {message}")
+    
     message_lower = message.lower()
     
     for category, data in CYBERSECURITY_KNOWLEDGE.items():
         for keyword in data['keywords']:
             if keyword in message_lower:
+                logger.info(f"Found rule-based match in category: {category}")
                 return {
                     'response': data['response'],
                     'source': 'expert_knowledge',
                     'category': category
                 }
     
+    logger.info("No rule-based match found")
     return None
 
 def should_escalate_to_guardian(message):
     """Check if message should be escalated to Guardian"""
+    logger.info(f"Checking Guardian escalation for: {message}")
+    
+    escalation_keywords = [
+        'hacked', 'hack', 'stolen', 'breach', 'compromised', 'attacked',
+        'help', 'urgent', 'emergency', 'crisis', 'threat', 'malicious'
+    ]
+    
     message_lower = message.lower()
-    return any(keyword in message_lower for keyword in GUARDIAN_KEYWORDS)
+    for keyword in escalation_keywords:
+        if keyword in message_lower:
+            logger.info(f"Guardian escalation triggered by keyword: {keyword}")
+            return True
+    
+    logger.info("No Guardian escalation needed")
+    return False
 
-def get_llm_response(message):
-    """Get response from OpenAI LLM"""
+def get_openai_response(message):
+    """Get response from OpenAI API"""
+    logger.info(f"Attempting OpenAI API call for: {message}")
+    
     try:
+        # Check if API key is available
         if not openai.api_key:
+            logger.error("OpenAI API key not found in environment variables")
             return None
             
+        logger.info(f"OpenAI API key found: {openai.api_key[:10]}...")
+        
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
-                    "role": "system", 
-                    "content": "You are a cybersecurity expert assistant. Provide helpful, accurate cybersecurity advice. Keep responses concise but informative. Focus on practical, actionable guidance."
+                    "role": "system",
+                    "content": "You are a cybersecurity expert assistant. Provide helpful, accurate information about cybersecurity topics. Keep responses concise but informative."
                 },
-                {"role": "user", "content": message}
+                {
+                    "role": "user",
+                    "content": message
+                }
             ],
             max_tokens=300,
             temperature=0.7
         )
         
-        return {
-            'response': response.choices[0].message.content.strip(),
-            'source': 'ai_analysis',
-            'model': 'gpt-3.5-turbo'
-        }
+        logger.info("OpenAI API call successful")
+        return response.choices[0].message.content.strip()
         
     except Exception as e:
-        print(f"OpenAI API error: {str(e)}")
+        logger.error(f"OpenAI API error: {str(e)}")
         return None
 
-@chat_bp.route('/', methods=['OPTIONS'])
-def handle_preflight():
-    """Handle CORS preflight requests"""
-    response = make_response()
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization")
-    response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
-    return response
-
-@chat_bp.route('/', methods=['POST'])
+@chat_bp.route('/', methods=['POST', 'OPTIONS'])
 def chat_message():
-    """Handle chat messages with hybrid intelligence"""
+    logger.info(f"=== CHAT REQUEST RECEIVED ===")
+    logger.info(f"Method: {request.method}")
+    logger.info(f"Headers: {dict(request.headers)}")
+    
+    # Handle preflight requests
+    if request.method == 'OPTIONS':
+        logger.info("Handling OPTIONS preflight request")
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
+    
     try:
-        # Handle CORS for actual request
-        response_headers = {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type,Authorization",
-            "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTIONS"
-        }
+        # Get request data
+        logger.info(f"Request content type: {request.content_type}")
+        logger.info(f"Request data: {request.get_data()}")
         
         data = request.get_json()
+        logger.info(f"Parsed JSON data: {data}")
+        
         if not data or 'message' not in data:
+            logger.error("No message in request data")
             return jsonify({
-                'error': 'Message is required'
-            }), 400, response_headers
+                'error': 'No message provided',
+                'success': False
+            }), 400
         
-        user_message = data['message'].strip()
-        if not user_message:
-            return jsonify({
-                'error': 'Message cannot be empty'
-            }), 400, response_headers
-        
-        # Check for Guardian escalation first
-        needs_guardian = should_escalate_to_guardian(user_message)
+        message = data['message']
+        logger.info(f"Processing message: {message}")
         
         # Try rule-based response first
-        rule_response = get_rule_based_response(user_message)
-        
+        rule_response = get_rule_based_response(message)
         if rule_response:
-            # Rule-based response found
-            return jsonify({
+            logger.info("Returning rule-based response")
+            response_data = {
                 'response': rule_response['response'],
-                'source': rule_response['source'],
-                'category': rule_response['category'],
-                'needs_guardian': needs_guardian,
-                'guardian_url': 'https://www.remaleh.com.au/contact-us' if needs_guardian else None
-            }), 200, response_headers
+                'source': 'expert_knowledge',
+                'success': True
+            }
+            
+            # Add CORS headers
+            response = make_response(jsonify(response_data))
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            response.headers.add('Access-Control-Allow-Headers', "*")
+            response.headers.add('Access-Control-Allow-Methods', "*")
+            return response
         
-        # No rule-based response, try LLM
-        llm_response = get_llm_response(user_message)
+        # Try OpenAI for complex questions
+        logger.info("Attempting OpenAI response")
+        openai_response = get_openai_response(message)
         
-        if llm_response:
-            # LLM response available
-            return jsonify({
-                'response': llm_response['response'],
-                'source': llm_response['source'],
-                'model': llm_response['model'],
-                'needs_guardian': needs_guardian,
-                'guardian_url': 'https://www.remaleh.com.au/contact-us' if needs_guardian else None
-            }), 200, response_headers
+        if openai_response:
+            logger.info("Returning OpenAI response")
+            response_data = {
+                'response': openai_response,
+                'source': 'ai_analysis',
+                'success': True
+            }
+            
+            # Check if Guardian escalation is needed
+            if should_escalate_to_guardian(message):
+                response_data['show_guardian'] = True
+                response_data['guardian_url'] = 'https://www.remaleh.com.au/contact-us'
+            
+            # Add CORS headers
+            response = make_response(jsonify(response_data))
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            response.headers.add('Access-Control-Allow-Headers', "*")
+            response.headers.add('Access-Control-Allow-Methods', "*")
+            return response
         
         # Fallback response
-        fallback_response = """I understand you have a cybersecurity question. While I can help with common topics like passwords, phishing, and malware protection, your specific question might need expert attention.
-
-For immediate assistance with complex cybersecurity issues, please contact our Remaleh Guardians."""
-        
-        return jsonify({
-            'response': fallback_response,
+        logger.info("Using fallback response")
+        response_data = {
+            'response': "I'm here to help with cybersecurity questions. Could you please rephrase your question or ask about topics like passwords, phishing, malware, or data breaches?",
             'source': 'fallback',
-            'needs_guardian': True,
+            'success': True,
+            'show_guardian': True,
             'guardian_url': 'https://www.remaleh.com.au/contact-us'
-        }), 200, response_headers
+        }
+        
+        # Add CORS headers
+        response = make_response(jsonify(response_data))
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
         
     except Exception as e:
-        print(f"Chat error: {str(e)}")
-        return jsonify({
-            'error': 'Internal server error',
-            'message': 'Please try again or contact support'
-        }), 500, {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type,Authorization",
-            "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTIONS"
+        logger.error(f"Chat processing error: {str(e)}")
+        error_response = {
+            'error': f'Processing error: {str(e)}',
+            'success': False
         }
+        
+        # Add CORS headers even for errors
+        response = make_response(jsonify(error_response), 500)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
 
 @chat_bp.route('/health', methods=['GET'])
-def chat_health():
-    """Health check endpoint for chat service"""
+def health_check():
+    """Health check endpoint"""
+    logger.info("Health check requested")
     return jsonify({
         'status': 'healthy',
         'service': 'chat',
-        'openai_configured': bool(os.getenv('OPENAI_API_KEY')),
-        'knowledge_base_categories': len(CYBERSECURITY_KNOWLEDGE)
-    }), 200, {
-        "Access-Control-Allow-Origin": "*"
-    }
+        'openai_configured': bool(os.getenv('OPENAI_API_KEY'))
+    })
 
