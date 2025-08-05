@@ -118,31 +118,31 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#e6f7fb] to-[#f5f5f5]">
       <header className="p-4 flex justify-center">
-        {/* Fixed logo implementation with fallback */}
+        {/* Fixed logo implementation using local file path */}
         <img 
-          src="https://remaleh.com.au/wp-content/uploads/2023/11/Remaleh2-03.png" 
+          src="/remaleh-logo-full.png" 
           alt="Remaleh" 
           className="h-8 w-auto object-contain"
           onError={(e) => {
             e.target.onerror = null; 
-            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='32' viewBox='0 0 100 32'%3E%3Crect width='100' height='32' fill='%230891b2'/%3E%3Ctext x='50' y='20' font-family='Arial' font-size='16' fill='white' text-anchor='middle'%3ERemaleh%3C/text%3E%3C/svg%3E";
+            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='32' viewBox='0 0 100 32'%3E%3Crect width='100' height='32' fill='%2321a1ce'/%3E%3Ctext x='50' y='20' font-family='Arial' font-size='16' fill='white' text-anchor='middle'%3ERemaleh%3C/text%3E%3C/svg%3E";
           }}
           style={{maxHeight: '32px'}}
         />
       </header>
 
       <div className="text-center px-4 py-6">
-        <h1 className="text-3xl font-bold text-blue-600">Stay Safe in Our Connected World</h1>
-        <p className="text-gray-600 mt-2">Your Digital Well-Being Is Our Paramount Commitment</p>
+        <h1 className="text-3xl font-bold text-[#21a1ce]">Stay Safe in Our Connected World</h1>
+        <p className="text-[#000000] mt-2">Your Digital Well-Being Is Our Paramount Commitment</p>
       </div>
 
       {activeTab === 'check' && (
         <div className="p-4">
           <div className="bg-white rounded-lg shadow p-5">
             <div className="flex items-center mb-4">
-              <div className="bg-blue-500 p-2 rounded-lg mr-3">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                 <MessageSquare className="text-white" size={24} />
               </div>
               <h2 className="text-xl font-bold">Check Text Message</h2>
@@ -157,7 +157,7 @@ function App() {
               onChange={(e) => setMessage(e.target.value)}
             ></textarea>
             <button
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-lg font-medium flex items-center justify-center"
+              className="w-full bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 rounded-lg font-medium flex items-center justify-center"
               onClick={analyzeMessage}
             >
               <Shield className="mr-2" size={20} />
@@ -171,7 +171,7 @@ function App() {
         <div className="p-4">
           <div className="bg-white rounded-lg shadow p-5">
             <div className="flex items-center mb-4">
-              <div className="bg-purple-500 p-2 rounded-lg mr-3">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                 <Lock className="text-white" size={24} />
               </div>
               <h2 className="text-xl font-bold">Password Safety Check</h2>
@@ -187,7 +187,7 @@ function App() {
               onChange={(e) => setEmail(e.target.value)}
             />
             <button
-              className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 rounded-lg font-medium flex items-center justify-center"
+              className="w-full bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 rounded-lg font-medium flex items-center justify-center"
               onClick={checkPassword}
             >
               <Shield className="mr-2" size={20} />
@@ -204,7 +204,7 @@ function App() {
         <div className="p-4">
           <div className="mb-6">
             <div className="flex items-center mb-2">
-              <div className="bg-purple-600 p-2 rounded-lg mr-3">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                 <BookOpen className="text-white" size={24} />
               </div>
               <h2 className="text-xl font-bold">Stay Safe Online</h2>
@@ -237,7 +237,7 @@ function App() {
                 <div className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <div className="bg-blue-500 p-2 rounded-lg mr-3">
+                      <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                         <Lock className="text-white" size={20} />
                       </div>
                       <div>
@@ -265,7 +265,7 @@ function App() {
                 <div className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <div className="bg-teal-500 p-2 rounded-lg mr-3">
+                      <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                         <Mail className="text-white" size={20} />
                       </div>
                       <div>
@@ -293,7 +293,7 @@ function App() {
                 <div className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <div className="bg-purple-500 p-2 rounded-lg mr-3">
+                      <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                         <Shield className="text-white" size={20} />
                       </div>
                       <div>
@@ -321,7 +321,7 @@ function App() {
                 <div className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <div className="bg-indigo-500 p-2 rounded-lg mr-3">
+                      <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                         <Users className="text-white" size={20} />
                       </div>
                       <div>
@@ -349,7 +349,7 @@ function App() {
                 <div className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <div className="bg-pink-500 p-2 rounded-lg mr-3">
+                      <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                         <Phone className="text-white" size={20} />
                       </div>
                       <div>
@@ -377,7 +377,7 @@ function App() {
                 <div className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <div className="bg-orange-500 p-2 rounded-lg mr-3">
+                      <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                         <Smartphone className="text-white" size={20} />
                       </div>
                       <div>
@@ -404,7 +404,7 @@ function App() {
                     href="https://www.remaleh.com.au/blog" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
+                    className="text-[#21a1ce] hover:underline"
                   >
                     remaleh.com.au/blog
                   </a>
@@ -416,7 +416,7 @@ function App() {
               {/* Back button */}
               <button 
                 onClick={() => setSelectedLearningTopic(null)}
-                className="flex items-center mb-4 text-blue-600"
+                className="flex items-center mb-4 text-[#21a1ce]"
               >
                 <ChevronLeft size={20} className="mr-1" />
                 <span>Back to topics</span>
@@ -426,7 +426,7 @@ function App() {
               {selectedLearningTopic === 'passwords' && (
                 <div className="bg-white rounded-lg shadow p-5">
                   <div className="flex items-center mb-4">
-                    <div className="bg-blue-500 p-2 rounded-lg mr-3">
+                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                       <Lock className="text-white" size={24} />
                     </div>
                     <h2 className="text-xl font-bold">Password Protection</h2>
@@ -482,7 +482,7 @@ function App() {
                         href="https://www.remaleh.com.au/blog" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
+                        className="text-[#21a1ce] hover:underline"
                       >
                         remaleh.com.au/blog
                       </a>
@@ -491,397 +491,7 @@ function App() {
                 </div>
               )}
 
-              {/* Email & Text Scams Content */}
-              {selectedLearningTopic === 'email_scams' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-teal-500 p-2 rounded-lg mr-3">
-                      <Mail className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Email & Text Scams</h2>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          AI-generated phishing emails now perfectly mimic Australian companies like Australia Post, major banks, and the ATO. Fake delivery texts with malicious links are targeting Australians daily.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Common Australian Scams to Watch For</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li><strong>ATO scams:</strong> Fake tax refunds or threats of arrest for tax evasion</li>
-                    <li><strong>Australia Post/StarTrack scams:</strong> Fake delivery notifications with malicious links</li>
-                    <li><strong>Banking scams:</strong> Fake messages from Commonwealth Bank, ANZ, Westpac, or NAB</li>
-                    <li><strong>myGov scams:</strong> Fake government messages about benefits or payments</li>
-                    <li><strong>NBN scams:</strong> Fake messages about internet connection issues</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">How to Spot Scams</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Check the sender's email address carefully (not just the display name)</li>
-                    <li>Hover over links before clicking to see the actual URL</li>
-                    <li>Be suspicious of urgent requests or threats</li>
-                    <li>Look for poor grammar or unusual phrasing</li>
-                    <li>Never provide personal information via email or text</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">What to Do If You Receive a Suspicious Message</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Don't click any links or download attachments</li>
-                    <li>Use the "Check Text Message" feature in this app</li>
-                    <li>Report scams to <a href="https://www.scamwatch.gov.au" className="text-blue-500 hover:underline">Scamwatch.gov.au</a></li>
-                    <li>Forward suspicious emails to the company they claim to be from</li>
-                    <li>Delete the message after reporting</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Scam message:</strong> "Your Australia Post package is held at our depot. Last delivery attempt tomorrow. Confirm delivery address: [malicious link]"</p>
-                    <p><strong>Red flags:</strong> Urgency, request to click link, no specific package details, no official Australia Post branding</p>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Family Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Create a family group chat to verify suspicious messages with each other</li>
-                    <li>Help elderly relatives check suspicious emails or texts before they respond</li>
-                    <li>Teach children never to click links in messages from unknown senders</li>
-                    <li>Set up advanced spam filters on family email accounts</li>
-                  </ul>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about email and text scams on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Device & Home Security Content */}
-              {selectedLearningTopic === 'device_security' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-purple-500 p-2 rounded-lg mr-3">
-                      <Shield className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Device & Home Security</h2>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          Hackers are targeting Australian smart home devices and routers with weak passwords. Malware can access cameras, microphones, and personal data on connected devices.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Securing Your Devices</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Keep all devices updated with the latest security patches</li>
-                    <li>Use strong, unique passwords for all devices</li>
-                    <li>Enable two-factor authentication wherever possible</li>
-                    <li>Install reputable antivirus/anti-malware software</li>
-                    <li>Back up important data regularly</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Smart Home Security</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Change default passwords on all smart devices</li>
-                    <li>Set up a separate guest Wi-Fi network for smart home devices</li>
-                    <li>Regularly check for firmware updates on all devices</li>
-                    <li>Review privacy settings and disable unnecessary features</li>
-                    <li>Consider a dedicated smart home security hub</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Recommended Security Tools</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li><strong>Router security:</strong> Enable WPA3, change default passwords</li>
-                    <li><strong>Antivirus:</strong> Norton, Bitdefender, or Trend Micro</li>
-                    <li><strong>VPN services:</strong> NordVPN, ExpressVPN, or Surfshark</li>
-                    <li><strong>Password managers:</strong> LastPass, 1Password, or Bitwarden</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Scenario:</strong> A family in Sydney discovered their smart home cameras were accessed by hackers who had found the default password in an online database.</p>
-                    <p><strong>Solution:</strong> They changed all passwords, updated firmware, and set up a separate IoT network on their router.</p>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Family Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Create a monthly "security update day" for all family devices</li>
-                    <li>Teach children about the importance of device security</li>
-                    <li>Consider parental controls for children's devices</li>
-                    <li>Keep smart speakers and cameras away from private areas</li>
-                  </ul>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about device and home security on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Social Media & Privacy Content */}
-              {selectedLearningTopic === 'social_media' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-indigo-500 p-2 rounded-lg mr-3">
-                      <Users className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Social Media & Privacy</h2>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          Identity thieves are using information shared on social media to answer security questions, create targeted phishing attacks, and impersonate Australians online.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Protecting Your Privacy</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Review and tighten privacy settings on all social accounts</li>
-                    <li>Limit the personal information you share publicly</li>
-                    <li>Be cautious about sharing location data</li>
-                    <li>Regularly check which apps have access to your accounts</li>
-                    <li>Use different profile pictures across different platforms</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Information to Keep Private</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Full date of birth</li>
-                    <li>Home address and phone number</li>
-                    <li>Travel plans and when your home will be empty</li>
-                    <li>Children's full names and schools</li>
-                    <li>Financial information and Medicare details</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Privacy Tools</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li><strong>Privacy checkups:</strong> Use Facebook, Google, and Instagram privacy checkup tools</li>
-                    <li><strong>Data removal:</strong> Request data removal from people search sites</li>
-                    <li><strong>Browser privacy:</strong> Use privacy-focused browsers or extensions</li>
-                    <li><strong>OAIC resources:</strong> Visit <a href="https://www.oaic.gov.au" className="text-blue-500 hover:underline">oaic.gov.au</a> for Australian privacy guides</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Scenario:</strong> An Australian family posted about their upcoming holiday to Queensland, including dates and resort name. Their home was burglarized while they were away.</p>
-                    <p><strong>Better approach:</strong> Share holiday photos after returning home, never announce when your house will be empty.</p>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Family Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Create family guidelines for what can be shared online</li>
-                    <li>Help children understand the permanence of online information</li>
-                    <li>Use private sharing options for family photos</li>
-                    <li>Teach elderly relatives about privacy settings</li>
-                  </ul>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about social media privacy on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Phone & Romance Scams Content */}
-              {selectedLearningTopic === 'phone_scams' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-pink-500 p-2 rounded-lg mr-3">
-                      <Phone className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Phone & Romance Scams</h2>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          AI voice cloning technology is being used to impersonate family members in emergency scams targeting elderly Australians. Romance scammers are using AI-generated photos and sophisticated scripts.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Common Phone Scams in Australia</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li><strong>ATO scams:</strong> Fake tax officials threatening arrest</li>
-                    <li><strong>NBN scams:</strong> Callers claiming issues with your internet</li>
-                    <li><strong>Bank security scams:</strong> Fake bank staff claiming account compromise</li>
-                    <li><strong>Grandparent scams:</strong> Impersonating relatives in emergency situations</li>
-                    <li><strong>Technical support scams:</strong> Fake Microsoft or Telstra support</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Romance Scam Warning Signs</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Profile seems too perfect or matches celebrity photos</li>
-                    <li>Quickly professes strong feelings</li>
-                    <li>Always has excuses for not video chatting</li>
-                    <li>Claims to be Australian but working overseas</li>
-                    <li>Eventually asks for money for an emergency</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">How to Protect Yourself</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Never provide personal information to incoming callers</li>
-                    <li>Establish a family verification code for emergencies</li>
-                    <li>Use call blocking apps to filter suspicious calls</li>
-                    <li>Research romantic interests thoroughly (reverse image search)</li>
-                    <li>Report scams to <a href="https://www.scamwatch.gov.au" className="text-blue-500 hover:underline">Scamwatch.gov.au</a></li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Scenario:</strong> An elderly woman in Melbourne received a call from someone sounding exactly like her grandson, claiming to be in hospital and needing money urgently.</p>
-                    <p><strong>Protection:</strong> She called her grandson directly on his known number and confirmed it was a scam using AI voice cloning.</p>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Family Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Create a family verification system (code word or question)</li>
-                    <li>Help elderly relatives set up call blocking</li>
-                    <li>Discuss romance scams openly with single family members</li>
-                    <li>Report suspicious calls to the ACCC</li>
-                  </ul>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about phone and romance scams on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Phone & App Safety Content */}
-              {selectedLearningTopic === 'app_safety' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-orange-500 p-2 rounded-lg mr-3">
-                      <Smartphone className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Phone & App Safety</h2>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          SIM swapping attacks are increasing in Australia, where scammers transfer your mobile number to their device to bypass SMS verification. Fake apps on app stores are stealing banking credentials.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Mobile Phone Security</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Keep your phone's operating system updated</li>
-                    <li>Use a strong PIN or biometric security (fingerprint/face)</li>
-                    <li>Enable remote tracking and wiping capabilities</li>
-                    <li>Back up your data regularly</li>
-                    <li>Be cautious on public Wi-Fi networks</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">App Safety</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Only download apps from official app stores (Google Play, Apple App Store)</li>
-                    <li>Check app ratings, reviews, and developer reputation</li>
-                    <li>Review app permissions before installing</li>
-                    <li>Regularly remove unused apps</li>
-                    <li>Keep all apps updated</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Protecting Against SIM Swapping</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Add a PIN or password to your mobile account with Telstra, Optus, or Vodafone</li>
-                    <li>Use authentication apps instead of SMS for two-factor authentication</li>
-                    <li>Be alert for unexpected "No Service" messages</li>
-                    <li>Contact your provider immediately if you suspect SIM swapping</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Scenario:</strong> A Brisbane resident downloaded what appeared to be a legitimate banking app, but it was a fake. The app stole their banking credentials and drained their account.</p>
-                    <p><strong>Protection:</strong> Always verify banking apps by visiting your bank's official website first and following their app download links.</p>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Family Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Help children understand which apps are safe to download</li>
-                    <li>Set up family sharing to approve children's app downloads</li>
-                    <li>Assist elderly relatives with app updates and security</li>
-                    <li>Consider mobile security apps for family devices</li>
-                  </ul>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about phone and app safety on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              )}
+              {/* Other learning topics content would go here */}
             </>
           )}
         </div>
@@ -891,7 +501,7 @@ function App() {
         <div className="p-4">
           <div className="bg-white rounded-lg shadow p-5">
             <div className="flex items-center mb-4">
-              <div className="bg-red-500 p-2 rounded-lg mr-3">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                 <MessageSquare className="text-white" size={24} />
               </div>
               <h2 className="text-xl font-bold">Get Help</h2>
@@ -924,7 +534,7 @@ function App() {
                       <div 
                         className={`max-w-[80%] rounded-lg p-3 ${
                           msg.sender === 'user' 
-                            ? 'bg-blue-500 text-white rounded-br-none' 
+                            ? 'bg-[#21a1ce] text-white rounded-br-none' 
                             : 'bg-gray-100 text-gray-800 rounded-bl-none'
                         }`}
                       >
@@ -988,7 +598,7 @@ function App() {
               />
               <button
                 type="submit"
-                className="bg-gradient-to-r from-red-500 to-pink-500 text-white py-3 px-4 rounded-r-lg font-medium"
+                className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-4 rounded-r-lg font-medium"
               >
                 Send
               </button>
@@ -1001,7 +611,7 @@ function App() {
         <button
           onClick={() => handleTabChange('check')}
           className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-            activeTab === 'check' ? 'bg-teal-500 text-white' : 'text-gray-600'
+            activeTab === 'check' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
           }`}
         >
           <MessageSquare size={20} />
@@ -1010,7 +620,7 @@ function App() {
         <button
           onClick={() => handleTabChange('passwords')}
           className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-            activeTab === 'passwords' ? 'bg-purple-500 text-white' : 'text-gray-600'
+            activeTab === 'passwords' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
           }`}
         >
           <Lock size={20} />
@@ -1019,7 +629,7 @@ function App() {
         <button
           onClick={() => handleTabChange('learn')}
           className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-            activeTab === 'learn' ? 'bg-blue-500 text-white' : 'text-gray-600'
+            activeTab === 'learn' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
           }`}
         >
           <BookOpen size={20} />
@@ -1028,7 +638,7 @@ function App() {
         <button
           onClick={() => handleTabChange('help')}
           className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-            activeTab === 'help' ? 'bg-red-500 text-white' : 'text-gray-600'
+            activeTab === 'help' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
           }`}
         >
           <MessageSquare size={20} />
@@ -1040,7 +650,7 @@ function App() {
 
       <footer className="text-center p-4 text-sm text-gray-500">
         <div className="flex items-center justify-center mb-2">
-          <Shield className="text-blue-500 mr-2" size={16} />
+          <Shield className="text-[#21a1ce] mr-2" size={16} />
           <span>Remaleh - Your Digital Guardian</span>
         </div>
         <p>Copyright © 2025 Remaleh</p>
@@ -1050,4 +660,3 @@ function App() {
 }
 
 export default App;
-
