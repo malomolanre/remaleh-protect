@@ -1,76 +1,48 @@
 from flask import Flask
 from flask_cors import CORS
 
-# Import only the routes that exist
-try:
-    from routes.scam import scam_bp
-except ImportError:
-    scam_bp = None
-
-try:
-    from routes.breach_check import breach_bp
-except ImportError:
-    breach_bp = None
-
-try:
-    from routes.enhanced_scam import enhanced_scam_bp
-except ImportError:
-    enhanced_scam_bp = None
-
-try:
-    from routes.link_analysis import link_analysis_bp
-except ImportError:
-    link_analysis_bp = None
-
-try:
-    from routes.chat import chat_bp
-except ImportError:
-    chat_bp = None
+# Import all route blueprints
+from routes.scam import scam_bp
+from routes.breach_check import breach_bp
+from routes.enhanced_scam import enhanced_scam_bp
+from routes.link_analysis import link_analysis_bp
+from routes.chat import chat_bp
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/')
 def home():
-    available_endpoints = {}
-    
-    if scam_bp:
-        available_endpoints["scam_detection"] = "/api/scam/"
-    if enhanced_scam_bp:
-        available_endpoints["enhanced_scam"] = "/api/enhanced-scam/"
-    if breach_bp:
-        available_endpoints["breach_check"] = "/api/breach/"
-    if link_analysis_bp:
-        available_endpoints["link_analysis"] = "/api/link/"
-    if chat_bp:
-        available_endpoints["chat_support"] = "/api/chat/"
-    
+    """API information endpoint"""
     return {
         "message": "Remaleh Protect API",
         "version": "2.0",
-        "endpoints": available_endpoints,
-        "status": "active"
+        "endpoints": {
+            "scam_detection": "/api/scam/comprehensive",
+            "enhanced_scam": "/api/enhanced-scam/analyze", 
+            "breach_check": "/api/breach/check",
+            "link_analysis": "/api/link/analyze",
+            "chat_support": "/api/chat/"
+        },
+        "status": "active",
+        "description": "Comprehensive cybersecurity analysis API"
     }
 
 @app.route('/health')
 def health():
-    return {"status": "healthy", "service": "remaleh-protect-api"}
+    """Global health check endpoint"""
+    return {
+        "status": "healthy", 
+        "service": "remaleh-protect-api",
+        "version": "2.0"
+    }
 
-# Register only the blueprints that exist
-if scam_bp:
-    app.register_blueprint(scam_bp, url_prefix='/api/scam')
-
-if breach_bp:
-    app.register_blueprint(breach_bp, url_prefix='/api/breach')
-
-if enhanced_scam_bp:
-    app.register_blueprint(enhanced_scam_bp, url_prefix='/api/enhanced-scam')
-
-if link_analysis_bp:
-    app.register_blueprint(link_analysis_bp, url_prefix='/api/link')
-
-if chat_bp:
-    app.register_blueprint(chat_bp, url_prefix='/api/chat')
+# Register all blueprints with proper URL prefixes
+app.register_blueprint(scam_bp, url_prefix='/api/scam')
+app.register_blueprint(breach_bp, url_prefix='/api/breach')
+app.register_blueprint(enhanced_scam_bp, url_prefix='/api/enhanced-scam')
+app.register_blueprint(link_analysis_bp, url_prefix='/api/link')
+app.register_blueprint(chat_bp, url_prefix='/api/chat')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
