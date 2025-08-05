@@ -48,7 +48,7 @@ function App() {
 
       // 1. Basic Scam Detection (CORRECTED ENDPOINT)
       servicePromises.push(
-        fetch('https://remaleh-protect-api.onrender.com/api/scam/', {
+        fetch('https://remaleh-protect-api.onrender.com/api/scam/comprehensive', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: scamMessage })
@@ -66,7 +66,7 @@ function App() {
       // 2. Breach Check (CORRECTED ENDPOINT - only if emails found)
       if (emails.length > 0) {
         servicePromises.push(
-          fetch('https://remaleh-protect-api.onrender.com/api/breach/', {
+          fetch('https://remaleh-protect-api.onrender.com/api/breach/check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ emails: emails })
