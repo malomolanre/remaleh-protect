@@ -1,3 +1,19 @@
+/* LOGO SIZE FIX - Critical fixes first */
+img[alt="Remaleh Logo"] {
+  max-height: 32px !important;
+  height: 32px !important;
+  width: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+img[src="/remaleh-logo-full.png"] {
+  max-height: 32px !important;
+  height: 32px !important;
+  width: auto !important;
+  object-fit: contain !important;
+}
+
 /* Import Google Fonts for better typography */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -62,6 +78,40 @@
 /* App-specific styles */
 .App {
   text-align: center;
+}
+
+/* Header and Logo Fixes */
+.bg-white\/80.backdrop-blur-sm.border-b {
+  min-height: auto !important;
+  height: auto !important;
+}
+
+.max-w-md.mx-auto.px-4.py-4 {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+.flex.items-center.justify-center.space-x-3 {
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.w-10.h-10.bg-gradient-to-br {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  flex-shrink: 0 !important;
+}
+
+.sticky.top-0.z-50 {
+  height: auto !important;
+  min-height: auto !important;
+}
+
+/* Prevent any image from being too large */
+header img {
+  max-height: 40px !important;
+  max-width: 200px !important;
+  object-fit: contain !important;
 }
 
 /* Custom animations and effects */
@@ -482,6 +532,17 @@
     @apply min-h-[44px] min-w-[44px];
   }
 
+  /* Mobile logo fixes */
+  img[alt="Remaleh Logo"] {
+    max-height: 28px !important;
+    height: 28px !important;
+  }
+  
+  .max-w-md.mx-auto.px-4.py-4 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
   .chat-container {
     height: 350px;
     max-height: 350px;
@@ -580,14 +641,6 @@
   
   .chat-input {
     border: 2px solid #000;
-  }
-}
-
-/* Dark mode support (if needed in future) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
   }
 }
 
