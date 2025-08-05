@@ -1,83 +1,214 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { MessageSquare, Lock, BookOpen, Shield, Mail, Users, Smartphone, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import './App.css';
-import { Shield, MessageSquare, Lock, AlertCircle, ChevronRight, ChevronLeft, Mail, Users, Phone, Smartphone, BookOpen } from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('check');
-  const [message, setMessage] = useState('');
+  const [scamMessage, setScamMessage] = useState('');
+  const [scamResult, setScamResult] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [email, setEmail] = useState('');
+  const [breachResult, setBreachResult] = useState(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [selectedLearningTopic, setSelectedLearningTopic] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedLearningTopic, setSelectedLearningTopic] = useState(null);
   const [chatError, setChatError] = useState(false);
-
-  // Enhanced cybersecurity knowledge base with expanded keywords
-  const cybersecurityKnowledge = {
-    password: {
-      keywords: ['password', 'passwords', 'strong password', 'secure password', 'password manager', 'passphrase', 'pass phrase', 'passcode', 'pin', 'good password', 'create password', 'make password'],
-      response: "# Password Security Best Practices\n\n## Create Strong Passwords\n- Use at least 12 characters\n- Mix uppercase, lowercase, numbers, and symbols\n- Avoid personal information or common words\n- Use a different password for each account\n\n## Password Managers\nConsider using a password manager like LastPass, 1Password, or Bitwarden to generate and store strong, unique passwords.\n\n## Two-Factor Authentication\nEnable 2FA on all important accounts for an extra layer of security.",
-      source: "Expert Knowledge"
-    },
-    phishing: {
-      keywords: ['phishing', 'scam email', 'fake email', 'suspicious email', 'scam', 'scams', 'phish', 'spam', 'suspicious message', 'fake message', 'scam text', 'scam sms'],
-      response: "# How to Spot Phishing Scams\n\n## Warning Signs\n- Urgent requests for personal information\n- Spelling and grammar errors\n- Mismatched or suspicious URLs\n- Generic greetings instead of your name\n- Requests for payment or financial details\n\n## What to Do\n- Don't click links or download attachments from suspicious emails\n- Verify requests by contacting the company directly through official channels\n- Report phishing attempts to the organization being impersonated",
-      source: "Expert Knowledge"
-    },
-    malware: {
-      keywords: ['malware', 'virus', 'ransomware', 'spyware', 'trojan', 'adware', 'computer virus', 'infected', 'infection', 'malicious software'],
-      response: "# Protecting Against Malware\n\n## Prevention Tips\n- Keep your operating system and software updated\n- Use reputable antivirus/anti-malware software\n- Be cautious about downloading files or clicking links\n- Back up your data regularly\n\n## If You're Infected\n- Disconnect from the internet\n- Run a full system scan with your security software\n- Change passwords from a clean device\n- Restore from a backup if necessary",
-      source: "Expert Knowledge"
-    },
-    privacy: {
-      keywords: ['privacy', 'data privacy', 'online privacy', 'protect privacy', 'private browsing', 'tracking', 'being tracked', 'data collection', 'personal data', 'information privacy'],
-      response: "# Enhancing Your Online Privacy\n\n## Browser Privacy\n- Use private browsing modes\n- Consider privacy-focused browsers like Firefox or Brave\n- Install ad and tracker blocking extensions\n\n## Social Media Privacy\n- Review and adjust privacy settings regularly\n- Limit personal information you share\n- Be selective about friend/connection requests\n\n## General Tips\n- Use a VPN for public Wi-Fi\n- Regularly delete cookies and browsing history\n- Opt out of data collection when possible",
-      source: "Expert Knowledge"
-    },
-    wifi: {
-      keywords: ['wifi', 'wi-fi', 'wireless', 'router', 'network security', 'public wifi', 'hotspot', 'wireless network', 'home network', 'secure wifi'],
-      response: "# Securing Your Wi-Fi Network\n\n## Router Security\n- Change default admin credentials\n- Use WPA3 encryption if available (at least WPA2)\n- Create a strong, unique password\n- Keep router firmware updated\n\n## Network Protection\n- Hide your network name (SSID) for home networks\n- Enable the firewall\n- Create a guest network for visitors\n- Disable remote management\n\n## Public Wi-Fi Safety\n- Use a VPN\n- Avoid sensitive transactions\n- Verify network names before connecting",
-      source: "Expert Knowledge"
-    },
-    identity: {
-      keywords: ['identity theft', 'identity protection', 'stolen identity', 'fraud', 'identity fraud', 'identity', 'personal information', 'identity stolen', 'protect identity'],
-      response: "# Preventing Identity Theft\n\n## Protect Your Information\n- Secure your Tax File Number and government IDs\n- Shred sensitive documents\n- Use strong, unique passwords for financial accounts\n- Be cautious about sharing personal details online\n\n## Monitoring\n- Check credit reports regularly\n- Review financial statements monthly\n- Consider identity theft protection services\n- Set up fraud alerts with your bank\n\n## If You're a Victim\n- Report to the police and financial institutions\n- Contact credit bureaus to place fraud alerts\n- Change all passwords\n- Monitor accounts closely",
-      source: "Expert Knowledge"
-    },
-    social: {
-      keywords: ['social media', 'facebook', 'instagram', 'twitter', 'tiktok', 'linkedin', 'social network', 'social networking', 'online profile', 'social account'],
-      response: "# Social Media Security\n\n## Account Protection\n- Use strong, unique passwords\n- Enable two-factor authentication\n- Be selective about connection requests\n- Regularly review privacy settings\n\n## Content Sharing\n- Think before posting personal information\n- Avoid sharing your location in real-time\n- Be cautious about what's visible in photos\n- Consider who can see your posts\n\n## Third-Party Apps\n- Regularly review connected applications\n- Remove access for unused apps\n- Check permission settings",
-      source: "Expert Knowledge"
-    },
-    device: {
-      keywords: ['device security', 'phone security', 'mobile security', 'laptop security', 'computer security', 'secure device', 'protect phone', 'protect computer', 'device protection', 'mobile device'],
-      response: "# Securing Your Devices\n\n## Basic Security\n- Keep operating systems and apps updated\n- Use strong passwords or biometric protection\n- Enable automatic screen locks\n- Install security software\n\n## Mobile Devices\n- Review app permissions regularly\n- Only download apps from official stores\n- Enable remote tracking and wiping\n- Back up your data\n\n## Computers\n- Use disk encryption\n- Install a firewall\n- Create regular backups\n- Use standard user accounts for daily use",
-      source: "Expert Knowledge"
-    }
-  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
 
-  const analyzeMessage = () => {
-    // Simulate message analysis
-    setTimeout(() => {
-      const result = Math.random() > 0.3 ? 'This message appears to be safe.' : 'Warning: This message shows signs of being a potential scam.';
-      alert(result);
-    }, 1000);
+  const handleScamCheck = async (e) => {
+    e.preventDefault();
+    if (!scamMessage.trim()) return;
+
+    setIsAnalyzing(true);
+    setScamResult(null);
+
+    try {
+      // Simulate API call
+      setTimeout(() => {
+        const randomScore = Math.random();
+        let result;
+
+        if (randomScore > 0.7) {
+          result = {
+            score: randomScore.toFixed(2),
+            risk: 'High Risk',
+            explanation: 'This message contains multiple warning signs of a scam, including urgency, requests for personal information, and suspicious links.',
+            color: 'red'
+          };
+        } else if (randomScore > 0.4) {
+          result = {
+            score: randomScore.toFixed(2),
+            risk: 'Medium Risk',
+            explanation: 'This message has some suspicious elements that could indicate a scam. Proceed with caution.',
+            color: 'orange'
+          };
+        } else {
+          result = {
+            score: randomScore.toFixed(2),
+            risk: 'Low Risk',
+            explanation: 'This message appears to be legitimate, but always remain vigilant.',
+            color: 'green'
+          };
+        }
+
+        setScamResult(result);
+        setIsAnalyzing(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Error analyzing message:', error);
+      setIsAnalyzing(false);
+    }
   };
 
-  const checkPassword = () => {
-    // Simulate password breach check
-    setTimeout(() => {
-      const result = Math.random() > 0.5 ? 'Good news! This email was not found in any known data breaches.' : 'Warning: This email was found in at least one data breach. Change your password immediately.';
-      alert(result);
-    }, 1000);
+  const handleBreachCheck = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setIsChecking(true);
+    setBreachResult(null);
+
+    try {
+      // Simulate API call
+      setTimeout(() => {
+        const randomBreached = Math.random() > 0.5;
+        
+        if (randomBreached) {
+          setBreachResult({
+            breached: true,
+            breaches: [
+              {
+                name: 'ExampleSite',
+                domain: 'example.com',
+                date: '2023-01-15',
+                data: ['Email', 'Password', 'Username']
+              },
+              {
+                name: 'AnotherBreach',
+                domain: 'anotherbreach.com',
+                date: '2022-08-22',
+                data: ['Email', 'Password', 'IP Address']
+              }
+            ]
+          });
+        } else {
+          setBreachResult({
+            breached: false
+          });
+        }
+        
+        setIsChecking(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Error checking breaches:', error);
+      setIsChecking(false);
+    }
   };
 
-  // Enhanced chat submission handler with better keyword matching and error handling
-  const handleChatSubmit = (e) => {
+  // Cybersecurity knowledge base for rule-based responses
+  const cybersecurityKnowledge = {
+    passwords: {
+      keywords: ['password', 'passwords', 'strong password', 'secure password', 'passphrase', 'password manager'],
+      response: `
+# Creating Strong Passwords
+
+- Use at least 16 characters when possible
+- Combine uppercase letters, lowercase letters, numbers, and symbols
+- Avoid personal information (birthdays, names, etc.)
+- Don't use common words or patterns
+- Consider using passphrases (e.g., "KangarooJumping2025!Sydney")
+- Use a different password for each account
+- Consider using a password manager like LastPass, 1Password, or Bitwarden
+- Enable multi-factor authentication (MFA) whenever possible
+      `,
+      source: 'Expert Knowledge'
+    },
+    phishing: {
+      keywords: ['phishing', 'scam email', 'fake email', 'suspicious email', 'scam text', 'phishing email', 'identify phishing'],
+      response: `
+# Identifying Phishing Emails and Texts
+
+- Check the sender's email address carefully for slight misspellings
+- Be suspicious of urgent requests requiring immediate action
+- Hover over links before clicking to see the actual URL
+- Be wary of emails requesting personal information or passwords
+- Look for poor grammar and spelling errors
+- Be suspicious of unexpected attachments
+- Verify requests through official channels (call the company directly)
+- Check for generic greetings like "Dear Customer" instead of your name
+      `,
+      source: 'Expert Knowledge'
+    },
+    malware: {
+      keywords: ['malware', 'virus', 'ransomware', 'spyware', 'trojan', 'adware', 'computer virus'],
+      response: `
+# Protecting Against Malware
+
+- Keep your operating system and software updated
+- Use reputable antivirus/anti-malware software
+- Be careful about downloading files or clicking links
+- Only download apps from official app stores
+- Back up your important data regularly
+- Use a firewall
+- Be wary of suspicious email attachments
+- Avoid pirated software and media
+      `,
+      source: 'Expert Knowledge'
+    },
+    privacy: {
+      keywords: ['privacy', 'data privacy', 'online privacy', 'protect privacy', 'privacy settings'],
+      response: `
+# Protecting Your Online Privacy
+
+- Review and adjust privacy settings on social media accounts
+- Use a VPN when connecting to public Wi-Fi
+- Clear your browsing history and cookies regularly
+- Use private browsing mode when appropriate
+- Be mindful of what you share online
+- Use strong, unique passwords for each account
+- Consider using privacy-focused browsers and search engines
+- Regularly check which apps have access to your data
+      `,
+      source: 'Expert Knowledge'
+    },
+    mfa: {
+      keywords: ['mfa', 'multi-factor', 'two-factor', '2fa', 'authentication', 'two step verification'],
+      response: `
+# Multi-Factor Authentication (MFA)
+
+- MFA adds an extra layer of security beyond just passwords
+- Types include: something you know (password), something you have (phone), something you are (fingerprint)
+- Authenticator apps (like Google Authenticator) are more secure than SMS
+- Enable MFA on all important accounts (email, banking, social media)
+- Hardware security keys provide the strongest protection
+- Even if your password is compromised, MFA helps protect your account
+- Backup your MFA recovery codes in a secure location
+      `,
+      source: 'Expert Knowledge'
+    },
+    wifi: {
+      keywords: ['wifi', 'wi-fi', 'wireless', 'router', 'network security', 'public wifi'],
+      response: `
+# Wi-Fi Security Best Practices
+
+- Change default router passwords and admin credentials
+- Use WPA3 encryption if available (at least WPA2)
+- Create a strong, unique Wi-Fi password
+- Enable the router's firewall
+- Keep router firmware updated
+- Use a guest network for visitors and IoT devices
+- Be cautious when using public Wi-Fi (use a VPN)
+- Position your router centrally to minimize signal outside your home
+      `,
+      source: 'Expert Knowledge'
+    }
+  };
+
+  const handleChatSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
@@ -95,76 +226,108 @@ function App() {
     setInputMessage('');
     setIsTyping(true);
 
-    // Rule-based response system with better matching
-    setTimeout(() => {
-      try {
-        let responseFound = false;
-        let response = '';
-        let source = '';
-        const lowercaseInput = messageToProcess.toLowerCase();
+    try {
+      let responseFound = false;
+      let response = '';
+      let source = '';
+      const lowercaseInput = messageToProcess.toLowerCase();
 
-        // Check against knowledge base with improved matching
-        for (const category in cybersecurityKnowledge) {
-          const { keywords, response: categoryResponse, source: categorySource } = cybersecurityKnowledge[category];
+      // First check against local knowledge base for quick responses
+      for (const category in cybersecurityKnowledge) {
+        const { keywords, response: categoryResponse, source: categorySource } = cybersecurityKnowledge[category];
+        
+        // Check each keyword
+        for (const keyword of keywords) {
+          if (lowercaseInput.includes(keyword.toLowerCase())) {
+            response = categoryResponse;
+            source = categorySource;
+            responseFound = true;
+            break;
+          }
+        }
+        
+        if (responseFound) break;
+      }
+
+      // If no match found in local knowledge base, call backend API
+      if (!responseFound) {
+        try {
+          const apiResponse = await fetch('https://remaleh-protect-app.onrender.com/api/chat/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: messageToProcess }),
+          });
           
-          // Check each keyword
-          for (const keyword of keywords) {
-            if (lowercaseInput.includes(keyword.toLowerCase())) {
-              response = categoryResponse;
-              source = categorySource;
-              responseFound = true;
-              break;
-            }
+          if (!apiResponse.ok) {
+            throw new Error(`API responded with status: ${apiResponse.status}`);
           }
           
-          if (responseFound) break;
+          const data = await apiResponse.json();
+          
+          if (data.success) {
+            response = data.response;
+            source = data.source === 'expert_knowledge' ? 'Expert Knowledge' : 'AI Analysis';
+            responseFound = true;
+          }
+        } catch (apiError) {
+          console.error("API Error:", apiError);
+          // Continue to fallback response if API call fails
         }
+      }
 
-        // Fallback response if no match
-        if (!responseFound) {
-          response = "I don't have specific information about that topic yet. For complex cybersecurity questions, I recommend consulting with a security professional.";
-          source = "AI Analysis";
-        }
+      // Fallback response if no match found and API call failed
+      if (!responseFound) {
+        response = "I don't have specific information about that topic yet. For complex cybersecurity questions, I recommend consulting with a security professional.";
+        source = "AI Analysis";
+      }
 
-        // Add bot response
+      // Add bot response after a short delay to simulate thinking
+      setTimeout(() => {
         const botMessage = { text: response, sender: 'assistant', source };
         setChatMessages(prevMessages => [...prevMessages, botMessage]);
-      } catch (error) {
-        console.error("Error processing chat:", error);
-        setChatError(true);
-        
-        // Add error message
-        const errorMessage = { 
-          text: "Sorry, I encountered an error processing your request. Please try again.", 
-          sender: 'assistant', 
-          source: "System" 
-        };
-        setChatMessages(prevMessages => [...prevMessages, errorMessage]);
-      } finally {
         setIsTyping(false);
-      }
-    }, 1500);
+      }, 1000);
+    } catch (error) {
+      console.error("Error processing chat:", error);
+      setChatError(true);
+      
+      // Add error message
+      const errorMessage = { 
+        text: "Sorry, I encountered an error processing your request. Please try again.", 
+        sender: 'assistant', 
+        source: "System" 
+      };
+      setChatMessages(prevMessages => [...prevMessages, errorMessage]);
+      setIsTyping(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#e6f7fb] to-[#f5f5f5]">
-      <header className="p-4 flex justify-center">
-        {/* Fixed logo implementation using local file path */}
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <header className="bg-white shadow-sm p-4 flex justify-center">
         <img 
           src="/remaleh-logo-full.png" 
           alt="Remaleh" 
           className="h-8 w-auto object-contain"
           onError={(e) => {
-            e.target.onerror = null; 
-            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='32' viewBox='0 0 100 32'%3E%3Crect width='100' height='32' fill='%2321a1ce'/%3E%3Ctext x='50' y='20' font-family='Arial' font-size='16' fill='white' text-anchor='middle'%3ERemaleh%3C/text%3E%3C/svg%3E";
+            e.target.onerror = null;
+            e.target.innerHTML = `
+              <svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.5 2L18 9.5L10.5 17L3 9.5L10.5 2Z" fill="#21a1ce"/>
+                <path d="M10.5 17L18 24.5L10.5 32L3 24.5L10.5 17Z" fill="#21a1ce"/>
+                <path d="M24.5 9.5L32 17L24.5 24.5L17 17L24.5 9.5Z" fill="#21a1ce"/>
+                <text x="40" y="20" font-family="Arial" font-size="16" font-weight="bold" fill="#000">Remaleh</text>
+              </svg>
+            `;
           }}
-          style={{maxHeight: '32px'}}
         />
       </header>
 
-      <div className="text-center px-4 py-6">
-        <h1 className="text-3xl font-bold text-[#21a1ce]">Stay Safe in Our Connected World</h1>
-        <p className="text-[#000000] mt-2">Your Digital Well-Being Is Our Paramount Commitment</p>
+      <div className="bg-gradient-to-br from-[#21a1ce] to-[#1a80a3] text-white text-center py-8 px-4">
+        <h1 className="text-3xl font-bold mb-2">Stay Safe in Our Connected World</h1>
+        <p className="text-xl">Your Digital Well-Being Is Our Paramount Commitment</p>
       </div>
 
       {activeTab === 'check' && (
@@ -179,19 +342,51 @@ function App() {
             <p className="text-gray-600 mb-4">
               Analyze messages for scams and threats using advanced AI
             </p>
-            <textarea
-              className="w-full border border-gray-300 rounded-lg p-3 mb-4 h-32"
-              placeholder="Paste your message here to check for scams..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            ></textarea>
-            <button
-              className="w-full bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 rounded-lg font-medium flex items-center justify-center"
-              onClick={analyzeMessage}
-            >
-              <Shield className="mr-2" size={20} />
-              Check Message
-            </button>
+
+            <form onSubmit={handleScamCheck}>
+              <textarea
+                className="w-full border border-gray-300 rounded-lg p-3 mb-4 h-32"
+                placeholder="Paste your message here to check for scams..."
+                value={scamMessage}
+                onChange={(e) => setScamMessage(e.target.value)}
+              ></textarea>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-6 rounded-lg font-medium w-full"
+                disabled={isAnalyzing}
+              >
+                {isAnalyzing ? 'Analyzing...' : 'Check Message'}
+              </button>
+            </form>
+
+            {scamResult && (
+              <div className="mt-6">
+                <div className={`p-4 rounded-lg ${
+                  scamResult.color === 'red' ? 'bg-red-100 border border-red-200' :
+                  scamResult.color === 'orange' ? 'bg-orange-100 border border-orange-200' :
+                  'bg-green-100 border border-green-200'
+                }`}>
+                  <div className="flex items-center mb-2">
+                    <div className={`p-2 rounded-full ${
+                      scamResult.color === 'red' ? 'bg-red-200' :
+                      scamResult.color === 'orange' ? 'bg-orange-200' :
+                      'bg-green-200'
+                    } mr-3`}>
+                      <AlertCircle className={`${
+                        scamResult.color === 'red' ? 'text-red-500' :
+                        scamResult.color === 'orange' ? 'text-orange-500' :
+                        'text-green-500'
+                      }`} size={20} />
+                    </div>
+                    <h3 className="font-bold text-lg">{scamResult.risk}</h3>
+                  </div>
+                  <p className="mb-2">
+                    <span className="font-medium">Risk Score:</span> {scamResult.score}
+                  </p>
+                  <p>{scamResult.explanation}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -208,55 +403,72 @@ function App() {
             <p className="text-gray-600 mb-4">
               Check if your email has been involved in data breaches
             </p>
-            <input
-              type="email"
-              className="w-full border border-gray-300 rounded-lg p-3 mb-4"
-              placeholder="Enter your email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <button
-              className="w-full bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 rounded-lg font-medium flex items-center justify-center"
-              onClick={checkPassword}
-            >
-              <Shield className="mr-2" size={20} />
-              Check My Passwords
-            </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              We never store your email address. Checks are performed securely using the HaveIBeenPwned API.
-            </p>
+
+            <form onSubmit={handleBreachCheck}>
+              <input
+                type="email"
+                className="w-full border border-gray-300 rounded-lg p-3 mb-4"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-6 rounded-lg font-medium w-full"
+                disabled={isChecking}
+              >
+                {isChecking ? 'Checking...' : 'Check My Passwords'}
+              </button>
+            </form>
+
+            {breachResult && (
+              <div className="mt-6">
+                {breachResult.breached ? (
+                  <div className="bg-red-100 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center mb-3">
+                      <div className="bg-red-200 p-2 rounded-full mr-3">
+                        <AlertCircle className="text-red-500" size={20} />
+                      </div>
+                      <h3 className="font-bold text-lg text-red-700">Your Email Was Found in Data Breaches</h3>
+                    </div>
+                    <p className="mb-4">Your email was found in {breachResult.breaches.length} data breaches. You should change your passwords immediately.</p>
+                    
+                    <div className="space-y-3">
+                      {breachResult.breaches.map((breach, index) => (
+                        <div key={index} className="bg-white p-3 rounded border border-red-100">
+                          <h4 className="font-bold">{breach.name}</h4>
+                          <p className="text-sm text-gray-600">{breach.domain}</p>
+                          <p className="text-sm"><span className="font-medium">Breach date:</span> {breach.date}</p>
+                          <p className="text-sm"><span className="font-medium">Data exposed:</span> {breach.data.join(', ')}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-green-100 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <div className="bg-green-200 p-2 rounded-full mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg text-green-700">Good News!</h3>
+                        <p>Your email was not found in any known data breaches.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {activeTab === 'learn' && (
         <div className="p-4">
-          <div className="mb-6">
-            <div className="flex items-center mb-2">
-              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                <BookOpen className="text-white" size={24} />
-              </div>
-              <h2 className="text-xl font-bold">Stay Safe Online</h2>
-            </div>
-            <p className="text-gray-600">
-              Protect yourself from the latest cyber threats targeting Australian families
-            </p>
-          </div>
-
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start">
-              <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-              <div>
-                <h3 className="font-bold text-red-700">2025 Threat Alert</h3>
-                <p className="text-red-600">
-                  Scammers are using AI to create more convincing fake emails, texts, and voice calls targeting Australians.
-                  Stay vigilant!
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {selectedLearningTopic === null ? (
+          {!selectedLearningTopic ? (
             <>
               {/* Password Protection */}
               <div 
@@ -272,7 +484,7 @@ function App() {
                       <div>
                         <h3 className="font-bold">Password Protection</h3>
                         <p className="text-sm text-gray-600">
-                          With AI making password cracking faster than ever, strong unique passwords are essential
+                          Create strong passwords and keep your accounts secure
                         </p>
                       </div>
                     </div>
@@ -300,7 +512,7 @@ function App() {
                       <div>
                         <h3 className="font-bold">Email & Text Scams</h3>
                         <p className="text-sm text-gray-600">
-                          Scammers now use AI to create convincing fake emails and texts that look legitimate
+                          Identify and avoid phishing attempts and scam messages
                         </p>
                       </div>
                     </div>
@@ -308,7 +520,7 @@ function App() {
                   </div>
                   <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-2 text-sm">
                     <p className="text-yellow-800">
-                      <span className="font-bold">⚠️ Current threat:</span> AI-generated phishing emails and fake Australia Post/banking texts
+                      <span className="font-bold">⚠️ Current threat:</span> AI-generated phishing and fake delivery texts
                     </p>
                   </div>
                 </div>
@@ -328,7 +540,7 @@ function App() {
                       <div>
                         <h3 className="font-bold">Device & Home Security</h3>
                         <p className="text-sm text-gray-600">
-                          Protect your computers, phones, and smart home devices from hackers
+                          Protect your computers, phones, and smart home devices
                         </p>
                       </div>
                     </div>
@@ -336,7 +548,7 @@ function App() {
                   </div>
                   <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-2 text-sm">
                     <p className="text-yellow-800">
-                      <span className="font-bold">⚠️ Current threat:</span> Smart home device hacking and malicious QR codes
+                      <span className="font-bold">⚠️ Current threat:</span> Smart home hacking and malicious QR codes
                     </p>
                   </div>
                 </div>
@@ -356,7 +568,7 @@ function App() {
                       <div>
                         <h3 className="font-bold">Social Media & Privacy</h3>
                         <p className="text-sm text-gray-600">
-                          What you share online can be used against you by identity thieves
+                          Manage your online presence and protect personal information
                         </p>
                       </div>
                     </div>
@@ -364,35 +576,7 @@ function App() {
                   </div>
                   <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-2 text-sm">
                     <p className="text-yellow-800">
-                      <span className="font-bold">⚠️ Current threat:</span> Identity theft using information shared on social media
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Phone & Romance Scams */}
-              <div 
-                className="bg-white rounded-lg shadow mb-4 overflow-hidden cursor-pointer"
-                onClick={() => setSelectedLearningTopic('phone_scams')}
-              >
-                <div className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                        <Phone className="text-white" size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-bold">Phone & Romance Scams</h3>
-                        <p className="text-sm text-gray-600">
-                          Voice cloning technology is being used to impersonate loved ones in emergency scams
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight size={20} className="text-gray-400" />
-                  </div>
-                  <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-2 text-sm">
-                    <p className="text-yellow-800">
-                      <span className="font-bold">⚠️ Current threat:</span> AI voice cloning scams targeting elderly Australians
+                      <span className="font-bold">⚠️ Current threat:</span> Identity theft using social media information
                     </p>
                   </div>
                 </div>
@@ -692,107 +876,36 @@ function App() {
 
                   <h3 className="font-bold text-lg mb-2">Privacy Settings to Check</h3>
                   <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Who can see your posts (friends only vs. public)</li>
-                    <li>Who can tag you in photos</li>
-                    <li>Who can see your friends list</li>
-                    <li>Whether your profile appears in search engines</li>
+                    <li>Profile visibility (who can see your profile)</li>
+                    <li>Post visibility (who can see what you share)</li>
+                    <li>Friend/connection request settings</li>
+                    <li>Photo tagging permissions</li>
+                    <li>Search engine visibility</li>
+                    <li>Data sharing with third-party apps</li>
                     <li>Location sharing settings</li>
-                    <li>App permissions and connected apps</li>
                   </ul>
 
-                  <h3 className="font-bold text-lg mb-2">Protecting Your Family Online</h3>
+                  <h3 className="font-bold text-lg mb-2">Protecting Your Digital Footprint</h3>
                   <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Talk to children about what's appropriate to share online</li>
-                    <li>Use privacy settings on children's accounts</li>
-                    <li>Be cautious about sharing photos of children</li>
-                    <li>Help elderly family members review their privacy settings</li>
-                    <li>Consider using family sharing features for oversight</li>
+                    <li>Regularly search for yourself online to see what information is public</li>
+                    <li>Set up Google Alerts for your name</li>
+                    <li>Request removal of sensitive information from search results</li>
+                    <li>Use privacy-focused browsers and search engines</li>
+                    <li>Consider using a VPN for additional privacy</li>
                   </ul>
 
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Oversharing scenario:</strong> Posting "Just landed in Sydney for our two-week holiday! House is all locked up back in Melbourne."</p>
-                    <p><strong>Risk:</strong> Tells criminals your home is empty and exactly where it is located</p>
-                    <p><strong>Better approach:</strong> Share your holiday photos after you return home</p>
-                  </div>
+                  <h3 className="font-bold text-lg mb-2">Family Privacy Tips</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Discuss privacy with all family members, including children</li>
+                    <li>Be cautious about sharing photos of children online</li>
+                    <li>Help elderly relatives configure privacy settings</li>
+                    <li>Consider using family privacy protection services</li>
+                    <li>Report suspicious activity to the ACCC or OAIC</li>
+                  </ul>
 
                   <div className="mt-6 text-center">
                     <p className="text-sm text-gray-500">
-                      Learn more about social media privacy on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#21a1ce] hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Phone & Romance Scams Content */}
-              {selectedLearningTopic === 'phone_scams' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                      <Phone className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Phone & Romance Scams</h2>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          AI voice cloning technology is being used to impersonate family members in emergency scams, particularly targeting elderly Australians. Romance scammers are using sophisticated psychological manipulation techniques.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">Common Phone Scams in Australia</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>ATO tax debt collection scams</li>
-                    <li>NBN technical support scams</li>
-                    <li>Bank security team impersonation</li>
-                    <li>Computer technical support scams</li>
-                    <li>Family emergency scams with voice cloning</li>
-                    <li>Investment opportunities (cryptocurrency, etc.)</li>
-                    <li>Fake government rebates or grants</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Protecting Against Voice Cloning Scams</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Establish a family code word for emergencies</li>
-                    <li>Ask verification questions only family would know</li>
-                    <li>Hang up and call the person directly on their known number</li>
-                    <li>Be suspicious of urgent money requests</li>
-                    <li>Limit personal audio/video content on public social media</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Romance Scam Warning Signs</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Professes love quickly without meeting in person</li>
-                    <li>Profile seems too perfect or inconsistent</li>
-                    <li>Always has excuses for not video chatting</li>
-                    <li>Claims to be working overseas (military, oil rig, etc.)</li>
-                    <li>Eventually asks for money for an emergency</li>
-                    <li>Requests unusual payment methods (gift cards, wire transfers, cryptocurrency)</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Voice cloning scenario:</strong> "Grandma, it's me. I've been in an accident in Sydney and need $2,000 for hospital bills. Please don't tell mum and dad."</p>
-                    <p><strong>Protection strategy:</strong> Ask a question only your real grandchild would know, hang up and call their actual number, or contact their parents to verify.</p>
-                  </div>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about phone and romance scams on our blog at{" "}
+                      Learn more about online privacy on our blog at{" "}
                       <a 
                         href="https://www.remaleh.com.au/blog" 
                         target="_blank" 
