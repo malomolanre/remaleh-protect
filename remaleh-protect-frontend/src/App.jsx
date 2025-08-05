@@ -798,6 +798,46 @@ function App() {
                       <li>• Avoid using public charging stations</li>
                     </ul>
                   </div>
+
+                  <h3 className="font-bold text-lg mb-2">App Safety Tips</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Only download apps from official app stores (Google Play, Apple App Store)</li>
+                    <li>Check app permissions before installing</li>
+                    <li>Read reviews and research the developer</li>
+                    <li>Keep apps updated</li>
+                    <li>Delete apps you no longer use</li>
+                    <li>Be wary of free apps that seem too good to be true</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Mobile Device Security</h3>
+                  <ul className="list-disc pl-5 mb-4 space-y-2">
+                    <li>Use a strong PIN, password, or biometric lock</li>
+                    <li>Keep your operating system updated</li>
+                    <li>Enable remote tracking and wiping features</li>
+                    <li>Use a security app to scan for malware</li>
+                    <li>Back up your data regularly</li>
+                    <li>Be cautious when connecting to public Wi-Fi</li>
+                  </ul>
+
+                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
+                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                    <p className="mb-2"><strong>SIM swapping scenario:</strong> A scammer calls Telstra pretending to be you, claims to have lost their phone, and requests your number be transferred to a new SIM.</p>
+                    <p><strong>Protection strategy:</strong> Add a PIN to your mobile account that must be provided for any account changes, and use authenticator apps instead of SMS for two-factor authentication.</p>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-500">
+                      Learn more about mobile security on our blog at{" "}
+                      <a 
+                        href="https://www.remaleh.com.au/blog" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[#21a1ce] hover:underline"
+                      >
+                        remaleh.com.au/blog
+                      </a>
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -930,102 +970,6 @@ function App() {
         </div>
       )}
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
-        <div className="flex justify-around">
-          <button
-            onClick={() => handleTabChange('check')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg ${
-              activeTab === 'check' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
-            }`}
-          >
-            <MessageSquare size={20} />
-            <span className="text-xs mt-1">Check that Text</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('passwords')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg ${
-              activeTab === 'passwords' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
-            }`}
-          >
-            <Lock size={20} />
-            <span className="text-xs mt-1">Password Still Safe?</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('learn')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg ${
-              activeTab === 'learn' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
-            }`}
-          >
-            <BookOpen size={20} />
-            <span className="text-xs mt-1">Cyber Sensei</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('chat')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg ${
-              activeTab === 'chat' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
-            }`}
-          >
-            <Shield size={20} />
-            <span className="text-xs mt-1">Help Me!</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default App;
-
-
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">App Safety Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Only download apps from official app stores (Google Play, Apple App Store)</li>
-                    <li>Check app permissions before installing</li>
-                    <li>Read reviews and research the developer</li>
-                    <li>Keep apps updated</li>
-                    <li>Delete apps you no longer use</li>
-                    <li>Be wary of free apps that seem too good to be true</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Mobile Device Security</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Use a strong PIN, password, or biometric lock</li>
-                    <li>Keep your operating system updated</li>
-                    <li>Enable remote tracking and wiping features</li>
-                    <li>Use a security app to scan for malware</li>
-                    <li>Back up your data regularly</li>
-                    <li>Be cautious when connecting to public Wi-Fi</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>SIM swapping scenario:</strong> A scammer calls Telstra pretending to be you, claims to have lost their phone, and requests your number be transferred to a new SIM.</p>
-                    <p><strong>Protection strategy:</strong> Add a PIN to your mobile account that must be provided for any account changes, and use authenticator apps instead of SMS for two-factor authentication.</p>
-                  </div>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about mobile security on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#21a1ce] hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
       {activeTab === 'help' && (
         <div className="p-4">
           <div className="bg-white rounded-lg shadow p-5">
@@ -1071,9 +1015,23 @@ export default App;
                           className="prose prose-sm"
                           dangerouslySetInnerHTML={{ 
                             __html: msg.sender === 'assistant' 
-                              ? msg.text.replace(/^#+\s*(.*)/gm, '<strong>$1</strong>')
-                                      .replace(/\n\n/g, '<br/><br/>')
-                                      .replace(/\n-\s(.*)/g, '<br/>• $1')
+                              ? msg.text
+                                  // Convert **bold** to <strong>
+                                  .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 600;">$1</strong>')
+                                  // Convert # headers to styled headers
+                                  .replace(/^#+\s*(.*)/gm, '<div style="font-weight: 600; font-size: 15px; margin: 12px 0 6px 0; color: #374151;">$1</div>')
+                                  // Convert bullet points with proper spacing
+                                  .replace(/\n•\s(.*)/g, '<div style="margin: 4px 0; padding-left: 8px;">• $1</div>')
+                                  .replace(/\n-\s(.*)/g, '<div style="margin: 4px 0; padding-left: 8px;">• $1</div>')
+                                  // Convert double line breaks to proper spacing
+                                  .replace(/\n\n/g, '<div style="margin: 12px 0;"></div>')
+                                  // Convert single line breaks
+                                  .replace(/\n/g, '<br/>')
+                                  // Convert links with proper styling
+                                  .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #21a1ce; text-decoration: underline; font-weight: 500;">$1</a>')
+                                  // Handle emoji and special characters properly
+                                  .replace(/🛡️/g, '<span style="font-size: 16px;">🛡️</span>')
+                                  .trim()
                               : msg.text 
                           }}
                         />
@@ -1198,4 +1156,9 @@ export default App;
         </div>
         <p>Copyright © 2025 Remaleh</p>
       </footer>
+    </div>
+  );
+}
+
+export default App;
 
