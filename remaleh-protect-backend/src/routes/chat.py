@@ -1,223 +1,254 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 import openai
 import os
 import re
 
 chat_bp = Blueprint('chat', __name__)
 
-# Cybersecurity knowledge base for rule-based responses
+# Configure OpenAI
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
+# Rule-based cybersecurity knowledge base
+CYBERSECURITY_KNOWLEDGE = {
+    'password': {
+        'keywords': ['password', 'passwords', 'strong password', 'password security', 'password manager', '2fa', 'two-factor'],
+        'response': """**Password Security Best Practices:**
+
+• **Use unique passwords for each account**
+• **Enable two-factor authentication (2FA)**
+• **Use a reputable password manager**
+• **Passwords should be 12+ characters with mixed case, numbers, and symbols**
+• **Never share passwords via email or text**
+• **Change passwords immediately if you suspect a breach**"""
+    },
+    'phishing': {
+        'keywords': ['phishing', 'phish', 'suspicious email', 'fake email', 'email scam', 'verify email'],
+        'response': """**How to Spot Phishing Emails:**
+
+• **Check sender's email address carefully**
+• **Look for urgent language and pressure tactics**
+• **Hover over links to see real destination**
+• **Be suspicious of unexpected attachments**
+• **Verify requests through official channels**
+• **Never provide personal info via email**"""
+    },
+    'malware': {
+        'keywords': ['malware', 'virus', 'ransomware', 'trojan', 'spyware', 'infected', 'antivirus'],
+        'response': """**Malware Protection Guide:**
+
+• **Keep operating system and software updated**
+• **Use reputable antivirus software**
+• **Avoid downloading from untrusted sources**
+• **Be cautious with email attachments**
+• **Regular system backups are essential**
+• **If infected, disconnect from internet immediately**"""
+    },
+    'breach': {
+        'keywords': ['data breach', 'breach', 'hacked', 'compromised', 'stolen data', 'identity theft'],
+        'response': """**Data Breach Response Steps:**
+
+• **Change passwords for affected accounts immediately**
+• **Enable 2FA on all important accounts**
+• **Monitor bank and credit card statements**
+• **Consider credit monitoring services**
+• **Report to relevant authorities if needed**
+• **Document everything for potential legal action**"""
+    },
+    'social_media': {
+        'keywords': ['social media', 'facebook', 'instagram', 'twitter', 'linkedin', 'privacy settings'],
+        'response': """**Social Media Security Tips:**
+
+• **Review and tighten privacy settings regularly**
+• **Be selective about friend/connection requests**
+• **Avoid sharing personal information publicly**
+• **Think before posting location data**
+• **Use strong, unique passwords**
+• **Enable login alerts and 2FA**"""
+    },
+    'network': {
+        'keywords': ['wifi', 'network', 'router', 'vpn', 'public wifi', 'network security'],
+        'response': """**Network Security Best Practices:**
+
+• **Use WPA3 encryption on home WiFi**
+• **Change default router passwords**
+• **Avoid public WiFi for sensitive activities**
+• **Use VPN when on public networks**
+• **Keep router firmware updated**
+• **Hide network name (SSID) if possible**"""
+    },
+    'mobile': {
+        'keywords': ['mobile', 'smartphone', 'phone security', 'app security', 'mobile device'],
+        'response': """**Mobile Device Security:**
+
+• **Keep OS and apps updated**
+• **Use screen lock with PIN/biometric**
+• **Download apps only from official stores**
+• **Review app permissions carefully**
+• **Enable remote wipe capability**
+• **Avoid charging at public USB ports**"""
+    },
+    'business': {
+        'keywords': ['business security', 'company', 'enterprise', 'employee training', 'business'],
+        'response': """**Business Cybersecurity Essentials:**
+
+• **Implement comprehensive security policies**
+• **Regular employee cybersecurity training**
+• **Use endpoint detection and response (EDR)**
+• **Maintain offline backups**
+• **Conduct regular security audits**
+• **Have an incident response plan ready**"""
+    }
+}
+
+# Guardian escalation keywords
+GUARDIAN_KEYWORDS = [
+    'hacked', 'breach', 'stolen', 'compromised', 'attacked', 'emergency',
+    'urgent', 'help', 'crisis', 'incident', 'threat', 'suspicious activity',
+    'identity theft', 'fraud', 'scammed', 'malware infected', 'ransomware'
+]
+
 def get_rule_based_response(message):
-    """
-    Check if message matches known cybersecurity topics and return rule-based response
-    Returns None if no match found (should use LLM)
-    """
-    lowerMessage = message.lower()
+    """Check if message matches rule-based knowledge"""
+    message_lower = message.lower()
     
-    # Password-related queries
-    if any(keyword in lowerMessage for keyword in ['password', 'passwords', '2fa', 'two factor', 'authentication']):
-        return {
-            "response": "🔐 **Password Security Best Practices:**\n\n• Use unique passwords for each account\n• Enable two-factor authentication (2FA)\n• Use a reputable password manager\n• Passwords should be 12+ characters with mixed case, numbers, and symbols\n• Never share passwords via email or text\n• Change passwords immediately if you suspect a breach\n\nWould you like specific help with password management tools or setting up 2FA?",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": False
-        }
+    for category, data in CYBERSECURITY_KNOWLEDGE.items():
+        for keyword in data['keywords']:
+            if keyword in message_lower:
+                return {
+                    'response': data['response'],
+                    'source': 'expert_knowledge',
+                    'category': category
+                }
     
-    # Phishing/scam queries
-    if any(keyword in lowerMessage for keyword in ['phishing', 'scam', 'suspicious email', 'fake email', 'spam']):
-        return {
-            "response": "🎣 **Phishing & Scam Protection:**\n\n• Check sender's email address carefully\n• Look for urgent language or threats\n• Verify links before clicking (hover to see real URL)\n• Don't download unexpected attachments\n• When in doubt, contact the organization directly\n• Use our 'Check Text' feature to analyze suspicious messages\n\nIf you're dealing with an active threat or need immediate assistance, I can connect you with a Remaleh Guardian.",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": True
-        }
-    
-    # Malware/virus queries
-    if any(keyword in lowerMessage for keyword in ['malware', 'virus', 'infected', 'ransomware', 'trojan']):
-        return {
-            "response": "🦠 **Malware Protection & Response:**\n\n• Keep your antivirus software updated\n• Run regular system scans\n• Avoid downloading software from untrusted sources\n• Keep your operating system updated\n• If infected: disconnect from internet, run antivirus scan\n• For ransomware: DO NOT pay - contact authorities\n\n⚠️ **If you suspect active malware infection, this requires immediate expert assistance.**",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": True
-        }
-    
-    # Data breach queries
-    if any(keyword in lowerMessage for keyword in ['data breach', 'breach', 'hacked', 'compromised', 'stolen data']):
-        return {
-            "response": "🚨 **Data Breach Response:**\n\n• Change passwords for affected accounts immediately\n• Enable 2FA on all important accounts\n• Monitor your accounts for suspicious activity\n• Check credit reports for unauthorized activity\n• Use our 'Password Safety Check' to see if your email appears in known breaches\n\nFor business data breaches or complex incidents, expert guidance is essential.",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": True
-        }
-    
-    # Social media security
-    if any(keyword in lowerMessage for keyword in ['social media', 'facebook', 'instagram', 'twitter', 'linkedin', 'tiktok']):
-        return {
-            "response": "📱 **Social Media Security:**\n\n• Review privacy settings regularly\n• Be selective with friend/connection requests\n• Think before sharing personal information\n• Use strong, unique passwords\n• Enable 2FA on all social accounts\n• Be cautious of suspicious links in messages\n• Report and block suspicious accounts\n\nNeed help securing specific social media accounts?",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": False
-        }
-    
-    # WiFi/network security
-    if any(keyword in lowerMessage for keyword in ['wifi', 'network', 'public wifi', 'router', 'vpn']):
-        return {
-            "response": "📶 **Network & WiFi Security:**\n\n• Avoid sensitive activities on public WiFi\n• Use a VPN when on public networks\n• Change default router passwords\n• Use WPA3 encryption on home WiFi\n• Regularly update router firmware\n• Hide your network name (SSID) if possible\n• Monitor connected devices regularly\n\nFor business network security, professional assessment is recommended.",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": True
-        }
-    
-    # Mobile security
-    if any(keyword in lowerMessage for keyword in ['mobile', 'phone', 'smartphone', 'app', 'android', 'iphone', 'ios']):
-        return {
-            "response": "📱 **Mobile Device Security:**\n\n• Keep your OS and apps updated\n• Only download apps from official stores\n• Use screen locks (PIN, password, biometric)\n• Enable remote wipe capabilities\n• Be cautious with app permissions\n• Avoid clicking suspicious text message links\n• Use mobile antivirus if available\n\nConcerned about a specific mobile security issue?",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": False
-        }
-    
-    # Business/enterprise security
-    if any(keyword in lowerMessage for keyword in ['business', 'company', 'enterprise', 'employee', 'corporate']):
-        return {
-            "response": "🏢 **Business Cybersecurity:**\n\n• Implement employee security training\n• Use endpoint protection on all devices\n• Regular security audits and assessments\n• Backup data regularly and test recovery\n• Implement access controls and monitoring\n• Have an incident response plan\n• Consider cyber insurance\n\n**Business security requires professional consultation for proper implementation.**",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": True
-        }
-    
-    # General help or greeting
-    if any(keyword in lowerMessage for keyword in ['help', 'hello', 'hi', 'start']) or len(message.strip()) < 10:
-        return {
-            "response": "👋 **Welcome to Remaleh Cybersecurity Support!**\n\nI'm here to help with:\n• Password security and management\n• Phishing and scam identification\n• Malware protection and response\n• Data breach guidance\n• Social media security\n• Network and WiFi security\n• Mobile device protection\n• Business cybersecurity advice\n\n**What cybersecurity topic can I help you with today?**",
-            "confidence": "high",
-            "source": "rule_based",
-            "show_guardian": False
-        }
-    
-    # No rule-based match found
     return None
 
-def get_llm_response(message, conversation_history):
-    """
-    Get response from OpenAI LLM for complex cybersecurity questions
-    """
+def should_escalate_to_guardian(message):
+    """Check if message should be escalated to Guardian"""
+    message_lower = message.lower()
+    return any(keyword in message_lower for keyword in GUARDIAN_KEYWORDS)
+
+def get_llm_response(message):
+    """Get response from OpenAI LLM"""
     try:
-        # Build conversation context
-        messages = [
-            {
-                "role": "system",
-                "content": """You are a cybersecurity expert assistant for Remaleh Protect. 
-
-IMPORTANT GUIDELINES:
-- Provide accurate, helpful cybersecurity advice
-- Keep responses concise but informative (2-3 paragraphs max)
-- Use bullet points for actionable steps
-- Always prioritize user safety
-- If the question involves immediate threats, active malware, or business security incidents, recommend connecting with a Remaleh Guardian
-- For complex technical issues beyond basic advice, suggest expert consultation
-- Never provide advice that could compromise security
-- Stay focused on cybersecurity topics
-
-RESPONSE FORMAT:
-- Use clear, professional language
-- Include relevant emojis for visual appeal
-- End with a question or offer for further help when appropriate
-
-If the user needs expert human assistance, indicate this in your response."""
-            }
-        ]
-        
-        # Add conversation history (last 3 exchanges)
-        for msg in conversation_history[-6:]:  # Last 3 user + 3 assistant messages
-            if msg.get('type') == 'user':
-                messages.append({"role": "user", "content": msg.get('content', '')})
-            elif msg.get('type') in ['ai', 'llm']:
-                messages.append({"role": "assistant", "content": msg.get('content', '')})
-        
-        # Add current message
-        messages.append({"role": "user", "content": message})
-        
-        # Call OpenAI API
+        if not openai.api_key:
+            return None
+            
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=messages,
-            max_tokens=500,
-            temperature=0.3,  # Lower temperature for more consistent responses
-            top_p=0.9
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "You are a cybersecurity expert assistant. Provide helpful, accurate cybersecurity advice. Keep responses concise but informative. Focus on practical, actionable guidance."
+                },
+                {"role": "user", "content": message}
+            ],
+            max_tokens=300,
+            temperature=0.7
         )
         
-        llm_response = response.choices[0].message.content.strip()
-        
-        # Determine if Guardian assistance should be offered
-        show_guardian = any(keyword in llm_response.lower() for keyword in [
-            'expert', 'professional', 'guardian', 'immediate', 'urgent', 
-            'complex', 'business', 'enterprise', 'incident', 'breach',
-            'malware infection', 'ransomware', 'hacked'
-        ])
-        
         return {
-            "response": llm_response,
-            "confidence": "medium",
-            "source": "llm",
-            "show_guardian": show_guardian
+            'response': response.choices[0].message.content.strip(),
+            'source': 'ai_analysis',
+            'model': 'gpt-3.5-turbo'
         }
         
     except Exception as e:
-        print(f"LLM Error: {str(e)}")
-        return {
-            "response": "I'm having trouble processing your question right now. For immediate cybersecurity assistance, please connect with a Remaleh Guardian who can help you directly.",
-            "confidence": "low",
-            "source": "error",
-            "show_guardian": True
-        }
+        print(f"OpenAI API error: {str(e)}")
+        return None
 
-@chat_bp.route('/message', methods=['POST'])
+@chat_bp.route('/', methods=['OPTIONS'])
+def handle_preflight():
+    """Handle CORS preflight requests"""
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization")
+    response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
+    return response
+
+@chat_bp.route('/', methods=['POST'])
 def chat_message():
-    """
-    Hybrid chat endpoint that uses rule-based responses first, then LLM fallback
-    """
+    """Handle chat messages with hybrid intelligence"""
     try:
+        # Handle CORS for actual request
+        response_headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type,Authorization",
+            "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTIONS"
+        }
+        
         data = request.get_json()
-        message = data.get('message', '').strip()
-        conversation_history = data.get('conversation_history', [])
-        
-        if not message:
+        if not data or 'message' not in data:
             return jsonify({
-                "response": "Please ask me a cybersecurity question and I'll be happy to help!",
-                "source": "validation",
-                "show_guardian": False
-            }), 200
+                'error': 'Message is required'
+            }), 400, response_headers
         
-        # First, try rule-based response
-        rule_response = get_rule_based_response(message)
+        user_message = data['message'].strip()
+        if not user_message:
+            return jsonify({
+                'error': 'Message cannot be empty'
+            }), 400, response_headers
+        
+        # Check for Guardian escalation first
+        needs_guardian = should_escalate_to_guardian(user_message)
+        
+        # Try rule-based response first
+        rule_response = get_rule_based_response(user_message)
         
         if rule_response:
-            # Rule-based match found
+            # Rule-based response found
             return jsonify({
-                "response": rule_response["response"],
-                "source": rule_response["source"],
-                "confidence": rule_response["confidence"],
-                "show_guardian": rule_response["show_guardian"],
-                "escalated": False
-            }), 200
+                'response': rule_response['response'],
+                'source': rule_response['source'],
+                'category': rule_response['category'],
+                'needs_guardian': needs_guardian,
+                'guardian_url': 'https://www.remaleh.com.au/contact-us' if needs_guardian else None
+            }), 200, response_headers
         
-        # No rule-based match, use LLM
-        llm_response = get_llm_response(message, conversation_history)
+        # No rule-based response, try LLM
+        llm_response = get_llm_response(user_message)
+        
+        if llm_response:
+            # LLM response available
+            return jsonify({
+                'response': llm_response['response'],
+                'source': llm_response['source'],
+                'model': llm_response['model'],
+                'needs_guardian': needs_guardian,
+                'guardian_url': 'https://www.remaleh.com.au/contact-us' if needs_guardian else None
+            }), 200, response_headers
+        
+        # Fallback response
+        fallback_response = """I understand you have a cybersecurity question. While I can help with common topics like passwords, phishing, and malware protection, your specific question might need expert attention.
+
+For immediate assistance with complex cybersecurity issues, please contact our Remaleh Guardians."""
         
         return jsonify({
-            "response": llm_response["response"],
-            "source": llm_response["source"],
-            "confidence": llm_response["confidence"],
-            "show_guardian": llm_response["show_guardian"],
-            "escalated": False
-        }), 200
+            'response': fallback_response,
+            'source': 'fallback',
+            'needs_guardian': True,
+            'guardian_url': 'https://www.remaleh.com.au/contact-us'
+        }), 200, response_headers
         
     except Exception as e:
         print(f"Chat error: {str(e)}")
         return jsonify({
-            "response": "I'm experiencing technical difficulties. Please connect with a Remaleh Guardian for immediate assistance.",
-            "source": "error",
-            "show_guardian": True,
-            "escalated": True
-        }), 500
+            'error': 'Internal server error',
+            'message': 'Please try again or contact support'
+        }), 500, {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type,Authorization",
+            "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTIONS"
+        }
+
+@chat_bp.route('/health', methods=['GET'])
+def chat_health():
+    """Health check endpoint for chat service"""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'chat',
+        'openai_configured': bool(os.getenv('OPENAI_API_KEY')),
+        'knowledge_base_categories': len(CYBERSECURITY_KNOWLEDGE)
+    }), 200, {
+        "Access-Control-Allow-Origin": "*"
+    }
 
