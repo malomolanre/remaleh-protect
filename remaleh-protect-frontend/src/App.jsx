@@ -120,7 +120,17 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
       <header className="p-4 flex justify-center">
-        <img src="https://remaleh.com.au/wp-content/uploads/2023/11/Remaleh2-03.png" alt="Remaleh" className="h-8 w-auto object-contain" />
+        {/* Fixed logo implementation with fallback */}
+        <img 
+          src="https://remaleh.com.au/wp-content/uploads/2023/11/Remaleh2-03.png" 
+          alt="Remaleh" 
+          className="h-8 w-auto object-contain"
+          onError={(e) => {
+            e.target.onerror = null; 
+            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='32' viewBox='0 0 100 32'%3E%3Crect width='100' height='32' fill='%230891b2'/%3E%3Ctext x='50' y='20' font-family='Arial' font-size='16' fill='white' text-anchor='middle'%3ERemaleh%3C/text%3E%3C/svg%3E";
+          }}
+          style={{maxHeight: '32px'}}
+        />
       </header>
 
       <div className="text-center px-4 py-6">
@@ -1040,3 +1050,4 @@ function App() {
 }
 
 export default App;
+
