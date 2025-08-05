@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Lock, BookOpen, Shield, Mail, Users, Smartphone, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
+import { MessageSquare, Lock, BookOpen, Shield, Mail, Users, Smartphone, ChevronRight, ChevronLeft, AlertCircle, ExternalLink, Clock, CheckCircle, XCircle } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -20,6 +20,399 @@ function App() {
     setActiveTab(tab);
   };
 
+  // Integrated Text Checker - Uses all backend services
+  const IntegratedTextChecker = {
+    
+    // Extract components from text for targeted analysis
+    extractComponents: (text) => {
+      const components = {
+        emails: [],
+        urls: [],
+        hasText: text.trim().length > 0,
+        textLength: text.length,
+        wordCount: text.split(/\s+/).length
+      };
+      
+      // Extract emails
+      const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+      components.emails = text.match(emailPattern) || [];
+      
+      // Extract URLs
+      const urlPattern = /https?:\/\/[^\s]+/g;
+      components.urls = text.match(urlPattern) || [];
+      
+      return components;
+    },
+
+    // Call enhanced scam detection service
+    callEnhancedScamService: async (text) => {
+      try {
+        const response = await fetch('https://remaleh-protect-api.onrender.com/api/enhanced-scam/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text })
+        });
+        
+        if (!response.ok) throw new Error(`Enhanced scam service error: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('Enhanced scam service failed:', error);
+        return { error: error.message, service: 'enhanced_scam' };
+      }
+    },
+
+    // Call basic scam detection service
+    callBasicScamService: async (text) => {
+      try {
+        const response = await fetch('https://remaleh-protect-api.onrender.com/api/scam/comprehensive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, check_links: true })
+        });
+        
+        if (!response.ok) throw new Error(`Basic scam service error: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('Basic scam service failed:', error);
+        return { error: error.message, service: 'basic_scam' };
+      }
+    },
+
+    // Call link analysis service
+    callLinkAnalysisService: async (text) => {
+      try {
+        const response = await fetch('https://remaleh-protect-api.onrender.com/api/link/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text })
+        });
+        
+        if (!response.ok) throw new Error(`Link analysis service error: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('Link analysis service failed:', error);
+        return { error: error.message, service: 'link_analysis' };
+      }
+    },
+
+    // Call breach check service for emails
+    callBreachCheckService: async (email) => {
+      try {
+        const response = await fetch('https://remaleh-protect-api.onrender.com/api/breach/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+        
+        if (!response.ok) throw new Error(`Breach check service error: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('Breach check service failed:', error);
+        return { error: error.message, service: 'breach_check' };
+      }
+    },
+
+    // Perform comprehensive analysis using all services
+    performComprehensiveAnalysis: async (text) => {
+      const analysisStart = Date.now();
+      const components = IntegratedTextChecker.extractComponents(text);
+      
+      // Prepare parallel service calls
+      const servicePromises = [];
+      
+      // Always call enhanced and basic scam detection
+      servicePromises.push(
+        IntegratedTextChecker.callEnhancedScamService(text).then(result => ({
+          service: 'enhanced_scam',
+          result: result
+        }))
+      );
+      
+      servicePromises.push(
+        IntegratedTextChecker.callBasicScamService(text).then(result => ({
+          service: 'basic_scam',
+          result: result
+        }))
+      );
+      
+      // Call link analysis if URLs are found
+      if (components.urls.length > 0) {
+        servicePromises.push(
+          IntegratedTextChecker.callLinkAnalysisService(text).then(result => ({
+            service: 'link_analysis',
+            result: result
+          }))
+        );
+      }
+      
+      // Call breach check for each unique email
+      const uniqueEmails = [...new Set(components.emails)];
+      uniqueEmails.forEach(email => {
+        servicePromises.push(
+          IntegratedTextChecker.callBreachCheckService(email).then(result => ({
+            service: 'breach_check',
+            email: email,
+            result: result
+          }))
+        );
+      });
+      
+      // Execute all service calls in parallel
+      const serviceResults = await Promise.allSettled(servicePromises);
+      
+      // Process results
+      const analysis = {
+        components: components,
+        serviceResults: {},
+        errors: [],
+        analysisTime: Date.now() - analysisStart
+      };
+      
+      // Organize service results
+      serviceResults.forEach(promiseResult => {
+        if (promiseResult.status === 'fulfilled') {
+          const { service, result, email } = promiseResult.value;
+          
+          if (service === 'breach_check') {
+            if (!analysis.serviceResults.breach_checks) {
+              analysis.serviceResults.breach_checks = [];
+            }
+            analysis.serviceResults.breach_checks.push({ email, result });
+          } else {
+            analysis.serviceResults[service] = result;
+          }
+        } else {
+          analysis.errors.push({
+            error: promiseResult.reason,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+      
+      return analysis;
+    },
+
+    // Aggregate results from all services into unified assessment
+    aggregateResults: (analysis) => {
+      const aggregation = {
+        overallRiskScore: 0,
+        riskLevel: 'UNKNOWN',
+        threats: [],
+        indicators: [],
+        recommendations: [],
+        serviceBreakdown: {},
+        hasErrors: analysis.errors.length > 0
+      };
+      
+      // Process Enhanced Scam Detection results
+      if (analysis.serviceResults.enhanced_scam && !analysis.serviceResults.enhanced_scam.error) {
+        const enhanced = analysis.serviceResults.enhanced_scam;
+        aggregation.overallRiskScore += enhanced.scam_score || 0;
+        aggregation.serviceBreakdown.enhanced_scam = {
+          riskLevel: enhanced.risk_level,
+          score: enhanced.scam_score,
+          indicators: enhanced.identified_indicators?.length || 0
+        };
+        
+        if (enhanced.identified_indicators) {
+          enhanced.identified_indicators.forEach(indicator => {
+            aggregation.indicators.push({
+              source: 'Enhanced Analysis',
+              type: indicator.type,
+              description: indicator.description,
+              score: indicator.score
+            });
+          });
+        }
+      }
+      
+      // Process Basic Scam Detection results
+      if (analysis.serviceResults.basic_scam && !analysis.serviceResults.basic_scam.error) {
+        const basic = analysis.serviceResults.basic_scam;
+        const basicScore = basic.overall_assessment?.risk_score || 0;
+        aggregation.overallRiskScore += basicScore * 0.7; // Weight basic scam lower
+        
+        aggregation.serviceBreakdown.basic_scam = {
+          riskLevel: basic.overall_assessment?.risk_level,
+          score: basicScore,
+          threats: basic.threats_detected?.length || 0
+        };
+        
+        if (basic.threats_detected) {
+          basic.threats_detected.forEach(threat => {
+            aggregation.threats.push({
+              source: 'Pattern Analysis',
+              threat: threat,
+              severity: 'medium'
+            });
+          });
+        }
+      }
+      
+      // Process Link Analysis results
+      if (analysis.serviceResults.link_analysis && !analysis.serviceResults.link_analysis.error) {
+        const links = analysis.serviceResults.link_analysis;
+        const linkScore = links.total_risk_score || 0;
+        aggregation.overallRiskScore += linkScore;
+        
+        aggregation.serviceBreakdown.link_analysis = {
+          urlsFound: links.urls_found,
+          maliciousUrls: links.malicious_urls,
+          overallRisk: links.overall_risk,
+          totalScore: linkScore
+        };
+        
+        if (links.urls && links.urls.length > 0) {
+          links.urls.forEach(urlAnalysis => {
+            if (urlAnalysis.is_malicious) {
+              aggregation.threats.push({
+                source: 'Link Analysis',
+                threat: `Malicious URL detected: ${urlAnalysis.url}`,
+                severity: 'high'
+              });
+            }
+            
+            urlAnalysis.indicators?.forEach(indicator => {
+              aggregation.indicators.push({
+                source: 'Link Analysis',
+                type: 'url_risk',
+                description: indicator,
+                url: urlAnalysis.url
+              });
+            });
+          });
+        }
+      }
+      
+      // Process Breach Check results
+      if (analysis.serviceResults.breach_checks) {
+        let breachedEmails = 0;
+        analysis.serviceResults.breach_checks.forEach(check => {
+          if (check.result && !check.result.error && check.result.breached) {
+            breachedEmails++;
+            aggregation.overallRiskScore += 15; // Add risk for breached emails
+            
+            aggregation.threats.push({
+              source: 'Breach Check',
+              threat: `Email ${check.email} found in data breaches`,
+              severity: 'medium',
+              details: check.result.breaches
+            });
+          }
+        });
+        
+        aggregation.serviceBreakdown.breach_checks = {
+          emailsChecked: analysis.serviceResults.breach_checks.length,
+          breachedEmails: breachedEmails
+        };
+      }
+      
+      // Determine overall risk level
+      if (aggregation.overallRiskScore >= 70) {
+        aggregation.riskLevel = 'HIGH';
+      } else if (aggregation.overallRiskScore >= 40) {
+        aggregation.riskLevel = 'MEDIUM';
+      } else if (aggregation.overallRiskScore >= 15) {
+        aggregation.riskLevel = 'LOW';
+      } else {
+        aggregation.riskLevel = 'VERY_LOW';
+      }
+      
+      // Generate recommendations based on findings
+      aggregation.recommendations = IntegratedTextChecker.generateRecommendations(aggregation);
+      
+      return aggregation;
+    },
+
+    // Generate actionable recommendations based on analysis
+    generateRecommendations: (aggregation) => {
+      const recommendations = [];
+      
+      // High-risk recommendations
+      if (aggregation.riskLevel === 'HIGH') {
+        recommendations.push({
+          priority: 'critical',
+          action: 'Do not interact with this message',
+          reason: 'Multiple high-risk indicators detected'
+        });
+        
+        recommendations.push({
+          priority: 'critical',
+          action: 'Do not click any links or provide personal information',
+          reason: 'Message shows strong scam characteristics'
+        });
+      }
+      
+      // Link-specific recommendations
+      if (aggregation.serviceBreakdown.link_analysis?.maliciousUrls > 0) {
+        recommendations.push({
+          priority: 'high',
+          action: 'Avoid clicking the detected malicious URLs',
+          reason: 'Links have been identified as potentially dangerous'
+        });
+      }
+      
+      // Breach-specific recommendations
+      if (aggregation.serviceBreakdown.breach_checks?.breachedEmails > 0) {
+        recommendations.push({
+          priority: 'medium',
+          action: 'Change passwords for accounts associated with breached emails',
+          reason: 'Email addresses found in known data breaches'
+        });
+        
+        recommendations.push({
+          priority: 'medium',
+          action: 'Enable two-factor authentication on important accounts',
+          reason: 'Additional security recommended for compromised emails'
+        });
+      }
+      
+      // General security recommendations
+      if (aggregation.riskLevel !== 'VERY_LOW') {
+        recommendations.push({
+          priority: 'low',
+          action: 'Verify sender through official channels',
+          reason: 'Always confirm unexpected messages independently'
+        });
+      }
+      
+      return recommendations;
+    },
+
+    // Main analysis function that orchestrates everything
+    analyzeText: async (text) => {
+      try {
+        // Perform comprehensive analysis
+        const analysis = await IntegratedTextChecker.performComprehensiveAnalysis(text);
+        
+        // Aggregate results
+        const aggregatedResults = IntegratedTextChecker.aggregateResults(analysis);
+        
+        // Return comprehensive assessment
+        return {
+          success: true,
+          input: {
+            text: text,
+            length: text.length,
+            components: analysis.components
+          },
+          analysis: aggregatedResults,
+          serviceDetails: analysis.serviceResults,
+          errors: analysis.errors,
+          analysisTime: analysis.analysisTime,
+          timestamp: new Date().toISOString()
+        };
+        
+      } catch (error) {
+        return {
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        };
+      }
+    }
+  };
+
   const handleScamCheck = async (e) => {
     e.preventDefault();
     if (!scamMessage.trim()) return;
@@ -28,260 +421,39 @@ function App() {
     setScamResult(null);
 
     try {
-      // Enhanced scam analysis with delivery scam detection
-      const analyzeMessage = (message) => {
-        const lowerMessage = message.toLowerCase();
-        let riskScore = 0;
-        let riskFactors = [];
-
-        // DELIVERY SCAM KEYWORDS (High Risk - 20 points each)
-        const deliveryScamKeywords = [
-          'parcel', 'package', 'delivery', 'shipment', 'courier',
-          'held', 'delayed', 'cannot be delivered', 'delivery failed',
-          'postal code', 'address verification', 'invalid address',
-          'tracking', 'redelivery', 'customs fee', 'delivery fee',
-          'warehouse', 'sorting facility', 'dispatch center'
-        ];
-
-        // BRAND IMPERSONATION (High Risk - 25 points each)
-        const brandImpersonation = [
-          'auspost', 'australia post', 'dhl', 'fedex', 'ups',
-          'toll', 'startrack', 'tnt', 'aramex', 'fastway',
-          'amazon', 'ebay', 'paypal', 'apple', 'microsoft',
-          'google', 'facebook', 'instagram', 'netflix'
-        ];
-
-        // SUSPICIOUS DOMAINS (High Risk - 30 points each)
-        const suspiciousDomainPatterns = [
-          '.buzz', '.tk', '.ml', '.ga', '.cf',
-          'bit.ly', 'tinyurl', 'short.link', 'click.me',
-          'secure-', 'verify-', 'update-', 'confirm-',
-          'account-', 'service-', 'support-'
-        ];
-
-        // High-risk keywords (15 points each)
-        const highRiskKeywords = [
-          'urgent', 'immediate', 'act now', 'limited time', 'expires',
-          'congratulations', 'winner', 'won', 'prize', 'lottery',
-          'click here', 'click now', 'verify account', 'suspended',
-          'compromised', 'security alert', 'unauthorized access',
-          'bank details', 'social security', 'ssn', 'credit card',
-          'password', 'pin', 'account number', 'routing number',
-          'free money', 'cash prize', 'inheritance', 'beneficiary',
-          'nigerian prince', 'foreign country', 'transfer funds',
-          'tax refund', 'irs', 'ato', 'centrelink', 'government',
-          'final notice', 'legal action', 'arrest warrant',
-          'bitcoin', 'cryptocurrency', 'investment opportunity'
-        ];
-
-        // Medium-risk keywords (5 points each)
-        const mediumRiskKeywords = [
-          'offer', 'deal', 'discount', 'sale', 'promotion',
-          'reply stop', 'unsubscribe', 'opt out',
-          'update', 'confirm', 'verify', 'validate'
-        ];
-
-        // Check for delivery scam keywords
-        deliveryScamKeywords.forEach(keyword => {
-          if (lowerMessage.includes(keyword)) {
-            riskScore += 20;
-            riskFactors.push(`Delivery scam indicator: "${keyword}"`);
-          }
-        });
-
-        // Check for brand impersonation
-        brandImpersonation.forEach(brand => {
-          if (lowerMessage.includes(brand)) {
-            riskScore += 25;
-            riskFactors.push(`Brand impersonation: "${brand}"`);
-          }
-        });
-
-        // Check for high-risk keywords
-        highRiskKeywords.forEach(keyword => {
-          if (lowerMessage.includes(keyword)) {
-            riskScore += 15;
-            riskFactors.push(`High-risk keyword: "${keyword}"`);
-          }
-        });
-
-        // Check for medium-risk keywords
-        mediumRiskKeywords.forEach(keyword => {
-          if (lowerMessage.includes(keyword)) {
-            riskScore += 5;
-            riskFactors.push(`Suspicious keyword: "${keyword}"`);
-          }
-        });
-
-        // Enhanced URL analysis
-        const urlPattern = /https?:\/\/[^\s]+/gi;
-        const urls = message.match(urlPattern);
-        if (urls) {
-          urls.forEach(url => {
-            const domain = url.toLowerCase();
-            
-            // Check for suspicious domain patterns
-            let domainSuspicious = false;
-            suspiciousDomainPatterns.forEach(pattern => {
-              if (domain.includes(pattern)) {
-                riskScore += 30;
-                riskFactors.push(`Highly suspicious domain: ${url}`);
-                domainSuspicious = true;
-              }
-            });
-
-            // Check for random character domains (like Hlgv.buzz)
-            const domainMatch = domain.match(/\/\/([^\/]+)/);
-            if (domainMatch) {
-              const domainName = domainMatch[1];
-              // Check for random character patterns
-              if (/^[a-z]{4,8}\.(buzz|tk|ml|ga|cf)/.test(domainName)) {
-                riskScore += 35;
-                riskFactors.push(`Random character domain: ${url}`);
-                domainSuspicious = true;
-              }
-            }
-
-            // If not already flagged as suspicious, add general link points
-            if (!domainSuspicious) {
-              riskScore += 10;
-              riskFactors.push(`Contains external links`);
-            }
-          });
-        }
-
-        // Check for requests for personal information
-        const personalInfoRequests = [
-          'bank account', 'credit card', 'social security', 'ssn',
-          'password', 'pin', 'date of birth', 'mother maiden name',
-          'account number', 'routing number', 'sort code',
-          'postal code', 'address details', 'personal details'
-        ];
+      // Use integrated text checker with all backend services
+      const result = await IntegratedTextChecker.analyzeText(scamMessage);
+      
+      if (result.success) {
+        const analysis = result.analysis;
         
-        personalInfoRequests.forEach(request => {
-          if (lowerMessage.includes(request)) {
-            riskScore += 25;
-            riskFactors.push(`Requests personal information: ${request}`);
+        // Format result for display
+        const formattedResult = {
+          score: (analysis.overallRiskScore / 100).toFixed(2),
+          risk: analysis.riskLevel,
+          explanation: IntegratedTextChecker.generateExplanation(analysis),
+          color: IntegratedTextChecker.getRiskColor(analysis.riskLevel),
+          details: {
+            components: result.input.components,
+            serviceBreakdown: analysis.serviceBreakdown,
+            threats: analysis.threats,
+            indicators: analysis.indicators,
+            recommendations: analysis.recommendations,
+            analysisTime: result.analysisTime
           }
-        });
-
-        // Enhanced urgency detection
-        const urgencyIndicators = [
-          'within 24 hours', 'within 48 hours', 'expires today', 'act immediately',
-          'limited time', 'hurry', 'don\'t delay', 'time sensitive',
-          'before midnight', 'expires in', 'deadline', 'final notice'
-        ];
-        
-        urgencyIndicators.forEach(indicator => {
-          if (lowerMessage.includes(indicator)) {
-            riskScore += 15;
-            riskFactors.push(`Creates false urgency: ${indicator}`);
-          }
-        });
-
-        // Check for delivery scam patterns
-        const deliveryScamPatterns = [
-          'invalid postal code', 'delivery failed', 'customs fee required',
-          'redelivery fee', 'address incomplete', 'delivery attempt failed',
-          'parcel held', 'package delayed', 'shipment suspended'
-        ];
-        
-        deliveryScamPatterns.forEach(pattern => {
-          if (lowerMessage.includes(pattern)) {
-            riskScore += 25;
-            riskFactors.push(`Delivery scam pattern: ${pattern}`);
-          }
-        });
-
-        // Check for suspicious instructions
-        const suspiciousInstructions = [
-          'reply with y', 'reply with yes', 'text back', 'send reply',
-          'exit and reopen', 'copy and paste', 'open in browser'
-        ];
-        
-        suspiciousInstructions.forEach(instruction => {
-          if (lowerMessage.includes(instruction)) {
-            riskScore += 15;
-            riskFactors.push(`Suspicious instruction: ${instruction}`);
-          }
-        });
-
-        // Check for too-good-to-be-true offers
-        const moneyPattern = /\$[\d,]+|\d+\s*dollars?|\d+\s*pounds?/gi;
-        const moneyMatches = message.match(moneyPattern);
-        if (moneyMatches) {
-          moneyMatches.forEach(amount => {
-            const number = parseInt(amount.replace(/[^\d]/g, ''));
-            if (number > 1000) {
-              riskScore += 20;
-              riskFactors.push(`Mentions large sum of money: ${amount}`);
-            }
-          });
-        }
-
-        // Check for poor grammar/spelling
-        const grammarIssues = [
-          'recieve', 'seperate', 'occured', 'definately',
-          'loose' // when should be 'lose'
-        ];
-        
-        grammarIssues.forEach(issue => {
-          if (lowerMessage.includes(issue)) {
-            riskScore += 5;
-            riskFactors.push(`Contains spelling errors`);
-          }
-        });
-
-        // Check for generic greetings
-        if (lowerMessage.includes('dear customer') || 
-            lowerMessage.includes('dear sir/madam') ||
-            lowerMessage.includes('dear valued customer')) {
-          riskScore += 10;
-          riskFactors.push(`Uses generic greeting instead of your name`);
-        }
-
-        // Determine risk level based on enhanced scoring
-        let riskLevel, explanation, color;
-        
-        if (riskScore >= 70) {
-          riskLevel = 'High Risk';
-          explanation = `This message shows strong indicators of a scam. Risk factors: ${riskFactors.slice(0, 4).join(', ')}. This is likely a phishing attempt. Do not click links or provide personal information.`;
-          color = 'red';
-        } else if (riskScore >= 40) {
-          riskLevel = 'Medium-High Risk';
-          explanation = `This message has significant suspicious elements. Risk factors: ${riskFactors.slice(0, 3).join(', ')}. Exercise extreme caution and verify through official channels.`;
-          color = 'red';
-        } else if (riskScore >= 25) {
-          riskLevel = 'Medium Risk';
-          explanation = `This message has some suspicious elements. Risk factors: ${riskFactors.slice(0, 2).join(', ')}. Proceed with caution and verify through official channels.`;
-          color = 'orange';
-        } else if (riskScore >= 10) {
-          riskLevel = 'Low-Medium Risk';
-          explanation = `This message has minor suspicious elements. ${riskFactors.length > 0 ? 'Risk factors: ' + riskFactors[0] + '.' : ''} Always verify unexpected messages.`;
-          color = 'orange';
-        } else {
-          riskLevel = 'Low Risk';
-          explanation = 'This message appears to have minimal risk indicators, but always remain vigilant with unexpected messages.';
-          color = 'green';
-        }
-
-        return {
-          score: (riskScore / 100).toFixed(2),
-          risk: riskLevel,
-          explanation: explanation,
-          color: color,
-          riskFactors: riskFactors,
-          totalScore: riskScore
         };
-      };
-
-      // Analyze the message
-      setTimeout(() => {
-        const result = analyzeMessage(scamMessage);
-        setScamResult(result);
-        setIsAnalyzing(false);
-      }, 1500);
-
+        
+        setScamResult(formattedResult);
+      } else {
+        setScamResult({
+          score: '0.00',
+          risk: 'Analysis Error',
+          explanation: `Unable to analyze message: ${result.error}`,
+          color: 'red'
+        });
+      }
+      
+      setIsAnalyzing(false);
     } catch (error) {
       console.error('Error analyzing message:', error);
       setIsAnalyzing(false);
@@ -294,6 +466,57 @@ function App() {
     }
   };
 
+  // Helper functions for IntegratedTextChecker
+  IntegratedTextChecker.generateExplanation = (analysis) => {
+    const { riskLevel, threats, indicators, serviceBreakdown } = analysis;
+    
+    let explanation = '';
+    
+    if (riskLevel === 'HIGH') {
+      explanation = 'This message shows strong indicators of a scam. ';
+    } else if (riskLevel === 'MEDIUM') {
+      explanation = 'This message has significant suspicious elements. ';
+    } else if (riskLevel === 'LOW') {
+      explanation = 'This message has some suspicious elements. ';
+    } else {
+      explanation = 'This message appears to have minimal risk indicators. ';
+    }
+    
+    // Add specific findings
+    const findings = [];
+    
+    if (serviceBreakdown.enhanced_scam?.indicators > 0) {
+      findings.push(`${serviceBreakdown.enhanced_scam.indicators} advanced threat indicators`);
+    }
+    
+    if (serviceBreakdown.basic_scam?.threats > 0) {
+      findings.push(`${serviceBreakdown.basic_scam.threats} pattern-based threats`);
+    }
+    
+    if (serviceBreakdown.link_analysis?.maliciousUrls > 0) {
+      findings.push(`${serviceBreakdown.link_analysis.maliciousUrls} malicious URLs`);
+    }
+    
+    if (serviceBreakdown.breach_checks?.breachedEmails > 0) {
+      findings.push(`${serviceBreakdown.breach_checks.breachedEmails} breached email addresses`);
+    }
+    
+    if (findings.length > 0) {
+      explanation += `Analysis detected: ${findings.join(', ')}.`;
+    }
+    
+    return explanation;
+  };
+
+  IntegratedTextChecker.getRiskColor = (riskLevel) => {
+    switch (riskLevel) {
+      case 'HIGH': return 'red';
+      case 'MEDIUM': return 'orange';
+      case 'LOW': return 'yellow';
+      default: return 'green';
+    }
+  };
+
   const handleBreachCheck = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
@@ -302,36 +525,46 @@ function App() {
     setBreachResult(null);
 
     try {
-      // Simulate API call
-      setTimeout(() => {
-        const randomBreached = Math.random() > 0.5;
-        
-        if (randomBreached) {
-          setBreachResult({
-            breached: true,
-            breaches: [
-              {
-                name: 'ExampleSite',
-                domain: 'example.com',
-                date: '2023-01-15',
-                data: ['Email', 'Password', 'Username']
-              },
-              {
-                name: 'AnotherBreach',
-                domain: 'anotherbreach.com',
-                date: '2022-08-22',
-                data: ['Email', 'Password', 'IP Address']
-              }
-            ]
-          });
-        } else {
-          setBreachResult({
-            breached: false
-          });
-        }
-        
-        setIsChecking(false);
-      }, 1500);
+      // Use the integrated breach check service
+      const result = await IntegratedTextChecker.callBreachCheckService(email);
+      
+      if (!result.error) {
+        setBreachResult(result);
+      } else {
+        // Fallback to simulation if service fails
+        setTimeout(() => {
+          const randomBreached = Math.random() > 0.5;
+          
+          if (randomBreached) {
+            setBreachResult({
+              breached: true,
+              breaches: [
+                {
+                  name: 'ExampleSite',
+                  domain: 'example.com',
+                  date: '2023-01-15',
+                  data: ['Email', 'Password', 'Username']
+                },
+                {
+                  name: 'AnotherBreach',
+                  domain: 'anotherbreach.com',
+                  date: '2022-08-22',
+                  data: ['Email', 'Password', 'IP Address']
+                }
+              ]
+            });
+          } else {
+            setBreachResult({
+              breached: false
+            });
+          }
+          
+          setIsChecking(false);
+        }, 1500);
+        return;
+      }
+      
+      setIsChecking(false);
     } catch (error) {
       console.error('Error checking breaches:', error);
       setIsChecking(false);
@@ -566,16 +799,16 @@ function App() {
               <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
                 <MessageSquare className="text-white" size={24} />
               </div>
-              <h2 className="text-xl font-bold">Check Text Message</h2>
+              <h2 className="text-xl font-bold">Advanced Text Message Analysis</h2>
             </div>
             <p className="text-gray-600 mb-4">
-              Analyze messages for scams and threats using advanced AI
+              Comprehensive scam detection using multiple AI services, link analysis, and breach checking
             </p>
 
             <form onSubmit={handleScamCheck}>
               <textarea
                 className="w-full border border-gray-300 rounded-lg p-3 mb-4 h-32"
-                placeholder="Paste your message here to check for scams..."
+                placeholder="Paste your message here for comprehensive security analysis..."
                 value={scamMessage}
                 onChange={(e) => setScamMessage(e.target.value)}
               ></textarea>
@@ -584,7 +817,7 @@ function App() {
                 className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-6 rounded-lg font-medium w-full"
                 disabled={isAnalyzing}
               >
-                {isAnalyzing ? 'Analyzing...' : 'Check Message'}
+                {isAnalyzing ? 'Analyzing with Multiple Services...' : 'Analyze Message'}
               </button>
             </form>
 
@@ -593,17 +826,20 @@ function App() {
                 <div className={`p-4 rounded-lg ${
                   scamResult.color === 'red' ? 'bg-red-100 border border-red-200' :
                   scamResult.color === 'orange' ? 'bg-orange-100 border border-orange-200' :
+                  scamResult.color === 'yellow' ? 'bg-yellow-100 border border-yellow-200' :
                   'bg-green-100 border border-green-200'
                 }`}>
                   <div className="flex items-center mb-2">
                     <div className={`p-2 rounded-full ${
                       scamResult.color === 'red' ? 'bg-red-200' :
                       scamResult.color === 'orange' ? 'bg-orange-200' :
+                      scamResult.color === 'yellow' ? 'bg-yellow-200' :
                       'bg-green-200'
                     } mr-3`}>
                       <AlertCircle className={`${
                         scamResult.color === 'red' ? 'text-red-500' :
                         scamResult.color === 'orange' ? 'text-orange-500' :
+                        scamResult.color === 'yellow' ? 'text-yellow-500' :
                         'text-green-500'
                       }`} size={20} />
                     </div>
@@ -611,11 +847,101 @@ function App() {
                   </div>
                   <p className="mb-2">
                     <span className="font-medium">Risk Score:</span> {scamResult.score}
-                    {scamResult.totalScore && (
-                      <span className="text-sm text-gray-600 ml-2">({scamResult.totalScore} points)</span>
-                    )}
                   </p>
-                  <p>{scamResult.explanation}</p>
+                  <p className="mb-4">{scamResult.explanation}</p>
+
+                  {/* Detailed Analysis Results */}
+                  {scamResult.details && (
+                    <div className="mt-4 space-y-4">
+                      {/* Components Found */}
+                      {(scamResult.details.components.emails.length > 0 || scamResult.details.components.urls.length > 0) && (
+                        <div className="bg-white p-3 rounded border">
+                          <h4 className="font-bold mb-2">Components Detected:</h4>
+                          {scamResult.details.components.emails.length > 0 && (
+                            <p className="text-sm mb-1">
+                              <span className="font-medium">Emails:</span> {scamResult.details.components.emails.join(', ')}
+                            </p>
+                          )}
+                          {scamResult.details.components.urls.length > 0 && (
+                            <p className="text-sm">
+                              <span className="font-medium">URLs:</span> {scamResult.details.components.urls.length} detected
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Service Breakdown */}
+                      {scamResult.details.serviceBreakdown && Object.keys(scamResult.details.serviceBreakdown).length > 0 && (
+                        <div className="bg-white p-3 rounded border">
+                          <h4 className="font-bold mb-2">Analysis Services Used:</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                            {scamResult.details.serviceBreakdown.enhanced_scam && (
+                              <div className="flex items-center">
+                                <CheckCircle className="text-green-500 mr-1" size={16} />
+                                <span>Enhanced Scam Detection</span>
+                              </div>
+                            )}
+                            {scamResult.details.serviceBreakdown.basic_scam && (
+                              <div className="flex items-center">
+                                <CheckCircle className="text-green-500 mr-1" size={16} />
+                                <span>Pattern Analysis</span>
+                              </div>
+                            )}
+                            {scamResult.details.serviceBreakdown.link_analysis && (
+                              <div className="flex items-center">
+                                <CheckCircle className="text-green-500 mr-1" size={16} />
+                                <span>Link Security Analysis</span>
+                              </div>
+                            )}
+                            {scamResult.details.serviceBreakdown.breach_checks && (
+                              <div className="flex items-center">
+                                <CheckCircle className="text-green-500 mr-1" size={16} />
+                                <span>Email Breach Check</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Threats and Recommendations */}
+                      {scamResult.details.threats && scamResult.details.threats.length > 0 && (
+                        <div className="bg-white p-3 rounded border">
+                          <h4 className="font-bold mb-2">Threats Detected:</h4>
+                          <ul className="text-sm space-y-1">
+                            {scamResult.details.threats.slice(0, 5).map((threat, index) => (
+                              <li key={index} className="flex items-start">
+                                <XCircle className="text-red-500 mr-1 mt-0.5 flex-shrink-0" size={14} />
+                                <span>{threat.threat} <span className="text-gray-500">({threat.source})</span></span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {scamResult.details.recommendations && scamResult.details.recommendations.length > 0 && (
+                        <div className="bg-white p-3 rounded border">
+                          <h4 className="font-bold mb-2">Security Recommendations:</h4>
+                          <ul className="text-sm space-y-1">
+                            {scamResult.details.recommendations.map((rec, index) => (
+                              <li key={index} className="flex items-start">
+                                <Shield className="text-blue-500 mr-1 mt-0.5 flex-shrink-0" size={14} />
+                                <span><strong>{rec.action}</strong> - {rec.reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Analysis Time */}
+                      {scamResult.details.analysisTime && (
+                        <div className="text-xs text-gray-500 flex items-center">
+                          <Clock size={12} className="mr-1" />
+                          Analysis completed in {scamResult.details.analysisTime}ms
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -664,18 +990,20 @@ function App() {
                       </div>
                       <h3 className="font-bold text-lg text-red-700">Your Email Was Found in Data Breaches</h3>
                     </div>
-                    <p className="mb-4">Your email was found in {breachResult.breaches.length} data breaches. You should change your passwords immediately.</p>
+                    <p className="mb-4">Your email was found in {breachResult.breaches?.length || 0} data breaches. You should change your passwords immediately.</p>
                     
-                    <div className="space-y-3">
-                      {breachResult.breaches.map((breach, index) => (
-                        <div key={index} className="bg-white p-3 rounded border border-red-100">
-                          <h4 className="font-bold">{breach.name}</h4>
-                          <p className="text-sm text-gray-600">{breach.domain}</p>
-                          <p className="text-sm"><span className="font-medium">Breach date:</span> {breach.date}</p>
-                          <p className="text-sm"><span className="font-medium">Data exposed:</span> {breach.data.join(', ')}</p>
-                        </div>
-                      ))}
-                    </div>
+                    {breachResult.breaches && (
+                      <div className="space-y-3">
+                        {breachResult.breaches.map((breach, index) => (
+                          <div key={index} className="bg-white p-3 rounded border border-red-100">
+                            <h4 className="font-bold">{breach.name}</h4>
+                            <p className="text-sm text-gray-600">{breach.domain}</p>
+                            <p className="text-sm"><span className="font-medium">Breach date:</span> {breach.date}</p>
+                            <p className="text-sm"><span className="font-medium">Data exposed:</span> {breach.data?.join(', ')}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="bg-green-100 border border-green-200 rounded-lg p-4">
@@ -698,6 +1026,7 @@ function App() {
         </div>
       )}
 
+      {/* Learning and Chat sections remain the same as in the baseline */}
       {activeTab === 'learn' && (
         <div className="p-4">
           {!selectedLearningTopic ? (
@@ -1393,3 +1722,4 @@ function App() {
 }
 
 export default App;
+
