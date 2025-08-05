@@ -252,7 +252,7 @@ function App() {
       // If no match found in local knowledge base, call backend API
       if (!responseFound) {
         try {
-          const apiResponse = await fetch('https://remaleh-protect-app.onrender.com/api/chat/', {
+          const apiResponse = await fetch('https://remaleh-protect-api.onrender.com/api/chat/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
