@@ -208,7 +208,7 @@ function App() {
 
     // No rule-based match, use backend LLM
     try {
-      const response = await fetch('https://remaleh-protect-api.onrender.com/api/chat/message', {
+      const response = await fetch('https://remaleh-protect-api.onrender.com/api/chat/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
