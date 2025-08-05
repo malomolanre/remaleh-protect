@@ -28,40 +28,182 @@ function App() {
     setScamResult(null);
 
     try {
-      // Simulate API call
-      setTimeout(() => {
-        const randomScore = Math.random();
-        let result;
+      // Real scam analysis instead of random
+      const analyzeMessage = (message) => {
+        const lowerMessage = message.toLowerCase();
+        let riskScore = 0;
+        let riskFactors = [];
 
-        if (randomScore > 0.7) {
-          result = {
-            score: randomScore.toFixed(2),
-            risk: 'High Risk',
-            explanation: 'This message contains multiple warning signs of a scam, including urgency, requests for personal information, and suspicious links.',
-            color: 'red'
-          };
-        } else if (randomScore > 0.4) {
-          result = {
-            score: randomScore.toFixed(2),
-            risk: 'Medium Risk',
-            explanation: 'This message has some suspicious elements that could indicate a scam. Proceed with caution.',
-            color: 'orange'
-          };
-        } else {
-          result = {
-            score: randomScore.toFixed(2),
-            risk: 'Low Risk',
-            explanation: 'This message appears to be legitimate, but always remain vigilant.',
-            color: 'green'
-          };
+        // High-risk keywords and phrases
+        const highRiskKeywords = [
+          'urgent', 'immediate', 'act now', 'limited time', 'expires',
+          'congratulations', 'winner', 'won', 'prize', 'lottery',
+          'click here', 'click now', 'verify account', 'suspended',
+          'compromised', 'security alert', 'unauthorized access',
+          'bank details', 'social security', 'ssn', 'credit card',
+          'password', 'pin', 'account number', 'routing number',
+          'free money', 'cash prize', 'inheritance', 'beneficiary',
+          'nigerian prince', 'foreign country', 'transfer funds',
+          'tax refund', 'irs', 'ato', 'centrelink', 'government',
+          'final notice', 'legal action', 'arrest warrant',
+          'bitcoin', 'cryptocurrency', 'investment opportunity'
+        ];
+
+        // Medium-risk keywords
+        const mediumRiskKeywords = [
+          'offer', 'deal', 'discount', 'sale', 'promotion',
+          'reply stop', 'unsubscribe', 'opt out',
+          'delivery', 'package', 'shipment', 'tracking',
+          'update', 'confirm', 'verify', 'validate'
+        ];
+
+        // Check for high-risk keywords
+        highRiskKeywords.forEach(keyword => {
+          if (lowerMessage.includes(keyword)) {
+            riskScore += 15;
+            riskFactors.push(`Contains high-risk keyword: "${keyword}"`);
+          }
+        });
+
+        // Check for medium-risk keywords
+        mediumRiskKeywords.forEach(keyword => {
+          if (lowerMessage.includes(keyword)) {
+            riskScore += 5;
+            riskFactors.push(`Contains suspicious keyword: "${keyword}"`);
+          }
+        });
+
+        // Check for suspicious URLs
+        const urlPattern = /https?:\/\/[^\s]+/gi;
+        const urls = message.match(urlPattern);
+        if (urls) {
+          urls.forEach(url => {
+            // Check for suspicious domains
+            const suspiciousDomains = [
+              'bit.ly', 'tinyurl', 'short.link', 'click.me',
+              'secure-bank', 'bank-security', 'verify-account',
+              'lottery', 'winner', 'prize', 'claim'
+            ];
+            
+            const domain = url.toLowerCase();
+            if (suspiciousDomains.some(suspicious => domain.includes(suspicious))) {
+              riskScore += 20;
+              riskFactors.push(`Suspicious URL detected: ${url}`);
+            } else if (urls.length > 0) {
+              riskScore += 10;
+              riskFactors.push(`Contains external links`);
+            }
+          });
         }
 
+        // Check for requests for personal information
+        const personalInfoRequests = [
+          'bank account', 'credit card', 'social security', 'ssn',
+          'password', 'pin', 'date of birth', 'mother maiden name',
+          'account number', 'routing number', 'sort code'
+        ];
+        
+        personalInfoRequests.forEach(request => {
+          if (lowerMessage.includes(request)) {
+            riskScore += 25;
+            riskFactors.push(`Requests personal information: ${request}`);
+          }
+        });
+
+        // Check for urgency indicators
+        const urgencyIndicators = [
+          'within 24 hours', 'expires today', 'act immediately',
+          'limited time', 'hurry', 'don\'t delay', 'time sensitive'
+        ];
+        
+        urgencyIndicators.forEach(indicator => {
+          if (lowerMessage.includes(indicator)) {
+            riskScore += 15;
+            riskFactors.push(`Creates false urgency: ${indicator}`);
+          }
+        });
+
+        // Check for too-good-to-be-true offers
+        const moneyPattern = /\$[\d,]+|\d+\s*dollars?|\d+\s*pounds?/gi;
+        const moneyMatches = message.match(moneyPattern);
+        if (moneyMatches) {
+          moneyMatches.forEach(amount => {
+            // Extract number from amount
+            const number = parseInt(amount.replace(/[^\d]/g, ''));
+            if (number > 1000) {
+              riskScore += 20;
+              riskFactors.push(`Mentions large sum of money: ${amount}`);
+            }
+          });
+        }
+
+        // Check for poor grammar/spelling (simplified check)
+        const grammarIssues = [
+          'recieve', 'seperate', 'occured', 'definately',
+          'loose' // when should be 'lose'
+        ];
+        
+        grammarIssues.forEach(issue => {
+          if (lowerMessage.includes(issue)) {
+            riskScore += 5;
+            riskFactors.push(`Contains spelling errors`);
+          }
+        });
+
+        // Check for generic greetings
+        if (lowerMessage.includes('dear customer') || 
+            lowerMessage.includes('dear sir/madam') ||
+            lowerMessage.includes('dear valued customer')) {
+          riskScore += 10;
+          riskFactors.push(`Uses generic greeting instead of your name`);
+        }
+
+        // Determine risk level based on score
+        let riskLevel, explanation, color;
+        
+        if (riskScore >= 50) {
+          riskLevel = 'High Risk';
+          explanation = `This message shows strong indicators of a scam. Risk factors: ${riskFactors.slice(0, 3).join(', ')}. Do not click links or provide personal information.`;
+          color = 'red';
+        } else if (riskScore >= 25) {
+          riskLevel = 'Medium Risk';
+          explanation = `This message has some suspicious elements. Risk factors: ${riskFactors.slice(0, 2).join(', ')}. Proceed with caution and verify through official channels.`;
+          color = 'orange';
+        } else if (riskScore >= 10) {
+          riskLevel = 'Low-Medium Risk';
+          explanation = `This message has minor suspicious elements. ${riskFactors.length > 0 ? 'Risk factors: ' + riskFactors[0] + '.' : ''} Always verify unexpected messages.`;
+          color = 'orange';
+        } else {
+          riskLevel = 'Low Risk';
+          explanation = 'This message appears to have minimal risk indicators, but always remain vigilant with unexpected messages.';
+          color = 'green';
+        }
+
+        return {
+          score: (riskScore / 100).toFixed(2),
+          risk: riskLevel,
+          explanation: explanation,
+          color: color,
+          riskFactors: riskFactors
+        };
+      };
+
+      // Analyze the message
+      setTimeout(() => {
+        const result = analyzeMessage(scamMessage);
         setScamResult(result);
         setIsAnalyzing(false);
       }, 1500);
+
     } catch (error) {
       console.error('Error analyzing message:', error);
       setIsAnalyzing(false);
+      setScamResult({
+        score: '0.00',
+        risk: 'Analysis Error',
+        explanation: 'Unable to analyze message. Please try again.',
+        color: 'red'
+      });
     }
   };
 
