@@ -2,18 +2,17 @@ from flask import Blueprint, request, jsonify, make_response
 import os
 import openai
 import logging
-from flask_cors import cross_origin
 
-# Set up enhanced logging for debugging
-logging.basicConfig(level=logging.DEBUG)
+# Set up minimal logging for production
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 chat_bp = Blueprint('chat', __name__)
 
-# Configure OpenAI - but we'll check the key for each request
+# Configure OpenAI
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Rule-based knowledge base - keeping your comprehensive categories
+# Rule-based knowledge base
 CYBERSECURITY_KNOWLEDGE = {
     'passwords': {
         'keywords': ['password', 'passwords', 'strong password', 'password security', 'password manager', '2fa', 'two-factor'],
@@ -112,165 +111,230 @@ def get_rule_based_response(message):
     for category, data in CYBERSECURITY_KNOWLEDGE.items():
         for keyword in data['keywords']:
             if keyword in message_lower:
-                logger.debug(f"Found rule-based match in category: {category}")
                 return {
                     'response': data['response'],
                     'source': 'expert_knowledge',
                     'category': category
                 }
     
-    logger.debug("No rule-based match found")
     return None
 
 def should_escalate_to_guardian(message):
-    """Check if message should be escalated to Guardian"""
-    escalation_keywords = [
+    """Check if message should be escalated to Guardian with enhanced detection"""
+    # High priority escalation keywords (immediate Guardian contact)
+    high_priority_keywords = [
         'hacked', 'hack', 'stolen', 'breach', 'compromised', 'attacked',
-        'help', 'urgent', 'emergency', 'crisis', 'threat', 'malicious'
+        'help me', 'urgent', 'emergency', 'crisis', 'threat', 'malicious',
+        'scammed', 'fraud', 'identity theft', 'ransomware', 'blackmail',
+        'suspicious activity', 'unauthorized access', 'data stolen',
+        'account compromised', 'credit card fraud', 'bank account',
+        'what do i do', 'need help', 'been hacked', 'lost money'
+    ]
+    
+    # Medium priority keywords (suggest Guardian contact)
+    medium_priority_keywords = [
+        'worried', 'concerned', 'suspicious', 'strange', 'unusual',
+        'not sure', 'confused', 'advice', 'guidance', 'recommendation'
     ]
     
     message_lower = message.lower()
-    for keyword in escalation_keywords:
-        if keyword in message_lower:
-            logger.debug(f"Guardian escalation triggered by keyword: {keyword}")
-            return True
     
-    return False
+    # Check for high priority escalation
+    for keyword in high_priority_keywords:
+        if keyword in message_lower:
+            return 'high'
+    
+    # Check for medium priority escalation
+    for keyword in medium_priority_keywords:
+        if keyword in message_lower:
+            return 'medium'
+    
+    return None
+
+def get_guardian_response(escalation_level, base_response=""):
+    """Generate appropriate guardian escalation response"""
+    if escalation_level == 'high':
+        guardian_message = """
+
+**🛡️ REMALEH GUARDIAN ESCALATION**
+
+This appears to be a serious cybersecurity concern that requires immediate expert attention. Our cybersecurity specialists are ready to help you.
+
+**Immediate Actions:**
+• **Contact our Guardian team** for personalized assistance
+• **Document any evidence** of the security incident
+• **Don't panic** - we're here to help you through this
+
+**Get Expert Help Now:**
+[Contact Remaleh Guardian →](https://www.remaleh.com.au/contact-us)
+
+Our team will provide you with step-by-step guidance to resolve your security concerns safely and effectively."""
+
+    else:  # medium priority
+        guardian_message = """
+
+**💡 Need More Personalized Help?**
+
+For complex cybersecurity situations or personalized advice, our Guardian team is available to provide expert guidance tailored to your specific needs.
+
+**Get Expert Consultation:**
+[Contact Remaleh Guardian →](https://www.remaleh.com.au/contact-us)
+
+Our cybersecurity specialists can provide detailed analysis and customized security recommendations."""
+
+    return base_response + guardian_message
 
 def get_openai_response(message):
-    """Get response from OpenAI API with enhanced error handling"""
-    # Check if OpenAI API key is set
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        logger.error("OpenAI API key not found in environment variables")
-        return {
-            'response': "I'm sorry, but I'm having trouble accessing my advanced AI capabilities. For complex questions, please check resources like the Australian Cyber Security Centre (cyber.gov.au) or contact a cybersecurity professional.",
-            'source': 'ai_analysis',
-            'error': 'api_key_missing'
-        }
-    
+    """Get response from OpenAI API"""
     try:
-        # Set the API key
-        openai.api_key = api_key
-        
-        # Log that we're making an API call
-        logger.debug("Making OpenAI API call")
-        
-        # Make the API call
+        if not openai.api_key:
+            return None
+            
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a cybersecurity expert assistant. Provide concise, accurate information about cybersecurity topics. Focus on practical advice for everyday users in Australia. Keep responses under 150 words and use bullet points where appropriate."},
-                {"role": "user", "content": message}
+                {
+                    "role": "system",
+                    "content": "You are a cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses concise but informative. Focus on Australian context when relevant."
+                },
+                {
+                    "role": "user",
+                    "content": message
+                }
             ],
             max_tokens=300,
             temperature=0.7
         )
         
-        # Log successful response (but not the full content)
-        logger.debug(f"OpenAI API call successful, received {len(response.choices[0].message.content)} characters")
-        
-        # Return the response
-        return {
-            'response': response.choices[0].message.content.strip(),
-            'source': 'ai_analysis',
-            'success': True
-        }
+        return response.choices[0].message.content.strip()
         
     except Exception as e:
-        # Log the error
-        logger.error(f"Error calling OpenAI API: {str(e)}")
-        
-        # Return a user-friendly error message
-        return {
-            'response': "I'm sorry, but I'm having trouble connecting to my advanced AI capabilities right now. For complex questions like this, you might want to check resources like the Australian Cyber Security Centre (cyber.gov.au) or contact a cybersecurity professional.",
-            'source': 'ai_analysis',
-            'error': str(e)
-        }
+        logger.error(f"OpenAI API error: {str(e)}")
+        return None
 
 @chat_bp.route('/', methods=['POST', 'OPTIONS'])
-@cross_origin()
 def chat_message():
     # Handle preflight requests
     if request.method == 'OPTIONS':
-        return jsonify({"status": "ok"})
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
     
     try:
         data = request.get_json()
         
         if not data or 'message' not in data:
-            logger.warning("No message provided in request")
             return jsonify({
                 'error': 'No message provided',
                 'success': False
             }), 400
         
         message = data['message']
-        logger.debug(f"Received chat request with message: {message}")
+        
+        # Check for Guardian escalation first
+        escalation_level = should_escalate_to_guardian(message)
         
         # Try rule-based response first
         rule_response = get_rule_based_response(message)
         if rule_response:
+            base_response = rule_response['response']
+            
+            # Add Guardian escalation if needed
+            if escalation_level:
+                final_response = get_guardian_response(escalation_level, base_response)
+                source = 'expert_knowledge_with_guardian'
+            else:
+                final_response = base_response
+                source = 'expert_knowledge'
+            
             response_data = {
-                'response': rule_response['response'],
-                'source': 'expert_knowledge',
-                'success': True
+                'response': final_response,
+                'source': source,
+                'success': True,
+                'escalation_level': escalation_level,
+                'guardian_url': 'https://www.remaleh.com.au/contact-us' if escalation_level else None
             }
             
-            logger.debug(f"Sending rule-based response for category: {rule_response.get('category')}")
-            return jsonify(response_data)
+            response = make_response(jsonify(response_data))
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            response.headers.add('Access-Control-Allow-Headers', "*")
+            response.headers.add('Access-Control-Allow-Methods', "*")
+            return response
         
         # Try OpenAI for complex questions
-        logger.debug("No rule-based match, attempting to use OpenAI")
         openai_response = get_openai_response(message)
         
-        if openai_response and 'error' not in openai_response:
+        if openai_response:
+            # Add Guardian escalation if needed
+            if escalation_level:
+                final_response = get_guardian_response(escalation_level, openai_response)
+                source = 'ai_analysis_with_guardian'
+            else:
+                final_response = openai_response
+                source = 'ai_analysis'
+            
             response_data = {
-                'response': openai_response['response'],
-                'source': 'ai_analysis',
-                'success': True
+                'response': final_response,
+                'source': source,
+                'success': True,
+                'escalation_level': escalation_level,
+                'guardian_url': 'https://www.remaleh.com.au/contact-us' if escalation_level else None
             }
             
-            # Check if Guardian escalation is needed
-            if should_escalate_to_guardian(message):
-                response_data['show_guardian'] = True
-                response_data['guardian_url'] = 'https://www.remaleh.com.au/contact-us'
-                logger.debug("Adding guardian escalation to response")
-            
-            logger.debug("Sending OpenAI response")
-            return jsonify(response_data)
+            response = make_response(jsonify(response_data))
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            response.headers.add('Access-Control-Allow-Headers', "*")
+            response.headers.add('Access-Control-Allow-Methods', "*")
+            return response
         
-        # Fallback response
-        logger.debug("Using fallback response")
+        # Fallback response with Guardian escalation
+        fallback_response = "I'm here to help with cybersecurity questions. Could you please rephrase your question or ask about topics like passwords, phishing, malware, or data breaches?"
+        
+        if escalation_level:
+            final_response = get_guardian_response(escalation_level, fallback_response)
+            source = 'fallback_with_guardian'
+        else:
+            final_response = get_guardian_response('medium', fallback_response)  # Always offer Guardian for fallback
+            source = 'fallback_with_guardian'
+            escalation_level = 'medium'
+        
         response_data = {
-            'response': "I'm here to help with cybersecurity questions. Could you please rephrase your question or ask about topics like passwords, phishing, malware, or data breaches?",
-            'source': 'fallback',
+            'response': final_response,
+            'source': source,
             'success': True,
-            'show_guardian': True,
+            'escalation_level': escalation_level,
             'guardian_url': 'https://www.remaleh.com.au/contact-us'
         }
         
-        return jsonify(response_data)
+        response = make_response(jsonify(response_data))
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
         
     except Exception as e:
         logger.error(f"Chat processing error: {str(e)}")
         error_response = {
             'error': 'Processing error occurred',
-            'success': False
+            'success': False,
+            'guardian_url': 'https://www.remaleh.com.au/contact-us'
         }
         
-        return jsonify(error_response), 500
+        response = make_response(jsonify(error_response), 500)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
 
 @chat_bp.route('/health', methods=['GET'])
-@cross_origin()
 def health_check():
     """Health check endpoint"""
-    api_key_status = bool(os.getenv('OPENAI_API_KEY'))
-    logger.debug(f"Health check: OpenAI API key configured: {api_key_status}")
-    
     return jsonify({
         'status': 'healthy',
         'service': 'chat',
-        'openai_configured': api_key_status
+        'openai_configured': bool(os.getenv('OPENAI_API_KEY')),
+        'guardian_url': 'https://www.remaleh.com.au/contact-us'
     })
 
