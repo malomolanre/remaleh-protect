@@ -604,570 +604,373 @@ function App() {
                   </div>
                   <div className="mt-2 bg-yellow-50 border-l-4 border-yellow-400 p-2 text-sm">
                     <p className="text-yellow-800">
-                      <span className="font-bold">⚠️ Current threat:</span> SIM swapping attacks and fake mobile apps
+                      <span className="font-bold">⚠️ Current threat:</span> Malicious apps and SIM swapping attacks
                     </p>
                   </div>
                 </div>
               </div>
             </>
           ) : (
-            <>
-              <button
-                onClick={() => setSelectedLearningTopic(null)}
-                className="flex items-center text-[#21a1ce] mb-4 hover:underline"
-              >
-                <ChevronLeft size={20} className="mr-1" />
-                Back to all topics
-              </button>
+            <div className="bg-white rounded-lg shadow p-5">
+              <div className="flex items-center mb-4">
+                <button 
+                  onClick={() => setSelectedLearningTopic(null)}
+                  className="mr-3 p-2 rounded-lg hover:bg-gray-100"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <h2 className="text-xl font-bold">
+                  {selectedLearningTopic === 'passwords' && 'Password Protection'}
+                  {selectedLearningTopic === 'email_scams' && 'Email & Text Scams'}
+                  {selectedLearningTopic === 'device_security' && 'Device & Home Security'}
+                  {selectedLearningTopic === 'social_media' && 'Social Media & Privacy'}
+                  {selectedLearningTopic === 'phone_app_safety' && 'Phone & App Safety'}
+                </h2>
+              </div>
 
-              {/* Password Protection Content */}
               {selectedLearningTopic === 'passwords' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                      <Lock className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Password Protection</h2>
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <h3 className="font-bold text-blue-800 mb-2">🔐 Creating Strong Passwords</h3>
+                    <ul className="text-blue-700 space-y-1">
+                      <li>• Use at least 16 characters when possible</li>
+                      <li>• Mix uppercase, lowercase, numbers, and symbols</li>
+                      <li>• Avoid personal information (birthdays, names)</li>
+                      <li>• Consider passphrases: "KangarooJumping2025!Sydney"</li>
+                    </ul>
                   </div>
 
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          AI-powered password cracking tools can now guess common passwords and patterns in seconds. Credential stuffing attacks are targeting Australians who reuse passwords across multiple sites.
-                        </p>
-                      </div>
-                    </div>
+                  <div className="bg-green-50 border-l-4 border-green-400 p-4">
+                    <h3 className="font-bold text-green-800 mb-2">🛡️ Password Managers</h3>
+                    <p className="text-green-700 mb-2">Use tools like LastPass, 1Password, or Bitwarden to:</p>
+                    <ul className="text-green-700 space-y-1">
+                      <li>• Generate unique passwords for each account</li>
+                      <li>• Store passwords securely</li>
+                      <li>• Auto-fill login forms safely</li>
+                    </ul>
                   </div>
 
-                  <h3 className="font-bold text-lg mb-2">Creating Strong Passwords</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Use at least 16 characters when possible</li>
-                    <li>Combine uppercase letters, lowercase letters, numbers, and symbols</li>
-                    <li>Avoid personal information (birthdays, names, etc.)</li>
-                    <li>Don't use common words or patterns</li>
-                    <li>Consider using passphrases (e.g., "KangarooJumping2025!Sydney")</li>
-                    <li>Use a different password for each account</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Password Managers</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Use a reputable password manager to generate and store strong passwords</li>
-                    <li>Popular options include LastPass, 1Password, Bitwarden, and Dashlane</li>
-                    <li>Only need to remember one master password</li>
-                    <li>Many offer secure sharing features for families</li>
-                    <li>Look for password managers with breach monitoring</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Multi-Factor Authentication (MFA)</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Enable MFA on all important accounts</li>
-                    <li>Authenticator apps (like Google Authenticator) are more secure than SMS</li>
-                    <li>Consider hardware security keys for maximum protection</li>
-                    <li>Even if your password is compromised, MFA provides another layer of security</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Weak password:</strong> "Sydney2025" or "Kangaroo1"</p>
-                    <p className="mb-2"><strong>Strong password:</strong> "j8T!p2&amp;KoalaEuc@lyptus"</p>
-                    <p><strong>Strong passphrase:</strong> "SunnyBeach-Waves-Crashing-2025!"</p>
-                  </div>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about password security on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#21a1ce] hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
+                  <div className="bg-purple-50 border-l-4 border-purple-400 p-4">
+                    <h3 className="font-bold text-purple-800 mb-2">🔑 Multi-Factor Authentication (MFA)</h3>
+                    <p className="text-purple-700 mb-2">Add an extra security layer:</p>
+                    <ul className="text-purple-700 space-y-1">
+                      <li>• Enable on all important accounts</li>
+                      <li>• Use authenticator apps over SMS when possible</li>
+                      <li>• Keep backup codes in a safe place</li>
+                    </ul>
                   </div>
                 </div>
               )}
 
-              {/* Email & Text Scams Content */}
               {selectedLearningTopic === 'email_scams' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                      <Mail className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Email & Text Scams</h2>
+                <div className="space-y-4">
+                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                    <h3 className="font-bold text-red-800 mb-2">🚨 Warning Signs</h3>
+                    <ul className="text-red-700 space-y-1">
+                      <li>• Urgent requests for immediate action</li>
+                      <li>• Requests for personal information or passwords</li>
+                      <li>• Poor grammar and spelling errors</li>
+                      <li>• Generic greetings like "Dear Customer"</li>
+                      <li>• Suspicious links or unexpected attachments</li>
+                    </ul>
                   </div>
 
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          AI-generated phishing emails now have perfect grammar and mimic legitimate communications from Australian banks, government agencies, and businesses. Fake Australia Post and StarTrack delivery texts are increasing.
-                        </p>
-                      </div>
-                    </div>
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <h3 className="font-bold text-blue-800 mb-2">🔍 How to Verify</h3>
+                    <ul className="text-blue-700 space-y-1">
+                      <li>• Check sender's email address carefully</li>
+                      <li>• Hover over links to see actual URL</li>
+                      <li>• Contact the company directly through official channels</li>
+                      <li>• Don't click links or download attachments if suspicious</li>
+                    </ul>
                   </div>
 
-                  <h3 className="font-bold text-lg mb-2">Common Australian Phishing Scams</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Fake Australia Post/StarTrack delivery notifications</li>
-                    <li>ATO tax refund or debt collection scams</li>
-                    <li>Commonwealth Bank, ANZ, Westpac, and NAB security alert scams</li>
-                    <li>myGov account suspension notices</li>
-                    <li>NBN connection issues or upgrades</li>
-                    <li>Telstra or Optus bill payment or service cancellation</li>
-                    <li>COVID-19 related government payments or information</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Warning Signs</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Urgent requests requiring immediate action</li>
-                    <li>Threats of account suspension or legal action</li>
-                    <li>Requests for personal information, passwords, or payment details</li>
-                    <li>Links to websites that look similar but aren't quite right</li>
-                    <li>Generic greetings like "Dear Customer" instead of your name</li>
-                    <li>Offers that seem too good to be true</li>
-                    <li>Pressure to act quickly or miss out</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">How to Protect Yourself</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Never click links in suspicious emails or texts</li>
-                    <li>Go directly to the official website by typing the URL</li>
-                    <li>Call the organization using a number from their official website</li>
-                    <li>Check email sender addresses carefully</li>
-                    <li>Be suspicious of unexpected attachments</li>
-                    <li>Report scams to Scamwatch.gov.au</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>Scam text:</strong> "Your Australia Post package is held at our depot. Last attempt to deliver tomorrow. Confirm delivery address: [suspicious link]"</p>
-                    <p><strong>What to do:</strong> Don't click the link. If you're expecting a package, go directly to the Australia Post website and use your tracking number to check its status.</p>
-                  </div>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about email and text scams on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#21a1ce] hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <h3 className="font-bold text-yellow-800 mb-2">⚠️ Current Threats in Australia</h3>
+                    <ul className="text-yellow-700 space-y-1">
+                      <li>• Fake Australia Post delivery notifications</li>
+                      <li>• Centrelink and ATO impersonation emails</li>
+                      <li>• Bank phishing with Australian bank logos</li>
+                      <li>• COVID-19 related scam messages</li>
+                    </ul>
                   </div>
                 </div>
               )}
 
-              {/* Device & Home Security Content */}
               {selectedLearningTopic === 'device_security' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                      <Shield className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Device & Home Security</h2>
+                <div className="space-y-4">
+                  <div className="bg-green-50 border-l-4 border-green-400 p-4">
+                    <h3 className="font-bold text-green-800 mb-2">💻 Computer Security</h3>
+                    <ul className="text-green-700 space-y-1">
+                      <li>• Keep operating system and software updated</li>
+                      <li>• Use reputable antivirus software</li>
+                      <li>• Enable automatic security updates</li>
+                      <li>• Use a firewall</li>
+                      <li>• Regular data backups</li>
+                    </ul>
                   </div>
 
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          Smart home devices with weak security are being targeted by hackers to spy on families and access home networks. Malicious QR codes in public places are being used to steal information from mobile devices.
-                        </p>
-                      </div>
-                    </div>
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <h3 className="font-bold text-blue-800 mb-2">🏠 Smart Home Security</h3>
+                    <ul className="text-blue-700 space-y-1">
+                      <li>• Change default passwords on all devices</li>
+                      <li>• Use a separate network for IoT devices</li>
+                      <li>• Regularly update device firmware</li>
+                      <li>• Review device permissions and access</li>
+                    </ul>
                   </div>
 
-                  <h3 className="font-bold text-lg mb-2">Securing Your Home Network</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Change default router passwords and admin credentials</li>
-                    <li>Use WPA3 encryption if available (at least WPA2)</li>
-                    <li>Update router firmware regularly</li>
-                    <li>Create a separate guest network for visitors and IoT devices</li>
-                    <li>Consider a network security device like a Firewalla</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Smart Home Device Security</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Change default passwords on all devices</li>
-                    <li>Keep devices updated with the latest firmware</li>
-                    <li>Disable features you don't use</li>
-                    <li>Check privacy settings and data collection policies</li>
-                    <li>Consider using a dedicated IoT security hub</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Protecting Your Computers and Phones</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Keep operating systems and apps updated</li>
-                    <li>Use reputable antivirus/anti-malware software</li>
-                    <li>Back up important data regularly</li>
-                    <li>Be cautious about downloading apps and software</li>
-                    <li>Use screen locks and encryption</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Family Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Create a family security plan and discuss it regularly</li>
-                    <li>Help elderly family members set up automatic updates</li>
-                    <li>Teach children about safe downloading practices</li>
-                    <li>Consider parental controls for younger family members</li>
-                  </ul>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about device security on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#21a1ce] hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
+                  <div className="bg-purple-50 border-l-4 border-purple-400 p-4">
+                    <h3 className="font-bold text-purple-800 mb-2">📱 Mobile Device Protection</h3>
+                    <ul className="text-purple-700 space-y-1">
+                      <li>• Use screen locks (PIN, password, biometric)</li>
+                      <li>• Only download apps from official stores</li>
+                      <li>• Review app permissions regularly</li>
+                      <li>• Enable remote wipe capabilities</li>
+                    </ul>
                   </div>
                 </div>
               )}
 
-              {/* Social Media & Privacy Content */}
               {selectedLearningTopic === 'social_media' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                      <Users className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Social Media & Privacy</h2>
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <h3 className="font-bold text-blue-800 mb-2">🔒 Privacy Settings</h3>
+                    <ul className="text-blue-700 space-y-1">
+                      <li>• Review and adjust privacy settings regularly</li>
+                      <li>• Limit who can see your posts and personal information</li>
+                      <li>• Be selective about friend/connection requests</li>
+                      <li>• Turn off location sharing when possible</li>
+                    </ul>
                   </div>
 
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          Identity thieves are using information shared on social media to answer security questions, create targeted phishing attacks, and impersonate Australians online.
-                        </p>
-                      </div>
-                    </div>
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <h3 className="font-bold text-yellow-800 mb-2">⚠️ What Not to Share</h3>
+                    <ul className="text-yellow-700 space-y-1">
+                      <li>• Full birth dates and personal details</li>
+                      <li>• Real-time location information</li>
+                      <li>• Photos showing personal information (documents, addresses)</li>
+                      <li>• Vacation plans while you're away</li>
+                    </ul>
                   </div>
 
-                  <h3 className="font-bold text-lg mb-2">What Not to Share on Social Media</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Full date of birth</li>
-                    <li>Home address or detailed location information</li>
-                    <li>Phone numbers</li>
-                    <li>Travel plans (until after you return)</li>
-                    <li>Children's full names and schools</li>
-                    <li>Financial information</li>
-                    <li>Identity documents (even partially visible)</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Privacy Settings to Check</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Profile visibility (who can see your profile)</li>
-                    <li>Post visibility (who can see what you share)</li>
-                    <li>Friend/connection request settings</li>
-                    <li>Photo tagging permissions</li>
-                    <li>Search engine visibility</li>
-                    <li>Data sharing with third-party apps</li>
-                    <li>Location sharing settings</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Protecting Your Digital Footprint</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Regularly search for yourself online to see what information is public</li>
-                    <li>Set up Google Alerts for your name</li>
-                    <li>Request removal of sensitive information from search results</li>
-                    <li>Use privacy-focused browsers and search engines</li>
-                    <li>Consider using a VPN for additional privacy</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Family Privacy Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Discuss privacy with all family members, including children</li>
-                    <li>Be cautious about sharing photos of children online</li>
-                    <li>Help elderly relatives configure privacy settings</li>
-                    <li>Consider using family privacy protection services</li>
-                    <li>Report suspicious activity to the ACCC or OAIC</li>
-                  </ul>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about online privacy on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#21a1ce] hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
+                  <div className="bg-green-50 border-l-4 border-green-400 p-4">
+                    <h3 className="font-bold text-green-800 mb-2">🛡️ Account Security</h3>
+                    <ul className="text-green-700 space-y-1">
+                      <li>• Use strong, unique passwords</li>
+                      <li>• Enable two-factor authentication</li>
+                      <li>• Regularly review connected apps and remove unused ones</li>
+                      <li>• Log out from public or shared devices</li>
+                    </ul>
                   </div>
                 </div>
               )}
 
-              {/* Phone & App Safety Content */}
               {selectedLearningTopic === 'phone_app_safety' && (
-                <div className="bg-white rounded-lg shadow p-5">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                      <Smartphone className="text-white" size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold">Phone & App Safety</h2>
+                <div className="space-y-4">
+                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                    <h3 className="font-bold text-red-800 mb-2">🚨 SIM Swapping Protection</h3>
+                    <ul className="text-red-700 space-y-1">
+                      <li>• Add a PIN or password to your mobile account</li>
+                      <li>• Use authenticator apps instead of SMS for 2FA</li>
+                      <li>• Monitor your mobile account for unauthorized changes</li>
+                      <li>• Contact your carrier immediately if service stops unexpectedly</li>
+                    </ul>
                   </div>
 
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={20} />
-                      <div>
-                        <h3 className="font-bold text-red-700">Current Threat Alert</h3>
-                        <p className="text-red-600">
-                          SIM swapping attacks are targeting Telstra, Optus, and Vodafone customers to take over phone numbers and bypass SMS-based two-factor authentication. Fake mobile apps in unofficial app stores are stealing personal information.
-                        </p>
-                      </div>
-                    </div>
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <h3 className="font-bold text-blue-800 mb-2">📱 App Security</h3>
+                    <ul className="text-blue-700 space-y-1">
+                      <li>• Only download apps from official app stores</li>
+                      <li>• Read app reviews and check developer reputation</li>
+                      <li>• Review app permissions before installing</li>
+                      <li>• Keep apps updated to latest versions</li>
+                      <li>• Uninstall apps you no longer use</li>
+                    </ul>
                   </div>
 
-                  <h3 className="font-bold text-lg mb-2">Protecting Against SIM Swapping</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Add a PIN or password to your mobile account</li>
-                    <li>Use app-based two-factor authentication instead of SMS</li>
-                    <li>Be alert for unexpected "SIM not provisioned" messages</li>
-                    <li>Contact your provider immediately if you lose mobile service unexpectedly</li>
-                    <li>Consider using a separate email for account recovery</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">App Safety Tips</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Only download apps from official app stores (Google Play, Apple App Store)</li>
-                    <li>Check app permissions before installing</li>
-                    <li>Read reviews and research the developer</li>
-                    <li>Keep apps updated</li>
-                    <li>Delete apps you no longer use</li>
-                    <li>Be wary of free apps that seem too good to be true</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Mobile Device Security</h3>
-                  <ul className="list-disc pl-5 mb-4 space-y-2">
-                    <li>Use a strong PIN, password, or biometric lock</li>
-                    <li>Keep your operating system updated</li>
-                    <li>Enable remote tracking and wiping features</li>
-                    <li>Use a security app to scan for malware</li>
-                    <li>Back up your data regularly</li>
-                    <li>Be cautious when connecting to public Wi-Fi</li>
-                  </ul>
-
-                  <h3 className="font-bold text-lg mb-2">Real-World Example</h3>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <p className="mb-2"><strong>SIM swapping scenario:</strong> A scammer calls Telstra pretending to be you, claims to have lost their phone, and requests your number be transferred to a new SIM.</p>
-                    <p><strong>Protection strategy:</strong> Add a PIN to your mobile account that must be provided for any account changes, and use authenticator apps instead of SMS for two-factor authentication.</p>
-                  </div>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
-                      Learn more about mobile security on our blog at{" "}
-                      <a 
-                        href="https://www.remaleh.com.au/blog" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#21a1ce] hover:underline"
-                      >
-                        remaleh.com.au/blog
-                      </a>
-                    </p>
+                  <div className="bg-purple-50 border-l-4 border-purple-400 p-4">
+                    <h3 className="font-bold text-purple-800 mb-2">🔐 Phone Security</h3>
+                    <ul className="text-purple-700 space-y-1">
+                      <li>• Use strong screen lock (avoid simple patterns)</li>
+                      <li>• Enable automatic screen lock timeout</li>
+                      <li>• Set up remote wipe capabilities</li>
+                      <li>• Avoid using public charging stations</li>
+                    </ul>
                   </div>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       )}
 
-      {activeTab === 'help' && (
+      {activeTab === 'chat' && (
         <div className="p-4">
-          <div className="bg-white rounded-lg shadow p-5">
+          <div className="bg-white rounded-lg shadow p-5 h-[calc(100vh-200px)] flex flex-col">
             <div className="flex items-center mb-4">
               <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-                <MessageSquare className="text-white" size={24} />
+                <BookOpen className="text-white" size={24} />
               </div>
-              <h2 className="text-xl font-bold">Get Help</h2>
+              <h2 className="text-xl font-bold">Cyber Sensei</h2>
             </div>
-            <p className="text-gray-600 mb-4">
-              Chat with our cybersecurity assistant for instant help
-            </p>
-
-            <div className="border border-gray-200 rounded-lg mb-4 h-64 overflow-y-auto p-4">
-              {chatMessages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-gray-400">
-                  <div className="bg-gray-100 p-4 rounded-full mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-                      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
-                      <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
-                      <path d="M19 11h2"></path>
-                      <path d="M13 13v2"></path>
-                    </svg>
+            
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+              {chatMessages.length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  <BookOpen size={48} className="mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium mb-2">Welcome to Cyber Sensei!</p>
+                  <p>Ask me anything about cybersecurity, privacy, or online safety.</p>
+                  <div className="mt-4 text-sm">
+                    <p className="mb-2">Try asking about:</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <span className="bg-gray-100 px-2 py-1 rounded">Password security</span>
+                      <span className="bg-gray-100 px-2 py-1 rounded">Phishing emails</span>
+                      <span className="bg-gray-100 px-2 py-1 rounded">Wi-Fi safety</span>
+                      <span className="bg-gray-100 px-2 py-1 rounded">Privacy settings</span>
+                    </div>
                   </div>
-                  <p className="text-lg font-medium">Ask me anything about cybersecurity!</p>
-                  <p className="text-sm">I can help with passwords, phishing, malware, and more.</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {chatMessages.map((msg, index) => (
+              )}
+              
+              {chatMessages.map((msg, index) => (
+                <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div 
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      msg.sender === 'user' 
+                        ? 'bg-[#21a1ce] text-white rounded-br-none' 
+                        : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                    }`}
+                  >
                     <div 
-                      key={index} 
-                      className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div 
-                        className={`max-w-[80%] rounded-lg p-3 ${
-                          msg.sender === 'user' 
-                            ? 'bg-[#21a1ce] text-white rounded-br-none' 
-                            : 'bg-gray-100 text-gray-800 rounded-bl-none'
-                        }`}
-                      >
-                        <div 
-                          className="prose prose-sm"
-                          dangerouslySetInnerHTML={{ 
-                            __html: msg.sender === 'assistant' 
-                              ? msg.text.replace(/^#+\s*(.*)/gm, '<strong>$1</strong>')
-                                      .replace(/\n\n/g, '<br/><br/>')
-                                      .replace(/\n-\s(.*)/g, '<br/>• $1')
-                              : msg.text 
-                          }}
-                        />
-                        {msg.sender === 'assistant' && msg.source && (
-                          <div className={`mt-2 text-xs inline-flex items-center px-2 py-1 rounded-full ${
-                            msg.source === 'Expert Knowledge' 
-                              ? 'bg-green-100 text-green-800' 
-                              : msg.source === 'System'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {msg.source === 'Expert Knowledge' ? (
-                              <>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                              </>
-                            ) : msg.source === 'System' ? (
-                              <>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                              </>
-                            ) : (
-                              <>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                                </svg>
-                              </>
-                            )}
-                            {msg.source}
-                          </div>
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ 
+                        __html: msg.sender === 'assistant' 
+                          ? msg.text
+                              // Convert **bold** to <strong>
+                              .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 600;">$1</strong>')
+                              // Convert # headers to styled headers
+                              .replace(/^#+\s*(.*)/gm, '<div style="font-weight: 600; font-size: 15px; margin: 12px 0 6px 0; color: #374151;">$1</div>')
+                              // Convert bullet points with proper spacing
+                              .replace(/\n•\s(.*)/g, '<div style="margin: 4px 0; padding-left: 8px;">• $1</div>')
+                              .replace(/\n-\s(.*)/g, '<div style="margin: 4px 0; padding-left: 8px;">• $1</div>')
+                              // Convert double line breaks to proper spacing
+                              .replace(/\n\n/g, '<div style="margin: 12px 0;"></div>')
+                              // Convert single line breaks
+                              .replace(/\n/g, '<br/>')
+                              // Convert links with proper styling
+                              .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #21a1ce; text-decoration: underline; font-weight: 500;">$1</a>')
+                              // Handle emoji and special characters properly
+                              .replace(/🛡️/g, '<span style="font-size: 16px;">🛡️</span>')
+                              .trim()
+                          : msg.text 
+                      }}
+                      style={{
+                        lineHeight: '1.6',
+                        fontSize: '14px'
+                      }}
+                    />
+                    {msg.sender === 'assistant' && msg.source && (
+                      <div className={`mt-2 text-xs inline-flex items-center px-2 py-1 rounded-full ${
+                        msg.source === 'Expert Knowledge' 
+                          ? 'bg-green-100 text-green-800' 
+                          : msg.source === 'System'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {msg.source === 'Expert Knowledge' && (
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M9.664 1.319a.75.75 0 01.672 0 41.059 41.059 0 018.198 5.424.75.75 0 01-.254 1.285 31.372 31.372 0 00-7.86 3.83.75.75 0 01-.84 0 31.508 31.508 0 00-2.08-1.287V9.394c0-.244.116-.463.302-.592a35.504 35.504 0 013.305-2.033.75.75 0 00-.714-1.319 37 37 0 00-3.446 2.12A2.216 2.216 0 006 9.393v.38a31.293 31.293 0 00-4.28-1.746.75.75 0 01-.254-1.285 41.059 41.059 0 018.198-5.424zM6 11.459a29.848 29.848 0 00-2.455-1.158 41.029 41.029 0 00-.39 3.114.75.75 0 00.419.74c.528.256 1.046.53 1.554.82-.21-.899-.455-1.746-.721-2.517a.75.75 0 00-.407-.999zm2.78 4.42c.138.032.285.06.433.086a39.318 39.318 0 01-1.437-.695c.354.3.712.58 1.004.609zm.54-1.227a.75.75 0 00.81.316 28.997 28.997 0 001.145-.915c-.96-.07-1.908-.184-2.837-.336-.362.464-.667.952-.918 1.465zm2.78-2.829c.745.02 1.487.04 2.227.048a.75.75 0 00.787-.735 27.067 27.067 0 00-.002-3.01.75.75 0 00-.787-.735c-.74.008-1.482.028-2.227.048v4.384z" clipRule="evenodd" />
+                          </svg>
                         )}
+                        {msg.source}
                       </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 rounded-lg p-3 rounded-bl-none">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                     </div>
-                  ))}
-                  {isTyping && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 rounded-lg p-3 rounded-bl-none">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {chatError && (
-                    <div className="text-center text-sm text-red-500 mt-2">
-                      There was an error processing your request. Please try again.
-                    </div>
-                  )}
+                  </div>
                 </div>
               )}
             </div>
-
-            <form onSubmit={handleChatSubmit} className="flex">
+            
+            <form onSubmit={handleChatSubmit} className="flex gap-2">
               <input
                 type="text"
-                className="flex-1 border border-gray-300 rounded-l-lg p-3"
-                placeholder="Type your cybersecurity question..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type your cybersecurity question..."
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#21a1ce]"
+                disabled={isTyping}
               />
               <button
                 type="submit"
-                className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-4 rounded-r-lg font-medium"
-                disabled={isTyping}
+                disabled={isTyping || !inputMessage.trim()}
+                className="bg-[#21a1ce] text-white px-4 py-2 rounded-lg hover:bg-[#1a80a3] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Send
               </button>
             </form>
+            
+            {chatError && (
+              <div className="mt-2 text-sm text-red-600">
+                There was an error processing your request. Please try again.
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center p-2">
-        <button
-          onClick={() => handleTabChange('check')}
-          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-            activeTab === 'check' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
-          }`}
-        >
-          <MessageSquare size={20} />
-          <span className="text-xs mt-1">Check that Text</span>
-        </button>
-        <button
-          onClick={() => handleTabChange('passwords')}
-          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-            activeTab === 'passwords' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
-          }`}
-        >
-          <Lock size={20} />
-          <span className="text-xs mt-1">Password Still Safe?</span>
-        </button>
-        <button
-          onClick={() => handleTabChange('learn')}
-          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-            activeTab === 'learn' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
-          }`}
-        >
-          <BookOpen size={20} />
-          <span className="text-xs mt-1">Cyber Sensei</span>
-        </button>
-        <button
-          onClick={() => handleTabChange('help')}
-          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-            activeTab === 'help' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
-          }`}
-        >
-          <MessageSquare size={20} />
-          <span className="text-xs mt-1">Help Me!</span>
-        </button>
-      </div>
-
-      <footer className="text-center text-gray-500 text-xs py-4 mt-20">
-        <div className="flex justify-center items-center mb-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#21a1ce" />
-          </svg>
-          <span>Remaleh - Your Digital Guardian</span>
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
+        <div className="flex justify-around">
+          <button
+            onClick={() => handleTabChange('check')}
+            className={`flex flex-col items-center py-2 px-3 rounded-lg ${
+              activeTab === 'check' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+            }`}
+          >
+            <MessageSquare size={20} />
+            <span className="text-xs mt-1">Check that Text</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('passwords')}
+            className={`flex flex-col items-center py-2 px-3 rounded-lg ${
+              activeTab === 'passwords' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+            }`}
+          >
+            <Lock size={20} />
+            <span className="text-xs mt-1">Password Still Safe?</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('learn')}
+            className={`flex flex-col items-center py-2 px-3 rounded-lg ${
+              activeTab === 'learn' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+            }`}
+          >
+            <BookOpen size={20} />
+            <span className="text-xs mt-1">Cyber Sensei</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('chat')}
+            className={`flex flex-col items-center py-2 px-3 rounded-lg ${
+              activeTab === 'chat' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+            }`}
+          >
+            <Shield size={20} />
+            <span className="text-xs mt-1">Help Me!</span>
+          </button>
         </div>
-        <p>Copyright © 2025 Remaleh</p>
-      </footer>
+      </div>
     </div>
   );
 }
