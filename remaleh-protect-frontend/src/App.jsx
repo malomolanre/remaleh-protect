@@ -20,26 +20,7 @@ function App() {
     setActiveTab(tab);
   };
 
-  // Enhanced message formatting function
-  const formatMessage = (text) => {
-    if (!text) return '';
-    
-    let formatted = text
-      // Convert **bold** to <strong>
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      // Convert bullet points
-      .replace(/^• /gm, '<br/>• ')
-      .replace(/^- /gm, '<br/>• ')
-      // Convert headers (### Header)
-      .replace(/^### (.*$)/gm, '<h3 style="font-weight: bold; margin: 10px 0;">$1</h3>')
-      // Convert links [text](url)
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #21a1ce; text-decoration: underline;">$1</a>')
-      // Convert line breaks
-      .replace(/\n/g, '<br/>');
-    
-    return formatted;
-  };
-
+  // CORRECTED SCAM CHECKER WITH PROPER BACKEND INTEGRATION
   const handleScamCheck = async (e) => {
     e.preventDefault();
     if (!scamMessage.trim()) return;
@@ -61,15 +42,13 @@ function App() {
       const servicePromises = [];
       const serviceResults = {
         basicScam: null,
-        enhancedScam: null,
-        linkAnalysis: null,
         breachCheck: null,
         localAnalysis: null
       };
 
       // 1. Basic Scam Detection (CORRECTED ENDPOINT)
       servicePromises.push(
-        fetch('https://remaleh-protect-api.onrender.com/api/scam/comprehensive', {
+        fetch('https://remaleh-protect-api.onrender.com/api/scam/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: scamMessage })
@@ -84,46 +63,10 @@ function App() {
         })
       );
 
-      // 2. Enhanced Scam Detection (NEW SERVICE CALL)
-      servicePromises.push(
-        fetch('https://remaleh-protect-api.onrender.com/api/enhanced-scam/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: scamMessage })
-        })
-        .then(response => response.json())
-        .then(data => {
-          serviceResults.enhancedScam = data;
-        })
-        .catch(error => {
-          console.error('Enhanced scam detection failed:', error);
-          serviceResults.enhancedScam = { error: 'Service unavailable' };
-        })
-      );
-
-      // 3. Link Analysis (NEW SERVICE CALL - only if URLs found)
-      if (urls.length > 0) {
-        servicePromises.push(
-          fetch('https://remaleh-protect-api.onrender.com/api/link/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: scamMessage })
-          })
-          .then(response => response.json())
-          .then(data => {
-            serviceResults.linkAnalysis = data;
-          })
-          .catch(error => {
-            console.error('Link analysis failed:', error);
-            serviceResults.linkAnalysis = { error: 'Service unavailable' };
-          })
-        );
-      }
-
-      // 4. Breach Check (CORRECTED ENDPOINT - only if emails found)
+      // 2. Breach Check (CORRECTED ENDPOINT - only if emails found)
       if (emails.length > 0) {
         servicePromises.push(
-          fetch('https://remaleh-protect-api.onrender.com/api/breach/check', {
+          fetch('https://remaleh-protect-api.onrender.com/api/breach/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ emails: emails })
@@ -139,237 +82,304 @@ function App() {
         );
       }
 
-      // 5. Enhanced Local Analysis (Delivery Scam Detection)
-      const localAnalysis = analyzeDeliveryScams(scamMessage);
-      serviceResults.localAnalysis = localAnalysis;
+      // 3. Enhanced Local Analysis (Comprehensive)
+      serviceResults.localAnalysis = performEnhancedLocalAnalysis(scamMessage, urls, emails);
 
       // Wait for all service calls to complete
       await Promise.all(servicePromises);
-      
-      const endTime = Date.now();
-      const analysisTime = ((endTime - startTime) / 1000).toFixed(1);
 
-      // Aggregate results from all services
-      const aggregatedResult = aggregateAnalysisResults(serviceResults, emails, urls, analysisTime);
+      // Aggregate results
+      const aggregatedResult = aggregateScamResults(serviceResults, urls, emails, startTime);
       
-      setScamResult(formatMessage(aggregatedResult));
-      setIsAnalyzing(false);
+      setScamResult(aggregatedResult);
 
     } catch (error) {
-      console.error('Error analyzing message:', error);
-      setScamResult(formatMessage(`
-        <div style="color: red; padding: 15px; border: 1px solid red; border-radius: 5px; background-color: #ffeaea;">
-          <strong>Analysis Error</strong><br/>
-          Unable to complete analysis. Please try again later.
-        </div>
-      `));
+      console.error('Scam analysis error:', error);
+      setScamResult('Analysis failed. Please try again.');
+    } finally {
       setIsAnalyzing(false);
     }
   };
 
-  // Enhanced delivery scam detection
-  const analyzeDeliveryScams = (text) => {
+  // Enhanced Local Analysis Function
+  const performEnhancedLocalAnalysis = (text, urls, emails) => {
     const textLower = text.toLowerCase();
-    let riskScore = 0;
-    const riskFactors = [];
+    let score = 0;
+    const indicators = [];
 
-    // Delivery scam keywords (20 points each)
-    const deliveryKeywords = ['parcel', 'package', 'delivery', 'held', 'postal code', 'tracking'];
+    // Delivery Scam Detection (Enhanced)
+    const deliveryKeywords = [
+      'parcel', 'package', 'delivery', 'shipped', 'tracking', 'postal code',
+      'held', 'suspended', 'customs', 'warehouse', 'courier', 'fedex', 'dhl',
+      'ups', 'auspost', 'australia post', 'postage', 'shipment'
+    ];
+    
     deliveryKeywords.forEach(keyword => {
       if (textLower.includes(keyword)) {
-        riskScore += 20;
-        riskFactors.push(`Delivery scam indicator: "${keyword}"`);
+        score += 15;
+        indicators.push(`Delivery scam indicator: "${keyword}"`);
       }
     });
 
-    // Brand impersonation (25 points each)
-    const brandKeywords = ['auspost', 'australia post', 'dhl', 'fedex', 'ups', 'tnt', 'toll'];
-    brandKeywords.forEach(brand => {
+    // Brand Impersonation Detection
+    const brands = [
+      'auspost', 'australia post', 'ato', 'centrelink', 'medicare', 'telstra',
+      'optus', 'vodafone', 'commonwealth bank', 'anz', 'westpac', 'nab',
+      'paypal', 'amazon', 'ebay', 'netflix', 'spotify', 'apple', 'google',
+      'microsoft', 'facebook', 'instagram', 'twitter'
+    ];
+    
+    brands.forEach(brand => {
       if (textLower.includes(brand)) {
-        riskScore += 25;
-        riskFactors.push(`Brand impersonation: "${brand}"`);
+        score += 20;
+        indicators.push(`Brand impersonation: "${brand}"`);
       }
     });
 
-    // Suspicious domains (35 points each)
-    const suspiciousDomains = ['.buzz', '.tk', '.ml', '.ga', '.cf'];
-    suspiciousDomains.forEach(domain => {
-      if (textLower.includes(domain)) {
-        riskScore += 35;
-        riskFactors.push(`Highly suspicious domain: ${domain}`);
+    // Urgency Indicators
+    const urgencyPhrases = [
+      'within 24 hours', 'expires today', 'immediate action', 'urgent',
+      'act now', 'limited time', 'expires soon', 'verify now', 'confirm immediately',
+      'suspend', 'block', 'freeze', 'close your account'
+    ];
+    
+    urgencyPhrases.forEach(phrase => {
+      if (textLower.includes(phrase)) {
+        score += 12;
+        indicators.push(`Creates false urgency: "${phrase}"`);
       }
     });
 
-    // Urgency indicators (15 points each)
-    const urgencyKeywords = ['within 24 hours', 'expires today', 'immediate', 'urgent', 'act now'];
-    urgencyKeywords.forEach(keyword => {
+    // Financial Fraud Indicators
+    const financialKeywords = [
+      'bank account', 'credit card', 'social security', 'ssn', 'tax refund',
+      'inheritance', 'lottery', 'winner', 'prize', 'million', 'thousand',
+      'transfer', 'wire', 'bitcoin', 'cryptocurrency', 'investment'
+    ];
+    
+    financialKeywords.forEach(keyword => {
       if (textLower.includes(keyword)) {
-        riskScore += 15;
-        riskFactors.push(`Creates false urgency: ${keyword}`);
+        score += 18;
+        indicators.push(`Financial fraud indicator: "${keyword}"`);
       }
     });
 
-    // Suspicious instructions (15 points each)
-    const suspiciousInstructions = ['reply with y', 'exit and reopen', 'copy and paste', 'activate the link'];
+    // Suspicious Instructions
+    const suspiciousInstructions = [
+      'reply with', 'click here', 'download', 'install', 'enable',
+      'exit and reopen', 'copy and paste', 'forward this message',
+      'don\'t tell anyone', 'keep this secret', 'call this number'
+    ];
+    
     suspiciousInstructions.forEach(instruction => {
       if (textLower.includes(instruction)) {
-        riskScore += 15;
-        riskFactors.push(`Suspicious instruction: "${instruction}"`);
+        score += 10;
+        indicators.push(`Suspicious instruction: "${instruction}"`);
+      }
+    });
+
+    // URL Analysis (Enhanced)
+    urls.forEach(url => {
+      const urlLower = url.toLowerCase();
+      
+      // Suspicious domains
+      const suspiciousTlds = ['.tk', '.ml', '.ga', '.cf', '.buzz', '.click', '.download'];
+      suspiciousTlds.forEach(tld => {
+        if (urlLower.includes(tld)) {
+          score += 35;
+          indicators.push(`Highly suspicious domain: ${url}`);
+        }
+      });
+
+      // Random character domains
+      const domain = url.replace(/https?:\/\//, '').split('/')[0];
+      if (/^[a-z]{4,8}\.(buzz|tk|ml|ga|cf)/.test(domain.toLowerCase())) {
+        score += 30;
+        indicators.push(`Random character domain: ${domain}`);
+      }
+
+      // URL shorteners
+      const shorteners = ['bit.ly', 'tinyurl', 't.co', 'goo.gl', 'ow.ly'];
+      shorteners.forEach(shortener => {
+        if (urlLower.includes(shortener)) {
+          score += 15;
+          indicators.push(`URL shortener detected: ${shortener}`);
+        }
+      });
+    });
+
+    // Personal Information Requests
+    const personalInfoRequests = [
+      'password', 'pin', 'ssn', 'social security', 'date of birth',
+      'mother\'s maiden name', 'security question', 'account number',
+      'routing number', 'cvv', 'security code'
+    ];
+    
+    personalInfoRequests.forEach(request => {
+      if (textLower.includes(request)) {
+        score += 25;
+        indicators.push(`Requests personal information: "${request}"`);
       }
     });
 
     return {
-      riskScore: Math.min(riskScore, 100),
-      riskFactors: riskFactors,
+      score: score,
+      indicators: indicators,
       analysis: 'Enhanced local pattern analysis'
     };
   };
 
-  // Aggregate results from all services
-  const aggregateAnalysisResults = (serviceResults, emails, urls, analysisTime) => {
-    const { basicScam, enhancedScam, linkAnalysis, breachCheck, localAnalysis } = serviceResults;
+  // Result Aggregation Function
+  const aggregateScamResults = (serviceResults, urls, emails, startTime) => {
+    const endTime = Date.now();
+    const analysisTime = endTime - startTime;
     
-    // Calculate overall risk score
-    let overallRisk = 0;
-    let riskFactors = [];
-    
-    // Add local analysis risk
-    if (localAnalysis) {
-      overallRisk += localAnalysis.riskScore;
-      riskFactors = riskFactors.concat(localAnalysis.riskFactors);
+    let totalScore = 0;
+    let allIndicators = [];
+    let servicesUsed = [];
+    let serviceDetails = [];
+
+    // Process Basic Scam Detection Results
+    if (serviceResults.basicScam && !serviceResults.basicScam.error) {
+      totalScore += (serviceResults.basicScam.risk_score || 0) * 100;
+      servicesUsed.push('✓ Basic Scam Detection');
+      if (serviceResults.basicScam.indicators) {
+        allIndicators.push(...serviceResults.basicScam.indicators);
+      }
+      serviceDetails.push(`Basic Scam Analysis: ${serviceResults.basicScam.risk_score || 0} risk score`);
+    } else {
+      servicesUsed.push('✗ Basic Scam Detection (unavailable)');
     }
 
-    // Add enhanced scam analysis if available
-    if (enhancedScam && enhancedScam.result && !enhancedScam.error) {
-      overallRisk += (enhancedScam.result.risk_score || 0) * 100;
-      if (enhancedScam.result.indicators) {
-        riskFactors = riskFactors.concat(enhancedScam.result.indicators);
+    // Process Breach Check Results
+    if (serviceResults.breachCheck && !serviceResults.breachCheck.error) {
+      if (serviceResults.breachCheck.breached_emails && serviceResults.breachCheck.breached_emails.length > 0) {
+        totalScore += 30;
+        allIndicators.push(`Compromised emails detected: ${serviceResults.breachCheck.breached_emails.length}`);
       }
+      servicesUsed.push('✓ Breach Check');
+      serviceDetails.push(`Breach Check: ${serviceResults.breachCheck.breached_emails?.length || 0} compromised emails`);
+    } else if (emails.length > 0) {
+      servicesUsed.push('✗ Breach Check (unavailable)');
     }
 
-    // Add basic scam analysis if available
-    if (basicScam && basicScam.overall_assessment && !basicScam.error) {
-      overallRisk += basicScam.overall_assessment.risk_score || 0;
-      if (basicScam.threats_detected) {
-        riskFactors = riskFactors.concat(basicScam.threats_detected);
-      }
+    // Process Local Analysis Results
+    if (serviceResults.localAnalysis) {
+      totalScore += serviceResults.localAnalysis.score;
+      allIndicators.push(...serviceResults.localAnalysis.indicators);
+      servicesUsed.push('✓ Enhanced Pattern Analysis');
+      serviceDetails.push(`Pattern Analysis: ${serviceResults.localAnalysis.score} threat indicators`);
     }
 
     // Determine risk level
-    const finalRisk = Math.min(overallRisk, 100);
     let riskLevel, riskColor, riskIcon;
-    
-    if (finalRisk >= 70) {
+    if (totalScore >= 70) {
       riskLevel = 'HIGH RISK';
-      riskColor = 'red';
+      riskColor = '#dc2626';
       riskIcon = '🚨';
-    } else if (finalRisk >= 50) {
-      riskLevel = 'MEDIUM-HIGH RISK';
-      riskColor = 'orange';
-      riskIcon = '⚠️';
-    } else if (finalRisk >= 30) {
+    } else if (totalScore >= 40) {
       riskLevel = 'MEDIUM RISK';
-      riskColor = 'orange';
+      riskColor = '#ea580c';
       riskIcon = '⚠️';
-    } else if (finalRisk >= 15) {
+    } else if (totalScore >= 15) {
       riskLevel = 'LOW-MEDIUM RISK';
-      riskColor = 'yellow';
+      riskColor = '#ca8a04';
       riskIcon = '⚡';
     } else {
       riskLevel = 'LOW RISK';
-      riskColor = 'green';
+      riskColor = '#16a34a';
       riskIcon = '✅';
     }
 
-    // Build comprehensive result
-    let result = `
-      <div style="border: 2px solid ${riskColor}; border-radius: 8px; padding: 20px; background-color: ${riskColor === 'red' ? '#ffeaea' : riskColor === 'orange' ? '#fff3e0' : riskColor === 'yellow' ? '#fffbf0' : '#eafaf1'};">
-        <h3 style="color: ${riskColor}; margin: 0 0 10px 0; font-size: 18px;">
-          ${riskIcon} **${riskLevel}** (Score: ${Math.round(finalRisk)})
-        </h3>
-        <p style="margin: 10px 0;">
-          ${finalRisk >= 50 ? 'This message shows strong indicators of a scam.' : finalRisk >= 30 ? 'This message has some suspicious elements.' : 'This message appears relatively safe, but stay vigilant.'}
+    // Generate recommendations
+    const recommendations = generateRecommendations(totalScore, allIndicators, urls, emails);
+
+    // Format result
+    return `
+      <div style="padding: 20px; border-radius: 8px; background: #f8fafc; border-left: 4px solid ${riskColor};">
+        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+          <span style="font-size: 24px; margin-right: 10px;">${riskIcon}</span>
+          <h3 style="margin: 0; color: ${riskColor}; font-size: 18px;">${riskLevel}</h3>
+          <span style="margin-left: 10px; color: #64748b; font-size: 14px;">(Score: ${totalScore.toFixed(0)})</span>
+        </div>
+        
+        <p style="margin: 10px 0; color: #475569; font-size: 14px;">
+          ${totalScore >= 70 ? 'This message shows strong indicators of a scam.' : 
+            totalScore >= 40 ? 'This message contains several suspicious elements.' :
+            totalScore >= 15 ? 'This message has some concerning indicators.' :
+            'This message appears to have minimal risk indicators.'}
         </p>
-      </div>
 
-      <div style="margin: 20px 0;">
-        <h4 style="margin: 10px 0; font-weight: bold;">Components Detected:</h4>
-        <ul style="margin: 5px 0; padding-left: 20px;">
-          <li>**URLs:** ${urls.length} detected</li>
-          <li>**Emails:** ${emails.length} detected</li>
-        </ul>
-      </div>
+        <div style="margin: 15px 0;">
+          <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Components Detected:</h4>
+          <div style="color: #6b7280; font-size: 13px;">
+            ${urls.length > 0 ? `• URLs: ${urls.length} detected` : '• No URLs detected'}<br>
+            ${emails.length > 0 ? `• Emails: ${emails.length} detected` : '• No emails detected'}
+          </div>
+        </div>
 
-      <div style="margin: 20px 0;">
-        <h4 style="margin: 10px 0; font-weight: bold;">Analysis Services Used:</h4>
-        <ul style="margin: 5px 0; padding-left: 20px;">
-          <li>${basicScam && !basicScam.error ? '✅' : '❌'} **Basic Scam Detection** ${basicScam && basicScam.error ? '(unavailable)' : ''}</li>
-          <li>${enhancedScam && !enhancedScam.error ? '✅' : '❌'} **Enhanced Scam Analysis** ${enhancedScam && enhancedScam.error ? '(unavailable)' : ''}</li>
-          <li>${linkAnalysis && !linkAnalysis.error ? '✅' : urls.length === 0 ? '➖' : '❌'} **Link Analysis** ${linkAnalysis && linkAnalysis.error ? '(unavailable)' : urls.length === 0 ? '(no URLs to analyze)' : ''}</li>
-          <li>${breachCheck && !breachCheck.error ? '✅' : emails.length === 0 ? '➖' : '❌'} **Breach Check** ${breachCheck && breachCheck.error ? '(unavailable)' : emails.length === 0 ? '(no emails to check)' : ''}</li>
-          <li>✅ **Enhanced Pattern Analysis**</li>
-        </ul>
+        <div style="margin: 15px 0;">
+          <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Analysis Services Used:</h4>
+          <div style="color: #6b7280; font-size: 13px;">
+            ${servicesUsed.map(service => `• ${service}`).join('<br>')}
+          </div>
+        </div>
+
+        ${allIndicators.length > 0 ? `
+          <div style="margin: 15px 0;">
+            <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Threats Detected:</h4>
+            <div style="color: #dc2626; font-size: 13px;">
+              ${allIndicators.slice(0, 8).map(indicator => `✗ ${indicator}`).join('<br>')}
+              ${allIndicators.length > 8 ? `<br><em>... and ${allIndicators.length - 8} more indicators</em>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        <div style="margin: 15px 0;">
+          <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Security Recommendations:</h4>
+          <div style="color: #059669; font-size: 13px;">
+            ${recommendations.map(rec => `🛡️ ${rec}`).join('<br>')}
+          </div>
+        </div>
+
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px;">
+          Analysis completed in ${analysisTime}ms using ${servicesUsed.filter(s => s.includes('✓')).length} services
+        </div>
       </div>
     `;
+  };
 
-    // Add threat details if any found
-    if (riskFactors.length > 0) {
-      result += `
-        <div style="margin: 20px 0;">
-          <h4 style="margin: 10px 0; font-weight: bold;">Threats Detected:</h4>
-          <ul style="margin: 5px 0; padding-left: 20px;">
-      `;
-      
-      riskFactors.slice(0, 8).forEach(factor => {
-        result += `<li>${factor}</li>`;
-      });
-      
-      result += `</ul></div>`;
+  // Recommendations Generator
+  const generateRecommendations = (score, indicators, urls, emails) => {
+    const recommendations = [];
+
+    if (score >= 70) {
+      recommendations.push('Do not interact with this message - Multiple high-risk indicators detected');
+      if (urls.length > 0) {
+        recommendations.push('Avoid clicking the detected URLs - Links identified as dangerous');
+      }
+      recommendations.push('Verify sender through official channels - Always confirm unexpected messages');
+      if (emails.length > 0) {
+        recommendations.push('Check if your email has been compromised - Consider changing passwords');
+      }
+    } else if (score >= 40) {
+      recommendations.push('Exercise caution with this message - Several suspicious elements found');
+      if (urls.length > 0) {
+        recommendations.push('Verify URLs before clicking - Check domain authenticity');
+      }
+      recommendations.push('Confirm sender identity through alternative means');
+    } else if (score >= 15) {
+      recommendations.push('Be cautious and verify sender identity');
+      if (urls.length > 0) {
+        recommendations.push('Check URL destinations before clicking');
+      }
+      recommendations.push('When in doubt, contact the organization directly');
+    } else {
+      recommendations.push('Message appears legitimate but always stay vigilant');
+      recommendations.push('Continue following good cybersecurity practices');
     }
 
-    // Add service-specific results
-    if (linkAnalysis && linkAnalysis.result && !linkAnalysis.error) {
-      result += `
-        <div style="margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
-          <h4 style="margin: 0 0 10px 0; font-weight: bold;">Link Analysis Results:</h4>
-          <p>**Overall URL Risk:** ${linkAnalysis.result.overall_risk}</p>
-          <p>**URLs Analyzed:** ${linkAnalysis.result.urls_found}</p>
-        </div>
-      `;
-    }
-
-    if (breachCheck && breachCheck.result && !breachCheck.error) {
-      result += `
-        <div style="margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
-          <h4 style="margin: 0 0 10px 0; font-weight: bold;">Breach Check Results:</h4>
-          <p>**Emails Checked:** ${emails.length}</p>
-          <p>**Breach Status:** ${breachCheck.result.breached ? 'Found in breaches' : 'No breaches found'}</p>
-        </div>
-      `;
-    }
-
-    // Add recommendations
-    if (finalRisk >= 50) {
-      result += `
-        <div style="margin: 20px 0; padding: 15px; background-color: #ffeaea; border: 1px solid red; border-radius: 5px;">
-          <h4 style="margin: 0 0 10px 0; font-weight: bold; color: red;">⚠️ Recommendations:</h4>
-          <ul style="margin: 5px 0; padding-left: 20px;">
-            <li>**Do not click any links** in this message</li>
-            <li>**Do not provide personal information** if contacted</li>
-            <li>**Verify independently** by contacting the organization directly</li>
-            <li>**Report this message** to relevant authorities</li>
-          </ul>
-        </div>
-      `;
-    }
-
-    result += `
-      <div style="margin: 20px 0; font-size: 12px; color: #666;">
-        <p>**Analysis completed in ${analysisTime}s** | Powered by Remaleh Protect</p>
-      </div>
-    `;
-
-    return result;
+    return recommendations;
   };
 
   const handleBreachCheck = async (e) => {
@@ -404,792 +414,1041 @@ function App() {
           });
         } else {
           setBreachResult({
-            breached: false,
-            message: 'Good news! This email address was not found in any known data breaches.'
+            breached: false
           });
         }
+        
         setIsChecking(false);
       }, 1500);
     } catch (error) {
-      console.error('Error checking breach:', error);
+      console.error('Error checking breaches:', error);
       setIsChecking(false);
     }
   };
 
+  // Cybersecurity knowledge base for rule-based responses
+  const cybersecurityKnowledge = {
+    passwords: {
+      keywords: ['password', 'passwords', 'strong password', 'secure password', 'passphrase', 'password manager'],
+      response: `
+**Password Protection**
+
+• Use at least 16 characters when possible
+• Combine uppercase letters, lowercase letters, numbers, and symbols
+• Avoid personal information (birthdays, names, etc.)
+• Don't use common words or patterns
+• Consider using passphrases (e.g., "KangarooJumping2025!Sydney")
+• Use a different password for each account
+• Consider using a password manager like LastPass, 1Password, or Bitwarden
+• Enable multi-factor authentication (MFA) whenever possible
+      `,
+      source: 'Expert Knowledge'
+    },
+    phishing: {
+      keywords: ['phishing', 'scam email', 'fake email', 'suspicious email', 'scam text', 'phishing email', 'identify phishing'],
+      response: `
+**Identifying Phishing Emails and Texts**
+
+• Check the sender's email address carefully for slight misspellings
+• Be suspicious of urgent requests requiring immediate action
+• Hover over links before clicking to see the actual URL
+• Be wary of emails requesting personal information or passwords
+• Look for poor grammar and spelling errors
+• Be suspicious of unexpected attachments
+• Verify requests through official channels (call the company directly)
+• Check for generic greetings like "Dear Customer" instead of your name
+      `,
+      source: 'Expert Knowledge'
+    },
+    malware: {
+      keywords: ['malware', 'virus', 'ransomware', 'spyware', 'trojan', 'adware', 'computer virus'],
+      response: `
+**Protecting Against Malware**
+
+• Keep your operating system and software updated
+• Use reputable antivirus/anti-malware software
+• Be careful about downloading files or clicking links
+• Only download apps from official app stores
+• Back up your important data regularly
+• Use a firewall
+• Be wary of suspicious email attachments
+• Avoid pirated software and media
+      `,
+      source: 'Expert Knowledge'
+    },
+    privacy: {
+      keywords: ['privacy', 'data privacy', 'online privacy', 'protect privacy', 'privacy settings'],
+      response: `
+**Protecting Your Online Privacy**
+
+• Review and adjust privacy settings on social media accounts
+• Use a VPN when connecting to public Wi-Fi
+• Clear your browsing history and cookies regularly
+• Use private browsing mode when appropriate
+• Be mindful of what you share online
+• Use strong, unique passwords for each account
+• Consider using privacy-focused browsers and search engines
+• Regularly check which apps have access to your data
+      `,
+      source: 'Expert Knowledge'
+    },
+    mfa: {
+      keywords: ['mfa', 'multi-factor', 'two-factor', '2fa', 'authentication', 'two step verification'],
+      response: `
+**Multi-Factor Authentication (MFA)**
+
+• MFA adds an extra layer of security beyond just passwords
+• Types include: something you know (password), something you have (phone), something you are (fingerprint)
+• Authenticator apps (like Google Authenticator) are more secure than SMS
+• Enable MFA on all important accounts (email, banking, social media)
+• Hardware security keys provide the strongest protection
+• Even if your password is compromised, MFA helps protect your account
+• Backup your MFA recovery codes in a secure location
+      `,
+      source: 'Expert Knowledge'
+    },
+    wifi: {
+      keywords: ['wifi', 'wi-fi', 'wireless', 'router', 'network security', 'public wifi'],
+      response: `
+**Wi-Fi Security Best Practices**
+
+• Change default router passwords and admin credentials
+• Use WPA3 encryption if available (at least WPA2)
+• Create a strong, unique Wi-Fi password
+• Enable the router's firewall
+• Keep router firmware updated
+• Use a guest network for visitors and IoT devices
+• Be cautious when using public Wi-Fi (use a VPN)
+• Position your router centrally to minimize signal outside your home
+      `,
+      source: 'Expert Knowledge'
+    },
+    breach: {
+      keywords: ['data breach', 'breach', 'hacked', 'compromised', 'stolen data', 'leaked'],
+      response: `
+**Data Breach Response**
+
+• **Change passwords immediately** • **Enable 2FA on all accounts** • **Monitor financial statements** • **Check credit reports** • **Report to relevant authorities** • **Document the incident**
+
+**🛡️ REMALEH GUARDIAN ESCALATION**
+
+This appears to be a serious cybersecurity concern that may require immediate professional assistance. Our cybersecurity experts can provide personalized guidance for your specific situation.
+
+[Contact Remaleh Guardian →](https://www.remaleh.com.au/contact-us)
+      `,
+      source: 'Expert Knowledge'
+    },
+    phone: {
+      keywords: ['phone safety', 'mobile security', 'smartphone', 'app safety', 'sim swapping'],
+      response: `
+**Phone & App Safety**
+
+• Keep your phone's operating system updated
+• Only download apps from official app stores (Google Play, Apple App Store)
+• Review app permissions before installing
+• Use screen locks (PIN, password, fingerprint, face recognition)
+• Enable remote wipe capabilities
+• Be cautious with public Wi-Fi
+• Regularly review and uninstall unused apps
+• Be aware of SIM swapping attacks - contact your carrier if you lose service unexpectedly
+
+**Real-world example:** Sarah received a text saying her phone service would be suspended. She called her carrier directly and discovered it was a scam attempting SIM swapping.
+      `,
+      source: 'Expert Knowledge'
+    }
+  };
+
+  const formatChatMessage = (text) => {
+    if (!text) return '';
+    
+    // Enhanced formatting for better readability
+    let formatted = text
+      // Convert **bold** to <strong>
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Convert bullet points
+      .replace(/^• /gm, '<br>• ')
+      .replace(/^\* /gm, '<br>• ')
+      .replace(/^- /gm, '<br>• ')
+      // Convert headers
+      .replace(/^### (.*$)/gm, '<h4 style="margin: 15px 0 8px 0; color: #374151; font-size: 16px;">$1</h4>')
+      .replace(/^## (.*$)/gm, '<h3 style="margin: 15px 0 10px 0; color: #1f2937; font-size: 18px;">$1</h3>')
+      .replace(/^# (.*$)/gm, '<h2 style="margin: 15px 0 10px 0; color: #111827; font-size: 20px;">$1</h2>')
+      // Convert links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #21a1ce; text-decoration: underline;">$1</a>')
+      // Add spacing after bullet points
+      .replace(/• /g, '• ')
+      // Clean up extra line breaks
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+    
+    return formatted;
+  };
 
   const handleChatSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
-    const userMessage = inputMessage.trim();
-    setInputMessage('');
-    setChatMessages(prev => [...prev, { type: 'user', content: userMessage }]);
-    setIsTyping(true);
+    // Reset error state
     setChatError(false);
+    
+    // Add user message
+    const userMessage = { text: inputMessage, sender: 'user' };
+    setChatMessages([...chatMessages, userMessage]);
+    
+    // Store message for processing
+    const messageToProcess = inputMessage;
+    
+    // Clear input and show typing indicator
+    setInputMessage('');
+    setIsTyping(true);
 
     try {
-      const apiResponse = await fetch('https://remaleh-protect-api.onrender.com/api/chat/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: userMessage })
-      });
+      let responseFound = false;
+      let response = '';
+      let source = '';
+      const lowercaseInput = messageToProcess.toLowerCase();
 
-      if (!apiResponse.ok) {
-        throw new Error(`HTTP error! status: ${apiResponse.status}`);
+      // First check against local knowledge base for quick responses
+      for (const category in cybersecurityKnowledge) {
+        const { keywords, response: categoryResponse, source: categorySource } = cybersecurityKnowledge[category];
+        
+        // Check each keyword
+        for (const keyword of keywords) {
+          if (lowercaseInput.includes(keyword.toLowerCase())) {
+            response = categoryResponse;
+            source = categorySource;
+            responseFound = true;
+            break;
+          }
+        }
+        
+        if (responseFound) break;
       }
 
-      const data = await apiResponse.json();
-      
-      setIsTyping(false);
-      setChatMessages(prev => [...prev, { 
-        type: 'bot', 
-        content: data.response || 'I received your message but had trouble generating a response.',
-        source: data.source || 'Unknown'
-      }]);
+      // If no match found in local knowledge base, call backend API
+      if (!responseFound) {
+        try {
+          const apiResponse = await fetch('https://remaleh-protect-api.onrender.com/api/chat/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: messageToProcess }),
+          });
+          
+          if (!apiResponse.ok) {
+            throw new Error(`API responded with status: ${apiResponse.status}`);
+          }
+          
+          const data = await apiResponse.json();
+          
+          if (data.success) {
+            response = data.response;
+            source = data.source === 'expert_knowledge' ? 'Expert Knowledge' : 'AI Analysis';
+            responseFound = true;
+          }
+        } catch (apiError) {
+          console.error("API Error:", apiError);
+          // Continue to fallback response if API call fails
+        }
+      }
 
+      // Fallback response if no match found and API call failed
+      if (!responseFound) {
+        response = "I don't have specific information about that topic yet. For complex cybersecurity questions, I recommend consulting with a security professional.";
+        source = "AI Analysis";
+      }
+
+      // Add bot response after a short delay to simulate thinking
+      setTimeout(() => {
+        const botMessage = { text: response, sender: 'assistant', source };
+        setChatMessages(prevMessages => [...prevMessages, botMessage]);
+        setIsTyping(false);
+      }, 1000);
     } catch (error) {
-      console.error('Chat API Error:', error);
-      setIsTyping(false);
+      console.error("Error processing chat:", error);
       setChatError(true);
       
-      // Fallback response
-      setChatMessages(prev => [...prev, { 
-        type: 'bot', 
-        content: "I'm sorry, but I'm having trouble connecting to my knowledge base right now. For immediate cybersecurity assistance, please visit our contact page or try again in a few moments.",
-        source: 'Fallback'
-      }]);
+      // Add error message
+      const errorMessage = { 
+        text: "Sorry, I encountered an error processing your request. Please try again.", 
+        sender: 'assistant', 
+        source: "System" 
+      };
+      setChatMessages(prevMessages => [...prevMessages, errorMessage]);
+      setIsTyping(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-center">
-            <Shield className="mr-3" size={32} />
-            <h1 className="text-2xl font-bold">Remaleh</h1>
-          </div>
-          <div className="text-center mt-4">
-            <h2 className="text-3xl font-bold mb-2">Stay Safe in Our Connected World</h2>
-            <p className="text-lg opacity-90">Your Digital Well-Being Is Our Paramount Commitment</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <header className="bg-white shadow-sm p-4 flex justify-center">
+        <img 
+          src="/remaleh-logo-full.png" 
+          alt="Remaleh" 
+          className="h-8 w-auto object-contain"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.innerHTML = `
+              <svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.5 2L18 9.5L10.5 17L3 9.5L10.5 2Z" fill="#21a1ce"/>
+                <path d="M10.5 17L18 24.5L10.5 32L3 24.5L10.5 17Z" fill="#21a1ce"/>
+                <path d="M24.5 9.5L32 17L24.5 24.5L17 17L24.5 9.5Z" fill="#21a1ce"/>
+                <text x="40" y="20" font-family="Arial" font-size="16" font-weight="bold" fill="#000">Remaleh</text>
+              </svg>
+            `;
+          }}
+        />
+      </header>
+
+      <div className="bg-gradient-to-br from-[#21a1ce] to-[#1a80a3] text-white text-center py-8 px-4">
+        <h1 className="text-3xl font-bold mb-2">Stay Safe in Our Connected World</h1>
+        <p className="text-xl">Your Digital Well-Being Is Our Paramount Commitment</p>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        {activeTab === 'check' && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <div className="flex items-center mb-4">
-                <MessageSquare className="text-[#21a1ce] mr-3" size={24} />
-                <h3 className="text-xl font-bold">Advanced Text Message Analysis</h3>
+      {activeTab === 'check' && (
+        <div className="p-4">
+          <div className="bg-white rounded-lg shadow p-5">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                <MessageSquare className="text-white" size={24} />
               </div>
-              <p className="text-gray-600 mb-6">
-                Comprehensive scam detection using multiple AI services, link analysis, and breach checking
-              </p>
-              
-              <form onSubmit={handleScamCheck}>
-                <textarea
-                  className="w-full border border-gray-300 rounded-lg p-3 mb-4 h-32"
-                  placeholder="Paste your message here for comprehensive security analysis..."
-                  value={scamMessage}
-                  onChange={(e) => setScamMessage(e.target.value)}
-                ></textarea>
-                <button
-                  type="submit"
-                  className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-6 rounded-lg font-medium w-full"
-                  disabled={isAnalyzing}
-                >
-                  {isAnalyzing ? 'Analyzing Message...' : 'Analyze Message'}
-                </button>
-              </form>
-
-              {scamResult && (
-                <div className="mt-6">
-                  <div dangerouslySetInnerHTML={{ __html: scamResult }} />
-                </div>
-              )}
+              <h2 className="text-xl font-bold">Advanced Text Message Analysis</h2>
             </div>
-          </div>
-        )}
+            <p className="text-gray-600 mb-4">
+              Comprehensive scam detection using multiple AI services, link analysis, and breach checking
+            </p>
 
-        {activeTab === 'password' && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <div className="flex items-center mb-4">
-                <Lock className="text-[#21a1ce] mr-3" size={24} />
-                <h3 className="text-xl font-bold">Password Breach Check</h3>
+            <form onSubmit={handleScamCheck}>
+              <textarea
+                className="w-full border border-gray-300 rounded-lg p-3 mb-4 h-32"
+                placeholder="Paste your message here for comprehensive security analysis..."
+                value={scamMessage}
+                onChange={(e) => setScamMessage(e.target.value)}
+              ></textarea>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-6 rounded-lg font-medium w-full"
+                disabled={isAnalyzing}
+              >
+                {isAnalyzing ? 'Analyzing Message...' : 'Analyze Message'}
+              </button>
+            </form>
+
+            {scamResult && (
+              <div className="mt-6">
+                <div dangerouslySetInnerHTML={{ __html: scamResult }} />
               </div>
-              <p className="text-gray-600 mb-6">
-                Check if your email address has been involved in any known data breaches
-              </p>
-              
-              <form onSubmit={handleBreachCheck}>
-                <input
-                  type="email"
-                  className="w-full border border-gray-300 rounded-lg p-3 mb-4"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                <button
-                  type="submit"
-                  className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-6 rounded-lg font-medium w-full"
-                  disabled={isChecking}
-                >
-                  {isChecking ? 'Checking...' : 'Check for Breaches'}
-                </button>
-              </form>
+            )}
+          </div>
+        </div>
+      )}
 
-              {breachResult && (
-                <div className="mt-6">
-                  {breachResult.breached ? (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <h4 className="font-bold text-red-800 mb-2">⚠️ Breaches Found</h4>
-                      <p className="text-red-700 mb-4">Your email was found in the following data breaches:</p>
+      {activeTab === 'passwords' && (
+        <div className="p-4">
+          <div className="bg-white rounded-lg shadow p-5">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                <Lock className="text-white" size={24} />
+              </div>
+              <h2 className="text-xl font-bold">Password Still Safe?</h2>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Check if your email has been involved in any known data breaches
+            </p>
+
+            <form onSubmit={handleBreachCheck}>
+              <input
+                type="email"
+                className="w-full border border-gray-300 rounded-lg p-3 mb-4"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white py-3 px-6 rounded-lg font-medium w-full"
+                disabled={isChecking}
+              >
+                {isChecking ? 'Checking...' : 'Check for Breaches'}
+              </button>
+            </form>
+
+            {breachResult && (
+              <div className="mt-6">
+                {breachResult.breached ? (
+                  <div className="p-4 rounded-lg bg-red-100 border border-red-200">
+                    <div className="flex items-center mb-2">
+                      <div className="p-2 rounded-full bg-red-200 mr-3">
+                        <AlertCircle className="text-red-500" size={20} />
+                      </div>
+                      <h3 className="font-bold text-lg text-red-700">Email Found in Data Breaches</h3>
+                    </div>
+                    <p className="mb-4 text-red-600">
+                      Your email was found in {breachResult.breaches.length} known data breach(es).
+                    </p>
+                    <div className="space-y-3">
                       {breachResult.breaches.map((breach, index) => (
-                        <div key={index} className="bg-white p-3 rounded border mb-2">
-                          <h5 className="font-semibold">{breach.name}</h5>
+                        <div key={index} className="bg-white p-3 rounded border">
+                          <h4 className="font-medium">{breach.name}</h4>
                           <p className="text-sm text-gray-600">Domain: {breach.domain}</p>
                           <p className="text-sm text-gray-600">Date: {breach.date}</p>
-                          <p className="text-sm text-gray-600">Compromised data: {breach.data.join(', ')}</p>
+                          <p className="text-sm text-gray-600">
+                            Compromised data: {breach.data.join(', ')}
+                          </p>
                         </div>
                       ))}
-                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                        <h5 className="font-semibold text-yellow-800">Recommended Actions:</h5>
-                        <ul className="text-sm text-yellow-700 mt-2">
-                          <li>• Change your password immediately</li>
-                          <li>• Enable two-factor authentication</li>
-                          <li>• Monitor your accounts for suspicious activity</li>
-                          <li>• Consider using a password manager</li>
-                        </ul>
-                      </div>
                     </div>
-                  ) : (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <h4 className="font-bold text-green-800 mb-2">✅ No Breaches Found</h4>
-                      <p className="text-green-700">{breachResult.message}</p>
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                      <h4 className="font-medium text-yellow-800">Recommended Actions:</h4>
+                      <ul className="text-sm text-yellow-700 mt-2 space-y-1">
+                        <li>• Change your password immediately</li>
+                        <li>• Enable two-factor authentication</li>
+                        <li>• Monitor your accounts for suspicious activity</li>
+                        <li>• Consider using a password manager</li>
+                      </ul>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'learn' && (
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <div className="flex items-center mb-4">
-                <BookOpen className="text-[#21a1ce] mr-3" size={24} />
-                <h3 className="text-xl font-bold">Cyber Sensei - Learn & Stay Protected</h3>
-              </div>
-              <p className="text-gray-600 mb-6">
-                Master cybersecurity with expert guidance tailored for Australian families
-              </p>
-
-              {!selectedLearningTopic ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div 
-                    className="p-4 border border-gray-200 rounded-lg hover:border-[#21a1ce] hover:shadow-md cursor-pointer transition-all"
-                    onClick={() => setSelectedLearningTopic('passwords')}
-                  >
-                    <Lock className="text-[#21a1ce] mb-2" size={24} />
-                    <h4 className="font-bold mb-2">Password Protection</h4>
-                    <p className="text-sm text-gray-600">Learn to create and manage strong, unique passwords</p>
-                  </div>
-
-                  <div 
-                    className="p-4 border border-gray-200 rounded-lg hover:border-[#21a1ce] hover:shadow-md cursor-pointer transition-all"
-                    onClick={() => setSelectedLearningTopic('phishing')}
-                  >
-                    <Mail className="text-[#21a1ce] mb-2" size={24} />
-                    <h4 className="font-bold mb-2">Email & Text Scams</h4>
-                    <p className="text-sm text-gray-600">Identify and avoid phishing attempts and fraudulent messages</p>
-                  </div>
-
-                  <div 
-                    className="p-4 border border-gray-200 rounded-lg hover:border-[#21a1ce] hover:shadow-md cursor-pointer transition-all"
-                    onClick={() => setSelectedLearningTopic('devices')}
-                  >
-                    <Shield className="text-[#21a1ce] mb-2" size={24} />
-                    <h4 className="font-bold mb-2">Device & Home Security</h4>
-                    <p className="text-sm text-gray-600">Secure your devices, WiFi, and smart home systems</p>
-                  </div>
-
-                  <div 
-                    className="p-4 border border-gray-200 rounded-lg hover:border-[#21a1ce] hover:shadow-md cursor-pointer transition-all"
-                    onClick={() => setSelectedLearningTopic('social')}
-                  >
-                    <Users className="text-[#21a1ce] mb-2" size={24} />
-                    <h4 className="font-bold mb-2">Social Media & Privacy</h4>
-                    <p className="text-sm text-gray-600">Protect your privacy and family on social platforms</p>
-                  </div>
-
-                  <div 
-                    className="p-4 border border-gray-200 rounded-lg hover:border-[#21a1ce] hover:shadow-md cursor-pointer transition-all"
-                    onClick={() => setSelectedLearningTopic('mobile')}
-                  >
-                    <Smartphone className="text-[#21a1ce] mb-2" size={24} />
-                    <h4 className="font-bold mb-2">Phone & App Safety</h4>
-                    <p className="text-sm text-gray-600">Keep your mobile devices and apps secure</p>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <button 
-                    className="flex items-center text-[#21a1ce] mb-4 hover:underline"
-                    onClick={() => setSelectedLearningTopic(null)}
-                  >
-                    <ChevronLeft size={20} />
-                    Back to Topics
-                  </button>
-
-                  {selectedLearningTopic === 'passwords' && (
-                    <div className="space-y-6">
-                      <h3 className="text-xl font-bold">Password Protection Mastery</h3>
-                      
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <h4 className="font-bold mb-2">Why Strong Passwords Matter</h4>
-                        <p className="text-sm">
-                          Weak passwords are the #1 cause of account breaches. A strong password is your first line of defense against cybercriminals who use automated tools to guess millions of password combinations per second.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">Creating Unbreakable Passwords</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Use the "Passphrase Method"</p>
-                              <p className="text-sm text-gray-600">Combine 4-6 random words: "Coffee!Bicycle#Mountain9Sky"</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Minimum 12 characters</p>
-                              <p className="text-sm text-gray-600">Longer passwords are exponentially harder to crack</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Mix character types</p>
-                              <p className="text-sm text-gray-600">Include uppercase, lowercase, numbers, and symbols</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Unique for every account</p>
-                              <p className="text-sm text-gray-600">Never reuse passwords across different services</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <h4 className="font-bold mb-2">Password Manager Recommendation</h4>
-                        <p className="text-sm mb-3">
-                          Password managers generate and store unique passwords for all your accounts. Popular options include:
-                        </p>
-                        <ul className="text-sm space-y-1 ml-4">
-                          <li>• LastPass</li>
-                          <li>• 1Password</li>
-                          <li>• Bitwarden (free option)</li>
-                          <li>• Dashlane</li>
-                        </ul>
-                      </div>
-
-                      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                        <h4 className="font-bold mb-2">What NOT to Do</h4>
-                        <ul className="text-sm space-y-1">
-                          <li>• Don't use personal information (birthdays, names, addresses)</li>
-                          <li>• Don't use common words or patterns</li>
-                          <li>• Don't share passwords with others</li>
-                          <li>• Don't write passwords on sticky notes</li>
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedLearningTopic === 'phishing' && (
-                    <div className="space-y-6">
-                      <h3 className="text-xl font-bold">Email & Text Scams</h3>
-                      
-                      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                        <h4 className="font-bold mb-2">What is Phishing?</h4>
-                        <p className="text-sm">
-                          Phishing is when criminals send fake emails or texts pretending to be from legitimate companies to steal your personal information, passwords, or money.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">Warning Signs to Look For</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-start">
-                            <div className="bg-red-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Urgent language</p>
-                              <p className="text-sm text-gray-600">"Act now!" "Your account will be closed!" "Immediate action required!"</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-red-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Generic greetings</p>
-                              <p className="text-sm text-gray-600">"Dear Customer" instead of your actual name</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-red-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Suspicious links</p>
-                              <p className="text-sm text-gray-600">Hover over links to see where they really go</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-red-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Poor grammar and spelling</p>
-                              <p className="text-sm text-gray-600">Legitimate companies proofread their communications</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                        <h4 className="font-bold mb-2">Australian Example</h4>
-                        <p className="text-sm">
-                          "Your ATO tax refund is ready! Click here to claim $1,247.50 immediately or it will expire in 24 hours." 
-                          <br /><br />
-                          <strong>Red flags:</strong> The ATO doesn't send refund notifications via email, uses urgent language, and asks you to click links.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">How to Verify Suspicious Messages</h4>
-                        <div className="space-y-2 text-sm">
-                          <p>• Contact the company directly using official phone numbers</p>
-                          <p>• Log into your account through the official website (not email links)</p>
-                          <p>• Check the sender's email address carefully for misspellings</p>
-                          <p>• Ask yourself: "Was I expecting this message?"</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <h4 className="font-bold mb-2">What to Do if You've Been Targeted</h4>
-                        <ul className="text-sm space-y-1">
-                          <li>• Don't click any links or download attachments</li>
-                          <li>• Report the scam to ACCC Scamwatch</li>
-                          <li>• Forward phishing emails to the real company</li>
-                          <li>• If you clicked a link, change your passwords immediately</li>
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedLearningTopic === 'devices' && (
-                    <div className="space-y-6">
-                      <h3 className="text-xl font-bold">Device & Home Security</h3>
-                      
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <h4 className="font-bold mb-2">Your Digital Fortress</h4>
-                        <p className="text-sm">
-                          Every device in your home is a potential entry point for cybercriminals. Securing them properly creates multiple layers of protection for your family.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">Essential Device Security</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Keep everything updated</p>
-                              <p className="text-sm text-gray-600">Enable automatic updates for operating systems and apps</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Use screen locks</p>
-                              <p className="text-sm text-gray-600">Set PINs, patterns, or biometric locks on all devices</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Install reputable antivirus</p>
-                              <p className="text-sm text-gray-600">Protect computers with quality security software</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Backup regularly</p>
-                              <p className="text-sm text-gray-600">Use cloud services or external drives for important data</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                        <h4 className="font-bold mb-2">WiFi Security Checklist</h4>
-                        <ul className="text-sm space-y-1">
-                          <li>• Change default router passwords</li>
-                          <li>• Use WPA3 encryption (or WPA2 if WPA3 unavailable)</li>
-                          <li>• Create a strong WiFi password</li>
-                          <li>• Set up a guest network for visitors</li>
-                          <li>• Regularly update router firmware</li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">Smart Home Security</h4>
-                        <div className="space-y-2 text-sm">
-                          <p>• Change default passwords on all smart devices</p>
-                          <p>• Keep smart home apps updated</p>
-                          <p>• Review device permissions regularly</p>
-                          <p>• Consider network segmentation for IoT devices</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedLearningTopic === 'social' && (
-                    <div className="space-y-6">
-                      <h3 className="text-xl font-bold">Social Media & Privacy</h3>
-                      
-                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                        <h4 className="font-bold mb-2">Privacy in the Social Age</h4>
-                        <p className="text-sm">
-                          Social media platforms collect vast amounts of personal data. Understanding privacy settings and safe sharing practices protects you and your family from identity theft, stalking, and targeted scams.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">Essential Privacy Settings</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-start">
-                            <div className="bg-purple-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Make profiles private</p>
-                              <p className="text-sm text-gray-600">Only allow friends/followers to see your posts and information</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-purple-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Limit personal information</p>
-                              <p className="text-sm text-gray-600">Don't share phone numbers, addresses, or birthdates publicly</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-purple-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Review friend/follower requests</p>
-                              <p className="text-sm text-gray-600">Only connect with people you know in real life</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-purple-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Disable location tracking</p>
-                              <p className="text-sm text-gray-600">Turn off location services for social media apps</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                        <h4 className="font-bold mb-2">What Never to Share</h4>
-                        <ul className="text-sm space-y-1">
-                          <li>• Full birthdates (identity theft risk)</li>
-                          <li>• Home addresses or specific locations</li>
-                          <li>• Travel plans while you're away</li>
-                          <li>• Photos of important documents</li>
-                          <li>• Children's school or activity locations</li>
-                          <li>• Financial information or purchases</li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">Teaching Kids Social Media Safety</h4>
-                        <div className="space-y-2 text-sm">
-                          <p>• Discuss the permanence of online posts</p>
-                          <p>• Teach them about cyberbullying and how to report it</p>
-                          <p>• Set age-appropriate time limits</p>
-                          <p>• Monitor their friend lists and interactions</p>
-                          <p>• Create family social media agreements</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <h4 className="font-bold mb-2">Regular Privacy Checkups</h4>
-                        <p className="text-sm mb-2">Review these settings monthly:</p>
-                        <ul className="text-sm space-y-1">
-                          <li>• Who can see your posts and profile information</li>
-                          <li>• What data the platform collects about you</li>
-                          <li>• Which apps have access to your social media accounts</li>
-                          <li>• Your advertising preferences and data usage</li>
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedLearningTopic === 'mobile' && (
-                    <div className="space-y-6">
-                      <h3 className="text-xl font-bold">Phone & App Safety</h3>
-                      
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <h4 className="font-bold mb-2">Your Mobile Security Command Center</h4>
-                        <p className="text-sm">
-                          Your smartphone contains more personal information than your wallet, computer, and filing cabinet combined. Securing it properly is essential for protecting your digital life.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">Essential Mobile Security</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Use strong screen locks</p>
-                              <p className="text-sm text-gray-600">Enable PINs, patterns, fingerprints, or face recognition</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Enable automatic updates</p>
-                              <p className="text-sm text-gray-600">Keep your operating system and apps current</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Download from official stores</p>
-                              <p className="text-sm text-gray-600">Only use Google Play Store or Apple App Store</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div>
-                              <p className="font-medium">Review app permissions</p>
-                              <p className="text-sm text-gray-600">Only grant necessary permissions to apps</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                        <h4 className="font-bold mb-2">App Safety Tips</h4>
-                        <ul className="text-sm space-y-1">
-                          <li>• Read app reviews and ratings before downloading</li>
-                          <li>• Check what permissions apps request</li>
-                          <li>• Regularly review and delete unused apps</li>
-                          <li>• Be cautious with apps requesting excessive permissions</li>
-                          <li>• Avoid "free" apps that seem too good to be true</li>
-                        </ul>
-                      </div>
-
-                      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                        <h4 className="font-bold mb-2">SIM Swapping Protection</h4>
-                        <p className="text-sm mb-2">
-                          SIM swapping is when criminals transfer your phone number to their device. Protect yourself:
-                        </p>
-                        <ul className="text-sm space-y-1">
-                          <li>• Set up a PIN with your mobile carrier</li>
-                          <li>• Don't share personal information on social media</li>
-                          <li>• Use authenticator apps instead of SMS for 2FA when possible</li>
-                          <li>• Monitor your accounts for unusual activity</li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold mb-3">Lost or Stolen Phone Response</h4>
-                        <div className="space-y-2 text-sm">
-                          <p>• Immediately contact your carrier to suspend service</p>
-                          <p>• Use Find My Device (Android) or Find My iPhone (iOS)</p>
-                          <p>• Change passwords for important accounts</p>
-                          <p>• Report the theft to police if applicable</p>
-                          <p>• Monitor bank and credit card statements</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <h4 className="font-bold mb-2">Public WiFi Safety</h4>
-                        <ul className="text-sm space-y-1">
-                          <li>• Avoid accessing sensitive accounts on public WiFi</li>
-                          <li>• Use your phone's hotspot instead when possible</li>
-                          <li>• Consider using a VPN for public WiFi connections</li>
-                          <li>• Turn off auto-connect to WiFi networks</li>
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'help' && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <div className="flex items-center mb-4">
-                <MessageSquare className="text-[#21a1ce] mr-3" size={24} />
-                <h3 className="text-xl font-bold">Help Me!</h3>
-              </div>
-              <p className="text-gray-600 mb-6">
-                Get instant help with cybersecurity questions from our AI assistant
-              </p>
-
-              <div className="border border-gray-300 rounded-lg h-96 overflow-y-auto p-4 mb-4 bg-gray-50">
-                {chatMessages.length === 0 ? (
-                  <div className="text-center text-gray-500 mt-8">
-                    <MessageSquare className="mx-auto mb-4 text-gray-400" size={48} />
-                    <p>Ask me anything about cybersecurity!</p>
-                    <p className="text-sm mt-2">Try: "How do I create a strong password?"</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {chatMessages.map((message, index) => (
-                      <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.type === 'user' 
-                            ? 'bg-[#21a1ce] text-white' 
-                            : 'bg-white border border-gray-200'
-                        }`}>
-                          {message.type === 'bot' && (
-                            <div className="flex items-center mb-1">
-                              <Shield className="mr-1" size={14} />
-                              <span className="text-xs text-gray-500">
-                                {message.source === 'Expert Knowledge' && '👑 Expert Knowledge'}
-                                {message.source === 'AI Assistant' && '🤖 AI Assistant'}
-                                {message.source === 'Fallback' && '⚠️ Offline Mode'}
-                              </span>
-                            </div>
-                          )}
-                          <div dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }} />
-                        </div>
+                  <div className="p-4 rounded-lg bg-green-100 border border-green-200">
+                    <div className="flex items-center mb-2">
+                      <div className="p-2 rounded-full bg-green-200 mr-3">
+                        <Shield className="text-green-500" size={20} />
                       </div>
-                    ))}
-                    {isTyping && (
-                      <div className="flex justify-start">
-                        <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-white border border-gray-200">
-                          <div className="flex items-center">
-                            <div className="typing-indicator">
-                              <span></span>
-                              <span></span>
-                              <span></span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                      <h3 className="font-bold text-lg text-green-700">No Breaches Found</h3>
+                    </div>
+                    <p className="text-green-600">
+                      Great news! Your email was not found in any known data breaches.
+                    </p>
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                      <h4 className="font-medium text-blue-800">Stay Protected:</h4>
+                      <ul className="text-sm text-blue-700 mt-2 space-y-1">
+                        <li>• Continue using strong, unique passwords</li>
+                        <li>• Keep two-factor authentication enabled</li>
+                        <li>• Regularly monitor your accounts</li>
+                        <li>• Stay informed about new security threats</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
               </div>
+            )}
+          </div>
+        </div>
+      )}
 
-              <form onSubmit={handleChatSubmit}>
-                <div className="flex">
+      {activeTab === 'learn' && (
+        <div className="p-4">
+          <div className="bg-white rounded-lg shadow p-5">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                <BookOpen className="text-white" size={24} />
+              </div>
+              <h2 className="text-xl font-bold">Cyber Sensei</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Learn essential cybersecurity skills to protect yourself and your family
+            </p>
+
+            {!selectedLearningTopic ? (
+              <div className="grid gap-4">
+                <div 
+                  className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setSelectedLearningTopic('passwords')}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Lock className="text-[#21a1ce] mr-3" size={24} />
+                      <div>
+                        <h3 className="font-medium">Password Protection</h3>
+                        <p className="text-sm text-gray-600">Learn to create and manage strong passwords</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="text-gray-400" size={20} />
+                  </div>
+                </div>
+
+                <div 
+                  className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setSelectedLearningTopic('phishing')}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Mail className="text-[#21a1ce] mr-3" size={24} />
+                      <div>
+                        <h3 className="font-medium">Email & Text Scams</h3>
+                        <p className="text-sm text-gray-600">Identify and avoid phishing attempts</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="text-gray-400" size={20} />
+                  </div>
+                </div>
+
+                <div 
+                  className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setSelectedLearningTopic('devices')}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Shield className="text-[#21a1ce] mr-3" size={24} />
+                      <div>
+                        <h3 className="font-medium">Device & Home Security</h3>
+                        <p className="text-sm text-gray-600">Secure your devices and home network</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="text-gray-400" size={20} />
+                  </div>
+                </div>
+
+                <div 
+                  className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setSelectedLearningTopic('social')}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Users className="text-[#21a1ce] mr-3" size={24} />
+                      <div>
+                        <h3 className="font-medium">Social Media & Privacy</h3>
+                        <p className="text-sm text-gray-600">Protect your privacy on social platforms</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="text-gray-400" size={20} />
+                  </div>
+                </div>
+
+                <div 
+                  className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setSelectedLearningTopic('phone')}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Smartphone className="text-[#21a1ce] mr-3" size={24} />
+                      <div>
+                        <h3 className="font-medium">Phone & App Safety</h3>
+                        <p className="text-sm text-gray-600">Keep your mobile devices secure</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="text-gray-400" size={20} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <button 
+                  className="flex items-center text-[#21a1ce] mb-4 hover:underline"
+                  onClick={() => setSelectedLearningTopic(null)}
+                >
+                  <ChevronLeft size={20} className="mr-1" />
+                  Back to topics
+                </button>
+
+                {selectedLearningTopic === 'passwords' && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold">Password Protection</h3>
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-bold mb-2">Why Strong Passwords Matter</h4>
+                      <p className="text-sm">
+                        Passwords are your first line of defense against cybercriminals. A strong password can be the difference between keeping your accounts safe and having your identity stolen.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">Creating Strong Passwords</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Use at least 12-16 characters</p>
+                            <p className="text-sm text-gray-600">Longer passwords are exponentially harder to crack</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Mix character types</p>
+                            <p className="text-sm text-gray-600">Combine uppercase, lowercase, numbers, and symbols</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Use unique passwords</p>
+                            <p className="text-sm text-gray-600">Never reuse passwords across different accounts</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-bold mb-2">Australian Example</h4>
+                      <p className="text-sm">
+                        Instead of "password123", try "KangarooJumping2025!Sydney" - it's long, memorable, and includes Australian references that are meaningful to you.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">Password Managers</h4>
+                      <p className="text-sm mb-3">
+                        Password managers generate and store unique passwords for all your accounts. Popular options include:
+                      </p>
+                      <ul className="text-sm space-y-1 ml-4">
+                        <li>• LastPass</li>
+                        <li>• 1Password</li>
+                        <li>• Bitwarden (free option)</li>
+                        <li>• Dashlane</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h4 className="font-bold mb-2">What NOT to Do</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• Don't use personal information (birthdays, names, addresses)</li>
+                        <li>• Don't use common words or patterns</li>
+                        <li>• Don't share passwords with others</li>
+                        <li>• Don't write passwords on sticky notes</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {selectedLearningTopic === 'phishing' && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold">Email & Text Scams</h3>
+                    
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h4 className="font-bold mb-2">What is Phishing?</h4>
+                      <p className="text-sm">
+                        Phishing is when criminals send fake emails or texts pretending to be from legitimate companies to steal your personal information, passwords, or money.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">Warning Signs to Look For</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start">
+                          <div className="bg-red-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Urgent language</p>
+                            <p className="text-sm text-gray-600">"Act now!" "Your account will be closed!" "Immediate action required!"</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-red-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Generic greetings</p>
+                            <p className="text-sm text-gray-600">"Dear Customer" instead of your actual name</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-red-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Suspicious links</p>
+                            <p className="text-sm text-gray-600">Hover over links to see where they really go</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-red-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Poor grammar and spelling</p>
+                            <p className="text-sm text-gray-600">Legitimate companies proofread their communications</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-bold mb-2">Australian Example</h4>
+                      <p className="text-sm">
+                        "Your ATO tax refund is ready! Click here to claim $1,247.50 immediately or it will expire in 24 hours." 
+                        <br /><br />
+                        <strong>Red flags:</strong> The ATO doesn't send refund notifications via email, uses urgent language, and asks you to click links.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">How to Verify Suspicious Messages</h4>
+                      <div className="space-y-2 text-sm">
+                        <p>• Contact the company directly using official phone numbers</p>
+                        <p>• Log into your account through the official website (not email links)</p>
+                        <p>• Check the sender's email address carefully for misspellings</p>
+                        <p>• Ask yourself: "Was I expecting this message?"</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h4 className="font-bold mb-2">What to Do if You've Been Targeted</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• Don't click any links or download attachments</li>
+                        <li>• Report the message to the company being impersonated</li>
+                        <li>• Forward phishing emails to the ACCC's Scamwatch</li>
+                        <li>• If you clicked a link, change your passwords immediately</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {selectedLearningTopic === 'devices' && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold">Device & Home Security</h3>
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-bold mb-2">Why Device Security Matters</h4>
+                      <p className="text-sm">
+                        Your devices contain personal photos, banking apps, emails, and more. Securing them protects your entire digital life.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">Computer Security</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Keep software updated</p>
+                            <p className="text-sm text-gray-600">Enable automatic updates for your operating system and apps</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Use antivirus software</p>
+                            <p className="text-sm text-gray-600">Windows Defender is built-in and effective for most users</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Enable firewall</p>
+                            <p className="text-sm text-gray-600">Your computer's firewall blocks unauthorized access</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">Home Wi-Fi Security</h4>
+                      <div className="space-y-2 text-sm">
+                        <p>• Change default router passwords</p>
+                        <p>• Use WPA3 encryption (or at least WPA2)</p>
+                        <p>• Create a strong Wi-Fi password</p>
+                        <p>• Set up a guest network for visitors</p>
+                        <p>• Keep router firmware updated</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-bold mb-2">Backup Your Data</h4>
+                      <p className="text-sm">
+                        Follow the 3-2-1 rule: 3 copies of important data, on 2 different types of media, with 1 copy stored offsite (like cloud storage).
+                      </p>
+                    </div>
+
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h4 className="font-bold mb-2">Public Wi-Fi Safety</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• Avoid accessing sensitive accounts on public Wi-Fi</li>
+                        <li>• Use a VPN when possible</li>
+                        <li>• Turn off auto-connect to Wi-Fi networks</li>
+                        <li>• Use your phone's hotspot instead when possible</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {selectedLearningTopic === 'social' && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold">Social Media & Privacy</h3>
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-bold mb-2">Your Digital Footprint</h4>
+                      <p className="text-sm">
+                        Everything you post online creates a permanent digital footprint. Even "private" posts can become public through data breaches or account compromises.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">Privacy Settings</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Review privacy settings regularly</p>
+                            <p className="text-sm text-gray-600">Social media platforms often change their privacy policies</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Limit who can see your posts</p>
+                            <p className="text-sm text-gray-600">Set posts to "Friends only" rather than "Public"</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Control who can find you</p>
+                            <p className="text-sm text-gray-600">Limit search visibility and friend requests</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">What Not to Share</h4>
+                      <div className="space-y-2 text-sm">
+                        <p>• Full birth dates (use just day/month)</p>
+                        <p>• Home addresses or specific locations</p>
+                        <p>• Travel plans while you're away</p>
+                        <p>• Photos of important documents</p>
+                        <p>• Financial information</p>
+                        <p>• Children's full names and schools</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-bold mb-2">Think Before You Post</h4>
+                      <p className="text-sm">
+                        Ask yourself: "Would I be comfortable if my employer, family, or a stranger saw this?" If not, don't post it.
+                      </p>
+                    </div>
+
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h4 className="font-bold mb-2">Recognizing Social Media Scams</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• "You've won a prize!" messages</li>
+                        <li>• Fake friend requests from people you already know</li>
+                        <li>• "This video is going viral!" links</li>
+                        <li>• Requests for money from "friends" in trouble</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {selectedLearningTopic === 'phone' && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold">Phone & App Safety</h3>
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-bold mb-2">Your Phone is a Computer</h4>
+                      <p className="text-sm">
+                        Modern smartphones contain more personal information than most computers. They need the same level of security protection.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">Basic Phone Security</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Use a strong lock screen</p>
+                            <p className="text-sm text-gray-600">PIN, password, fingerprint, or face recognition</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Keep your OS updated</p>
+                            <p className="text-sm text-gray-600">Enable automatic updates for security patches</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div>
+                            <p className="font-medium">Enable remote wipe</p>
+                            <p className="text-sm text-gray-600">So you can erase your phone if it's lost or stolen</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">App Safety Tips</h4>
+                      <div className="space-y-2 text-sm">
+                        <p>• Only download apps from official stores (Google Play, Apple App Store)</p>
+                        <p>• Read app permissions before installing</p>
+                        <p>• Regularly review and uninstall unused apps</p>
+                        <p>• Be cautious with apps requesting excessive permissions</p>
+                        <p>• Keep apps updated</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-bold mb-2">Real-world Example: SIM Swapping</h4>
+                      <p className="text-sm">
+                        Sarah received a text saying her Telstra service would be suspended. She called Telstra directly and discovered it was a scam. The criminals were trying to get her to provide information that could be used for SIM swapping - taking control of her phone number.
+                      </p>
+                    </div>
+
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h4 className="font-bold mb-2">Warning Signs of Phone Scams</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• Unexpected texts about account problems</li>
+                        <li>• Calls claiming to be from tech support</li>
+                        <li>• Apps asking for unnecessary permissions</li>
+                        <li>• Sudden loss of phone service (possible SIM swap)</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold mb-3">Mobile Device Security</h4>
+                      <div className="space-y-2 text-sm">
+                        <p>• Use two-factor authentication on important accounts</p>
+                        <p>• Be cautious on public Wi-Fi</p>
+                        <p>• Don't leave your phone unattended in public</p>
+                        <p>• Consider using a VPN for sensitive activities</p>
+                        <p>• Backup your phone data regularly</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'help' && (
+        <div className="p-4">
+          <div className="bg-white rounded-lg shadow p-5">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+                <MessageSquare className="text-white" size={24} />
+              </div>
+              <h2 className="text-xl font-bold">Help Me!</h2>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Get instant help with cybersecurity questions from our AI assistant
+            </p>
+
+            <div className="border border-gray-200 rounded-lg h-96 flex flex-col">
+              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                {chatMessages.length === 0 && (
+                  <div className="text-center text-gray-500 mt-8">
+                    <MessageSquare className="mx-auto mb-2 text-gray-300" size={48} />
+                    <p>Ask me anything about cybersecurity!</p>
+                    <p className="text-sm mt-2">Try asking about passwords, phishing, or device security.</p>
+                  </div>
+                )}
+                
+                {chatMessages.map((message, index) => (
+                  <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      message.sender === 'user' 
+                        ? 'bg-[#21a1ce] text-white' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {message.sender === 'assistant' && (
+                        <div className="flex items-center mb-1">
+                          <Shield className="w-4 h-4 mr-1 text-[#21a1ce]" />
+                          <span className="text-xs text-[#21a1ce] font-medium">
+                            {message.source || 'AI Assistant'}
+                          </span>
+                        </div>
+                      )}
+                      <div 
+                        className="text-sm"
+                        dangerouslySetInnerHTML={{ 
+                          __html: message.sender === 'assistant' ? formatChatMessage(message.text) : message.text 
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg">
+                      <div className="flex items-center">
+                        <Shield className="w-4 h-4 mr-1 text-[#21a1ce]" />
+                        <span className="text-xs text-[#21a1ce] font-medium mr-2">AI Assistant</span>
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <form onSubmit={handleChatSubmit} className="border-t border-gray-200 p-4">
+                <div className="flex space-x-2">
                   <input
                     type="text"
-                    className="flex-1 border border-gray-300 rounded-l-lg p-3"
-                    placeholder="Type your cybersecurity question..."
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Type your cybersecurity question..."
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#21a1ce]"
                     disabled={isTyping}
                   />
                   <button
                     type="submit"
-                    className="bg-gradient-to-r from-[#21a1ce] to-[#1a80a3] text-white px-6 rounded-r-lg font-medium disabled:opacity-50"
                     disabled={isTyping || !inputMessage.trim()}
+                    className="bg-[#21a1ce] text-white px-4 py-2 rounded-lg hover:bg-[#1a80a3] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Send
                   </button>
                 </div>
-              </form>
-
-              {chatError && (
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-700">
-                    <AlertCircle className="inline mr-1" size={16} />
-                    Connection issue detected. Responses may be limited.
+                {chatError && (
+                  <p className="text-red-500 text-sm mt-2">
+                    Connection error. Please check your internet and try again.
                   </p>
-                </div>
-              )}
+                )}
+              </form>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
-        <div className="flex justify-around max-w-md mx-auto">
+        <div className="flex justify-around">
           <button
             onClick={() => handleTabChange('check')}
             className={`flex flex-col items-center p-2 rounded-lg ${
@@ -1201,9 +1460,9 @@ function App() {
           </button>
           
           <button
-            onClick={() => handleTabChange('password')}
+            onClick={() => handleTabChange('passwords')}
             className={`flex flex-col items-center p-2 rounded-lg ${
-              activeTab === 'password' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
+              activeTab === 'passwords' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
             }`}
           >
             <Lock size={20} />
@@ -1226,28 +1485,28 @@ function App() {
               activeTab === 'help' ? 'bg-[#21a1ce] text-white' : 'text-gray-600'
             }`}
           >
-            <MessageSquare size={20} />
+            <Shield size={20} />
             <span className="text-xs mt-1">Help Me!</span>
           </button>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="pb-20 bg-slate-800 text-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-4">
-              <Shield className="mr-2" size={24} />
-              <h3 className="text-xl font-bold">Remaleh - Your Digital Guardian</h3>
-            </div>
-            <p className="text-slate-300 mb-4">Protecting Australian families in the digital world</p>
-            <p className="text-sm text-slate-400">
-              Visit our blog at <a href="https://remaleh.com.au/blog" className="text-[#21a1ce] hover:underline">remaleh.com.au/blog</a> for more cybersecurity tips
-            </p>
-            <p className="text-xs text-slate-500 mt-4">Copyright © 2025 Remaleh</p>
-          </div>
+      <footer className="bg-gray-800 text-white text-center py-6 mt-8">
+        <div className="flex items-center justify-center mb-2">
+          <Shield className="text-[#21a1ce] mr-2" size={20} />
+          <span className="font-medium">Remaleh - Your Digital Guardian</span>
         </div>
-      </div>
+        <p className="text-sm text-gray-400">
+          Protecting Australian families in the digital world
+        </p>
+        <p className="text-sm text-gray-400 mt-1">
+          Visit our blog at <a href="https://www.remaleh.com.au/blog" className="text-[#21a1ce] hover:underline">remaleh.com.au/blog</a> for more cybersecurity tips
+        </p>
+        <p className="text-xs text-gray-500 mt-2">
+          Copyright © 2025 Remaleh
+        </p>
+      </footer>
     </div>
   );
 }
