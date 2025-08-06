@@ -56,7 +56,8 @@ except ImportError as e:
 
 # Register blueprints
 if chat_bp:
-    app.register_blueprint(chat_bp, url_prefix='/api')
+    # Register chat blueprint under /api/chat so that routes like '/api/chat/' and '/api/chat/health' are correctly exposed
+    app.register_blueprint(chat_bp, url_prefix='/api/chat')
     logger.info("✅ Chat blueprint registered at /api/chat")
 
 if breach_bp:
