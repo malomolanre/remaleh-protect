@@ -63,24 +63,81 @@ function App() {
         })
       );
 
-      // 2. Breach Check (CORRECTED ENDPOINT - only if emails found)
-      if (emails.length > 0) {
-        servicePromises.push(
-          fetch('https://remaleh-protect-api.onrender.com/api/breach/check', {
+      // FIXED BREACH CHECK FUNCTION - REAL API INTEGRATION
+      const handleBreachCheck = async (e) => {
+        e.preventDefault();
+        if (!email.trim()) return;
+
+        setIsChecking(true);
+        setBreachResult(null);
+
+        try {
+          console.log('Making breach check API call for:', email);
+      
+          // REAL API CALL TO BACKEND (with debugging enabled)
+          const response = await fetch('https://remaleh-protect-api.onrender.com/api/breach/check', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emails: emails })
-          })
-          .then(response => response.json())
-          .then(data => {
-            serviceResults.breachCheck = data;
-          })
-          .catch(error => {
-            console.error('Breach check failed:', error);
-            serviceResults.breachCheck = { error: 'Service unavailable' };
-          })
-        );
+            headers: { 
+              'Content-Type': 'application/json',
+              'User-Agent': 'Remaleh-Protect-Frontend'
+            },
+            body: JSON.stringify({ email: email.trim().toLowerCase() })
+        });
+
+        console.log('API Response Status:', response.status);
+      
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      
+        const data = await response.json();
+        console.log('API Response Data:', data);
+      
+        // Handle the response data format from backend
+        if (data.breached) {
+          setBreachResult({
+            breached: true,
+            breaches: data.breaches || [],
+            breach_count: data.breach_count || 0,
+            message: data.message || `Your email was found in ${data.breach_count || 'some'} data breach(es).`,
+            demo_mode: data.demo_mode || false,
+            api_success: data.api_success || false
+          });
+        } else {
+          setBreachResult({
+            breached: false,
+            message: data.message || 'Good news! Your email was not found in any known data breaches.',
+            demo_mode: data.demo_mode || false,
+            api_success: data.api_success || false
+        });
       }
+      
+    } catch (error) {
+      console.error('Breach check API error:', error);
+      
+      // Enhanced error handling with user-friendly messages
+        let errorMessage = 'Unable to check breaches at this time. ';
+      
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage += 'Please check your internet connection and try again.';
+        } else if (error.message.includes('404')) {
+          errorMessage += 'Service temporarily unavailable.';
+        } else if (error.message.includes('500')) {
+          errorMessage += 'Server error occurred.';
+        } else {
+          errorMessage += 'Please try again later.';
+        }
+      
+        setBreachResult({
+          error: true,
+          message: errorMessage,
+          technical_error: error.message
+          });
+      
+        } finally {
+          setIsChecking(false);
+        }
+      };
 
       // 3. Enhanced Local Analysis (Comprehensive)
       serviceResults.localAnalysis = performEnhancedLocalAnalysis(scamMessage, urls, emails);
