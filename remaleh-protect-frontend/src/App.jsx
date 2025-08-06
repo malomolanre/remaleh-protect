@@ -43,6 +43,7 @@ function App() {
       const serviceResults = {
         basicScam: null,
         breachCheck: null,
+        linkAnalysis: null,
         localAnalysis: null
       };
 
@@ -62,87 +63,48 @@ function App() {
           serviceResults.basicScam = { error: 'Service unavailable' };
         })
       );
-
-      // FIXED BREACH CHECK FUNCTION - REAL API INTEGRATION
-      const handleBreachCheck = async (e) => {
-        e.preventDefault();
-        if (!email.trim()) return;
-
-        setIsChecking(true);
-        setBreachResult(null);
-
-        try {
-          console.log('Making breach check API call for:', email);
-      
-          // REAL API CALL TO BACKEND (with debugging enabled)
-          const response = await fetch('https://remaleh-protect-api.onrender.com/api/breach/check', {
+      // 2. Breach Check (only if emails found) – call the backend API
+      if (emails.length > 0) {
+        servicePromises.push(
+          fetch('https://remaleh-protect-api.onrender.com/api/breach/check', {
             method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'User-Agent': 'Remaleh-Protect-Frontend'
-            },
-            body: JSON.stringify({ email: email.trim().toLowerCase() })
-        });
-
-        console.log('API Response Status:', response.status);
-      
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-      
-        const data = await response.json();
-        console.log('API Response Data:', data);
-      
-        // Handle the response data format from backend
-        if (data.breached) {
-          setBreachResult({
-            breached: true,
-            breaches: data.breaches || [],
-            breach_count: data.breach_count || 0,
-            message: data.message || `Your email was found in ${data.breach_count || 'some'} data breach(es).`,
-            demo_mode: data.demo_mode || false,
-            api_success: data.api_success || false
-          });
-        } else {
-          setBreachResult({
-            breached: false,
-            message: data.message || 'Good news! Your email was not found in any known data breaches.',
-            demo_mode: data.demo_mode || false,
-            api_success: data.api_success || false
-        });
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emails: emails })
+          })
+          .then(response => response.json())
+          .then(data => {
+            serviceResults.breachCheck = data;
+          })
+          .catch(error => {
+            console.error('Breach check failed:', error);
+            serviceResults.breachCheck = { error: 'Service unavailable' };
+          })
+        );
       }
-      
-    } catch (error) {
-      console.error('Breach check API error:', error);
-      
-      // Enhanced error handling with user-friendly messages
-        let errorMessage = 'Unable to check breaches at this time. ';
-      
-        if (error.message.includes('Failed to fetch')) {
-          errorMessage += 'Please check your internet connection and try again.';
-        } else if (error.message.includes('404')) {
-          errorMessage += 'Service temporarily unavailable.';
-        } else if (error.message.includes('500')) {
-          errorMessage += 'Server error occurred.';
-        } else {
-          errorMessage += 'Please try again later.';
-        }
-      
-        setBreachResult({
-          error: true,
-          message: errorMessage,
-          technical_error: error.message
-          });
-      
-        } finally {
-          setIsChecking(false);
-        }
-      };
 
-      // 3. Enhanced Local Analysis (Comprehensive)
+      // 3. Link Analysis (only if URLs found) – call the backend API
+      if (urls.length > 0) {
+        servicePromises.push(
+          fetch('https://remaleh-protect-api.onrender.com/api/link/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: urls })
+          })
+          .then(response => response.json())
+          .then(data => {
+            serviceResults.linkAnalysis = data;
+          })
+          .catch(error => {
+            console.error('Link analysis failed:', error);
+            serviceResults.linkAnalysis = { error: 'Service unavailable' };
+          })
+        );
+      }
+
+      // 4. Enhanced Local Analysis (Comprehensive)
       serviceResults.localAnalysis = performEnhancedLocalAnalysis(scamMessage, urls, emails);
 
-      // Wait for all service calls to complete
+      // Wait for all service calls (scam detection, breach check, link analysis) to complete
       await Promise.all(servicePromises);
 
       // Aggregate results
@@ -320,6 +282,26 @@ function App() {
       servicesUsed.push('✗ Breach Check (unavailable)');
     }
 
+    // Process Link Analysis Results
+    if (serviceResults.linkAnalysis && !serviceResults.linkAnalysis.error) {
+      const analysis = serviceResults.linkAnalysis.analysis || serviceResults.linkAnalysis.result || {};
+      const urlsAnalysed = analysis.urls || [];
+      // Use the average risk score from the backend to influence totalScore (scaled)
+      if (typeof analysis.average_risk_score === 'number') {
+        totalScore += analysis.average_risk_score;
+      }
+      servicesUsed.push('✓ Link Analysis');
+      serviceDetails.push(`Link Analysis: ${urlsAnalysed.length || urls.length} URL(s) analysed`);
+      // Pull indicators from each analysed URL
+      urlsAnalysed.forEach(u => {
+        if (u.indicators && u.indicators.length > 0) {
+          allIndicators.push(...u.indicators);
+        }
+      });
+    } else if (urls.length > 0) {
+      servicesUsed.push('✗ Link Analysis (unavailable)');
+    }
+
     // Process Local Analysis Results
     if (serviceResults.localAnalysis) {
       totalScore += serviceResults.localAnalysis.score;
@@ -447,38 +429,22 @@ function App() {
     setBreachResult(null);
 
     try {
-      // Simulate API call
-      setTimeout(() => {
-        const randomBreached = Math.random() > 0.5;
-        
-        if (randomBreached) {
-          setBreachResult({
-            breached: true,
-            breaches: [
-              {
-                name: 'ExampleSite',
-                domain: 'example.com',
-                date: '2023-01-15',
-                data: ['Email', 'Password', 'Username']
-              },
-              {
-                name: 'AnotherBreach',
-                domain: 'anotherbreach.com',
-                date: '2022-08-22',
-                data: ['Email', 'Password', 'IP Address']
-              }
-            ]
-          });
-        } else {
-          setBreachResult({
-            breached: false
-          });
-        }
-        
-        setIsChecking(false);
-      }, 1500);
+      // Make real API call to check breaches
+      const response = await fetch('https://remaleh-protect-api.onrender.com/api/breach/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setBreachResult(data);
     } catch (error) {
-      console.error('Error checking breaches:', error);
+      console.error('Breach check API error:', error);
+      // Provide a user‑friendly error message
+      setBreachResult({ error: true, message: 'Unable to check breaches at this time.' });
+    } finally {
       setIsChecking(false);
     }
   };
