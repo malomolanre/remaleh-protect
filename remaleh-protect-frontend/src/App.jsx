@@ -331,58 +331,79 @@ function App() {
       riskIcon = '✅';
     }
 
+    // Create a plain-language summary for readability
+    let simpleSummary = '';
+    if (totalScore >= 70) {
+      simpleSummary = '⚠️ This message looks like a scam. It contains multiple warning signs such as a suspicious link and urgent language.';
+    } else if (totalScore >= 40) {
+      simpleSummary = '⚠️ This message appears suspicious. It has several signs that it might be a scam.';
+    } else if (totalScore >= 15) {
+      simpleSummary = '⚠️ Be cautious. This message has some risky elements and could be a scam.';
+    } else {
+      simpleSummary = '✅ This message does not appear risky, but always be vigilant.';
+    }
+
+    // Pick a few key indicators for a simplified list
+    const topIndicators = allIndicators.slice(0, 3).map(ind => {
+      // Try to rephrase indicators to be more readable by removing technical prefixes
+      // e.g. "Delivery scam indicator: \"parcel\"" -> "Delivery scam indicator: parcel"
+      return ind.replace(/\"/g, '"');
+    });
+
     // Generate recommendations
     const recommendations = generateRecommendations(totalScore, allIndicators, urls, emails);
 
     // Format result
     return `
       <div style="padding: 20px; border-radius: 8px; background: #f8fafc; border-left: 4px solid ${riskColor};">
-        <div style="display: flex; align-items: center; margin-bottom: 15px;">
-          <span style="font-size: 24px; margin-right: 10px;">${riskIcon}</span>
-          <h3 style="margin: 0; color: ${riskColor}; font-size: 18px;">${riskLevel}</h3>
+        <!-- Header with risk level -->
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <span style="font-size: 26px; margin-right: 10px;">${riskIcon}</span>
+          <h3 style="margin: 0; color: ${riskColor}; font-size: 20px;">${riskLevel}</h3>
           <span style="margin-left: 10px; color: #64748b; font-size: 14px;">(Score: ${totalScore.toFixed(0)})</span>
         </div>
-        
-        <p style="margin: 10px 0; color: #475569; font-size: 14px;">
-          ${totalScore >= 70 ? 'This message shows strong indicators of a scam.' : 
-            totalScore >= 40 ? 'This message contains several suspicious elements.' :
-            totalScore >= 15 ? 'This message has some concerning indicators.' :
-            'This message appears to have minimal risk indicators.'}
+        <!-- Simple summary for families and elderly -->
+        <p style="margin: 8px 0; color: #111827; font-size: 15px; font-weight: bold; line-height: 1.4;">
+          ${simpleSummary}
         </p>
 
-        <div style="margin: 15px 0;">
-          <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Components Detected:</h4>
-          <div style="color: #6b7280; font-size: 13px;">
-            ${urls.length > 0 ? `• URLs: ${urls.length} detected` : '• No URLs detected'}<br>
-            ${emails.length > 0 ? `• Emails: ${emails.length} detected` : '• No emails detected'}
-          </div>
-        </div>
-
-        <div style="margin: 15px 0;">
-          <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Analysis Services Used:</h4>
-          <div style="color: #6b7280; font-size: 13px;">
-            ${servicesUsed.map(service => `• ${service}`).join('<br>')}
-          </div>
-        </div>
-
-        ${allIndicators.length > 0 ? `
-          <div style="margin: 15px 0;">
-            <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Threats Detected:</h4>
-            <div style="color: #dc2626; font-size: 13px;">
-              ${allIndicators.slice(0, 8).map(indicator => `✗ ${indicator}`).join('<br>')}
-              ${allIndicators.length > 8 ? `<br><em>... and ${allIndicators.length - 8} more indicators</em>` : ''}
+        <!-- Why risky section -->
+        ${topIndicators.length > 0 ? `
+          <div style="margin: 12px 0;">
+            <h4 style="margin: 0 0 6px 0; color: #374151; font-size: 14px;">Why this looks risky:</h4>
+            <div style="color: #b91c1c; font-size: 13px; line-height: 1.4;">
+              ${topIndicators.map(ind => `• ${ind}`).join('<br>')}
+              ${allIndicators.length > topIndicators.length ? `<br><em>...and more warning signs detected</em>` : ''}
             </div>
           </div>
         ` : ''}
 
-        <div style="margin: 15px 0;">
-          <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Security Recommendations:</h4>
-          <div style="color: #059669; font-size: 13px;">
+        <!-- What to do section -->
+        <div style="margin: 12px 0;">
+          <h4 style="margin: 0 0 6px 0; color: #374151; font-size: 14px;">What you should do:</h4>
+          <div style="color: #065f46; font-size: 13px; line-height: 1.4;">
             ${recommendations.map(rec => `🛡️ ${rec}`).join('<br>')}
           </div>
         </div>
 
-        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px;">
+        <!-- Detailed analysis section (optional) -->
+        <div style="margin: 15px 0;">
+          <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Detailed Analysis (for advanced users):</h4>
+          <div style="color: #6b7280; font-size: 13px;">
+            <strong>Components Detected:</strong><br>
+            ${urls.length > 0 ? `• URLs: ${urls.length} detected` : '• No URLs detected'}<br>
+            ${emails.length > 0 ? `• Emails: ${emails.length} detected` : '• No emails detected'}<br><br>
+            <strong>Analysis Services Used:</strong><br>
+            ${servicesUsed.map(service => `• ${service}`).join('<br>')}<br><br>
+            ${allIndicators.length > 0 ? `
+              <strong>Threats Detected:</strong><br>
+              ${allIndicators.slice(0, 8).map(indicator => `✗ ${indicator}`).join('<br>')}
+              ${allIndicators.length > 8 ? `<br><em>...and ${allIndicators.length - 8} more indicators</em>` : ''}<br>
+            ` : ''}
+          </div>
+        </div>
+
+        <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px;">
           Analysis completed in ${analysisTime}ms using ${servicesUsed.filter(s => s.includes('✓')).length} services
         </div>
       </div>
