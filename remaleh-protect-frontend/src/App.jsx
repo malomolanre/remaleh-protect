@@ -343,10 +343,12 @@ function App() {
       simpleSummary = '✅ This message does not appear risky, but always be vigilant.';
     }
 
+    // Filter out technical or overly verbose error messages from indicators
+    const technicalErrorRegex = /Content analysis failed|HTTPSConnectionPool|NameResolutionError|Failed to resolve|Max retries exceeded|HTTP error/i;
+    const displayIndicators = allIndicators.filter(ind => !technicalErrorRegex.test(ind));
     // Pick a few key indicators for a simplified list
-    const topIndicators = allIndicators.slice(0, 3).map(ind => {
+    const topIndicators = displayIndicators.slice(0, 3).map(ind => {
       // Try to rephrase indicators to be more readable by removing technical prefixes
-      // e.g. "Delivery scam indicator: \"parcel\"" -> "Delivery scam indicator: parcel"
       return ind.replace(/\"/g, '"');
     });
 
@@ -395,10 +397,10 @@ function App() {
             ${emails.length > 0 ? `• Emails: ${emails.length} detected` : '• No emails detected'}<br><br>
             <strong>Analysis Services Used:</strong><br>
             ${servicesUsed.map(service => `• ${service}`).join('<br>')}<br><br>
-            ${allIndicators.length > 0 ? `
+            ${displayIndicators.length > 0 ? `
               <strong>Threats Detected:</strong><br>
-              ${allIndicators.slice(0, 8).map(indicator => `✗ ${indicator}`).join('<br>')}
-              ${allIndicators.length > 8 ? `<br><em>...and ${allIndicators.length - 8} more indicators</em>` : ''}<br>
+              ${displayIndicators.slice(0, 8).map(indicator => `✗ ${indicator}`).join('<br>')}
+              ${displayIndicators.length > 8 ? `<br><em>...and ${displayIndicators.length - 8} more indicators</em>` : ''}<br>
             ` : ''}
           </div>
         </div>
