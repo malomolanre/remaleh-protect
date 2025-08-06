@@ -83,12 +83,13 @@ function App() {
       }
 
       // 3. Link Analysis (only if URLs found) – call the backend API
+      // The link analysis endpoint expects the entire text for proper URL extraction
       if (urls.length > 0) {
         servicePromises.push(
           fetch('https://remaleh-protect-api.onrender.com/api/link/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ urls: urls })
+            body: JSON.stringify({ text: scamMessage })
           })
           .then(response => response.json())
           .then(data => {
