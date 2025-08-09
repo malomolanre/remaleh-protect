@@ -5,6 +5,7 @@ from flask_limiter.util import get_remote_address
 import logging
 import os
 from datetime import datetime
+from models import db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -19,6 +20,13 @@ def create_app():
     This function sets up CORS, rate limiting, and registers all blueprints.
     """
     app = Flask(__name__)
+    
+    # Database configuration
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///remaleh_protect.db')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    # Initialize database
+    db.init_app(app)
 
     # Restrict CORS origins to the production front-end and local development
     CORS(app, resources={r"/api/*": {
@@ -41,6 +49,10 @@ def create_app():
     from routes.link_analysis import link_analysis_bp
     from routes.breach_check import breach_bp
     from routes.chat import chat_bp
+    from routes.auth import auth_bp
+    from routes.threat_intelligence import threat_intelligence_bp
+    from routes.risk_profile import risk_profile_bp
+    from routes.community import community_bp
 
     # Example of applying a per-route limit on a heavy endpoint:
     # @scam_bp.route('/comprehensive', methods=['POST'])
@@ -53,6 +65,10 @@ def create_app():
     app.register_blueprint(link_analysis_bp, url_prefix="/api/link")
     app.register_blueprint(breach_bp, url_prefix="/api/breach")
     app.register_blueprint(chat_bp, url_prefix="/api/chat")
+    app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(threat_intelligence_bp, url_prefix="/api/threat_intelligence")
+    app.register_blueprint(risk_profile_bp, url_prefix="/api/risk_profile")
+    app.register_blueprint(community_bp, url_prefix="/api/community")
 
     @app.errorhandler(429)
     def ratelimit_handler(e):

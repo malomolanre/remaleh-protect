@@ -1,413 +1,469 @@
-import React, { useState } from 'react'
-import { Users, Flag, MessageSquare, TrendingUp, Award, Share2, Eye, ThumbsUp, AlertTriangle } from 'lucide-react'
-import { Card, CardHeader, CardContent } from './ui/card'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
-import { Textarea } from './ui/textarea'
-import { Input } from './ui/input'
+import React, { useState, useEffect } from 'react';
+import { Card, Badge, Button, Textarea, Input } from './ui';
+import { 
+  AlertTriangle, 
+  TrendingUp, 
+  Users, 
+  Shield, 
+  MessageSquare, 
+  ThumbsUp, 
+  ThumbsDown,
+  CheckCircle,
+  Clock,
+  Star
+} from 'lucide-react';
+import { useCommunity } from '../hooks/useCommunity';
 
 export default function CommunityReporting() {
-  const [activeTab, setActiveTab] = useState('reports')
-  const [reportForm, setReportForm] = useState({
-    threatType: '',
+  const {
+    reports,
+    trendingThreats,
+    communityStats,
+    alerts,
+    isLoading,
+    error,
+    loadAllData,
+    createReport,
+    voteOnReport,
+    verifyReport,
+    addComment,
+    createAlert,
+    clearError
+  } = useCommunity();
+
+  const [showNewReport, setShowNewReport] = useState(false);
+  const [showNewAlert, setShowNewAlert] = useState(false);
+  const [newReport, setNewReport] = useState({
+    title: '',
     description: '',
+    threat_type: 'phishing',
+    severity: 'medium',
     location: '',
-    urgency: 'MEDIUM'
-  })
+    evidence: ''
+  });
+  const [newAlert, setNewAlert] = useState({
+    title: '',
+    message: '',
+    priority: 'medium'
+  });
+  const [commentText, setCommentText] = useState('');
 
-  const [communityReports, setCommunityReports] = useState([
-    {
-      id: 1,
-      user: 'Sarah M.',
-      threatType: 'Delivery Scam',
-      description: 'Received SMS claiming package held at customs. Asked for $50 fee via suspicious link.',
-      location: 'Sydney, NSW',
-      urgency: 'HIGH',
-      votes: 23,
-      comments: 8,
-      verified: true,
-      time: '2 hours ago'
-    },
-    {
-      id: 2,
-      user: 'Mike R.',
-      threatType: 'Bank Impersonation',
-      description: 'Call from "Commonwealth Bank" asking to verify account details. Number was spoofed.',
-      location: 'Melbourne, VIC',
-      urgency: 'CRITICAL',
-      votes: 45,
-      comments: 12,
-      verified: true,
-      time: '4 hours ago'
-    },
-    {
-      id: 3,
-      user: 'Lisa K.',
-      threatType: 'Tech Support Fraud',
-      description: 'Pop-up claiming computer infected. Called number and they asked for remote access.',
-      location: 'Brisbane, QLD',
-      urgency: 'MEDIUM',
-      votes: 18,
-      comments: 5,
-      verified: false,
-      time: '6 hours ago'
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
+
+  const handleSubmitReport = async (e) => {
+    e.preventDefault();
+    const result = await createReport(newReport);
+    if (result.success) {
+      setShowNewReport(false);
+      setNewReport({
+        title: '',
+        description: '',
+        threat_type: 'phishing',
+        severity: 'medium',
+        location: '',
+        evidence: ''
+      });
     }
-  ])
+  };
 
-  const [userStats, setUserStats] = useState({
-    reportsSubmitted: 7,
-    reportsVerified: 5,
-    communityPoints: 1250,
-    rank: 'Guardian',
-    contributionLevel: 'Gold'
-  })
-
-  const getUrgencyColor = (urgency) => {
-    const colors = {
-      'LOW': 'bg-green-100 text-green-800',
-      'MEDIUM': 'bg-yellow-100 text-yellow-800',
-      'HIGH': 'bg-orange-100 text-orange-800',
-      'CRITICAL': 'bg-red-100 text-red-800'
+  const handleSubmitAlert = async (e) => {
+    e.preventDefault();
+    const result = await createAlert(newAlert);
+    if (result.success) {
+      setShowNewAlert(false);
+      setNewAlert({
+        title: '',
+        message: '',
+        priority: 'medium'
+      });
     }
-    return colors[urgency] || colors['MEDIUM']
+  };
+
+  const handleVote = async (reportId, voteType) => {
+    await voteOnReport(reportId, voteType);
+  };
+
+  const handleVerify = async (reportId) => {
+    await verifyReport(reportId, { verified: true });
+  };
+
+  const handleAddComment = async (reportId) => {
+    if (commentText.trim()) {
+      await addComment(reportId, { comment: commentText });
+      setCommentText('');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading community data...</p>
+        </div>
+      </div>
+    );
   }
 
-  const getContributionColor = (level) => {
-    const colors = {
-      'Bronze': 'bg-amber-100 text-amber-800',
-      'Silver': 'bg-gray-100 text-gray-800',
-      'Gold': 'bg-yellow-100 text-yellow-800',
-      'Platinum': 'bg-blue-100 text-blue-800'
-    }
-    return colors[level] || colors['Bronze']
-  }
-
-  const handleReportSubmit = (e) => {
-    e.preventDefault()
-    const newReport = {
-      id: Date.now(),
-      user: 'You',
-      ...reportForm,
-      votes: 0,
-      comments: 0,
-      verified: false,
-      time: 'Just now'
-    }
-    setCommunityReports([newReport, ...communityReports])
-    setReportForm({ threatType: '', description: '', location: '', urgency: 'MEDIUM' })
-  }
-
-  const handleVote = (reportId, increment) => {
-    setCommunityReports(prev => 
-      prev.map(report => 
-        report.id === reportId 
-          ? { ...report, votes: report.votes + increment }
-          : report
-      )
-    )
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+          <span className="text-red-800">{error}</span>
+        </div>
+        <Button onClick={clearError} className="mt-2" variant="outline" size="sm">
+          Dismiss
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Community Threat Reporting</h1>
-        <p className="text-gray-600">Report threats, share experiences, and help protect others</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Community Threat Reporting</h1>
+          <p className="text-gray-600">Report threats, share insights, and help protect the community</p>
+        </div>
+        <div className="flex space-x-3">
+          <Button onClick={() => setShowNewReport(true)}>
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Report Threat
+          </Button>
+          <Button onClick={() => setShowNewAlert(true)} variant="outline">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Create Alert
+          </Button>
+        </div>
       </div>
 
-      {/* User Stats */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-center">
-            <div>
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Flag className="w-8 h-8 text-blue-600" />
+      {/* Community Stats */}
+      {communityStats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-blue-600 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Active Members</p>
+                <p className="text-2xl font-bold text-gray-900">{communityStats.active_members || 0}</p>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{userStats.reportsSubmitted}</p>
-              <p className="text-sm text-gray-600">Reports Submitted</p>
             </div>
-            
-            <div>
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Eye className="w-8 h-8 text-green-600" />
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center">
+              <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Total Reports</p>
+                <p className="text-2xl font-bold text-gray-900">{communityStats.total_reports || 0}</p>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{userStats.reportsVerified}</p>
-              <p className="text-sm text-gray-600">Reports Verified</p>
             </div>
-            
-            <div>
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <TrendingUp className="w-8 h-8 text-purple-600" />
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center">
+              <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Verified Threats</p>
+                <p className="text-2xl font-bold text-gray-900">{communityStats.verified_threats || 0}</p>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{userStats.communityPoints}</p>
-              <p className="text-sm text-gray-600">Community Points</p>
             </div>
-            
-            <div>
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Award className="w-8 h-8 text-yellow-600" />
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center">
+              <Shield className="h-8 w-8 text-purple-600 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Protected Users</p>
+                <p className="text-2xl font-bold text-gray-900">{communityStats.protected_users || 0}</p>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{userStats.rank}</p>
-              <p className="text-sm text-gray-600">Your Rank</p>
             </div>
-            
-            <div>
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Users className="w-8 h-8 text-orange-600" />
-              </div>
-              <Badge className={`text-lg px-3 py-1 ${getContributionColor(userStats.contributionLevel)}`}>
-                {userStats.contributionLevel}
-              </Badge>
-              <p className="text-sm text-gray-600 mt-1">Contribution Level</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabs */}
-      <div className="flex border-b">
-        <button
-          onClick={() => setActiveTab('reports')}
-          className={`px-4 py-2 font-medium ${
-            activeTab === 'reports'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Community Reports
-        </button>
-        <button
-          onClick={() => setActiveTab('submit')}
-          className={`px-4 py-2 font-medium ${
-            activeTab === 'submit'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Submit Report
-        </button>
-        <button
-          onClick={() => setActiveTab('trending')}
-          className={`px-4 py-2 font-medium ${
-            activeTab === 'trending'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Trending Threats
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'reports' && (
-        <div className="space-y-4">
-          {communityReports.map((report) => (
-            <Card key={report.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-gray-900">{report.user}</h3>
-                      <Badge className={getUrgencyColor(report.urgency)}>
-                        {report.urgency}
-                      </Badge>
-                      {report.verified && (
-                        <Badge className="bg-blue-100 text-blue-800">
-                          Verified
-                        </Badge>
-                      )}
-                      <span className="text-sm text-gray-500">{report.time}</span>
-                    </div>
-                    
-                    <h4 className="font-medium text-gray-900 mb-2">{report.threatType}</h4>
-                    <p className="text-gray-700 mb-3">{report.description}</p>
-                    
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span>📍 {report.location}</span>
-                      <span>💬 {report.comments} comments</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleVote(report.id, 1)}
-                      className="flex flex-col items-center"
-                    >
-                      <ThumbsUp className="w-4 h-4" />
-                      <span className="text-xs">{report.votes}</span>
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex flex-col items-center"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      <span className="text-xs">Comment</span>
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex flex-col items-center"
-                    >
-                      <Share2 className="w-4 h-4" />
-                      <span className="text-xs">Share</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          </Card>
         </div>
       )}
 
-      {activeTab === 'submit' && (
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900">Submit Threat Report</h2>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleReportSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Threat Type
-                </label>
-                <select
-                  value={reportForm.threatType}
-                  onChange={(e) => setReportForm({...reportForm, threatType: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Select threat type</option>
-                  <option value="Delivery Scam">Delivery Scam</option>
-                  <option value="Bank Impersonation">Bank Impersonation</option>
-                  <option value="Tech Support Fraud">Tech Support Fraud</option>
-                  <option value="Romance Scam">Romance Scam</option>
-                  <option value="Investment Fraud">Investment Fraud</option>
-                  <option value="Phishing">Phishing</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <Textarea
-                  value={reportForm.description}
-                  onChange={(e) => setReportForm({...reportForm, description: e.target.value})}
-                  placeholder="Describe what happened, including any suspicious links, phone numbers, or other details..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={4}
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location (City, State)
-                  </label>
-                  <Input
-                    value={reportForm.location}
-                    onChange={(e) => setReportForm({...reportForm, location: e.target.value})}
-                    placeholder="e.g., Sydney, NSW"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
+      {/* Trending Threats */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Trending Threats</h2>
+          <TrendingUp className="h-5 w-5 text-orange-500" />
+        </div>
+        <div className="space-y-3">
+          {trendingThreats && trendingThreats.length > 0 ? (
+            trendingThreats.map((threat) => (
+              <div key={threat.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <div>
+                    <p className="font-medium text-gray-900">{threat.title}</p>
+                    <p className="text-sm text-gray-600">{threat.description}</p>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Urgency Level
-                  </label>
-                  <select
-                    value={reportForm.urgency}
-                    onChange={(e) => setReportForm({...reportForm, urgency: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="LOW">Low - Informational</option>
-                    <option value="MEDIUM">Medium - Caution</option>
-                    <option value="HIGH">High - Warning</option>
-                    <option value="CRITICAL">Critical - Immediate Action</option>
-                  </select>
-                </div>
+                <Badge variant={threat.severity === 'high' ? 'destructive' : threat.severity === 'medium' ? 'default' : 'secondary'}>
+                  {threat.severity}
+                </Badge>
               </div>
-              
-              <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-blue-600" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium">Privacy & Safety</p>
-                  <p>Your report will be shared with the community to help protect others. Personal information will be kept private.</p>
-                </div>
-              </div>
-              
-              <Button type="submit" className="w-full">
-                <Flag className="w-4 h-4 mr-2" />
-                Submit Report
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-4">No trending threats at the moment</p>
+          )}
+        </div>
+      </Card>
 
-      {activeTab === 'trending' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900">Most Reported Threats</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {['Delivery Scams', 'Bank Impersonation', 'Tech Support Fraud', 'Romance Scams'].map((threat, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <span className="font-medium text-gray-900">{threat}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="h-2 bg-blue-600 rounded-full"
-                          style={{ width: `${80 - (index * 15)}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600">{80 - (index * 15)}%</span>
+      {/* Recent Reports */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Recent Reports</h2>
+          <Button onClick={loadAllData} variant="outline" size="sm">
+            Refresh
+          </Button>
+        </div>
+        <div className="space-y-4">
+          {reports && reports.length > 0 ? (
+            reports.map((report) => (
+              <div key={report.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-medium text-gray-900">{report.title}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{report.description}</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>Type: {report.threat_type}</span>
+                      <span>Location: {report.location}</span>
+                      <span>Reported: {new Date(report.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900">Recent Community Alerts</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <AlertTriangle className="w-4 h-4 text-red-600" />
-                    <span className="font-medium text-red-900">New Phishing Campaign</span>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={report.severity === 'high' ? 'destructive' : report.severity === 'medium' ? 'default' : 'secondary'}>
+                      {report.severity}
+                    </Badge>
+                    {report.verification_status === 'verified' && (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    )}
                   </div>
-                  <p className="text-sm text-red-700">Targeting Medicare users with fake login pages</p>
-                  <p className="text-xs text-red-600 mt-1">Reported 15 times in the last 24 hours</p>
                 </div>
                 
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                    <span className="font-medium text-yellow-900">Fake Australia Post SMS</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        onClick={() => handleVote(report.id, 'upvote')}
+                        variant="ghost"
+                        size="sm"
+                        className={report.user_vote === 'upvote' ? 'text-green-600' : ''}
+                      >
+                        <ThumbsUp className="h-4 w-4 mr-1" />
+                        {report.votes?.upvotes || 0}
+                      </Button>
+                      <Button
+                        onClick={() => handleVote(report.id, 'downvote')}
+                        variant="ghost"
+                        size="sm"
+                        className={report.user_vote === 'downvote' ? 'text-red-600' : ''}
+                      >
+                        <ThumbsDown className="h-4 w-4 mr-1" />
+                        {report.votes?.downvotes || 0}
+                      </Button>
+                    </div>
+                    {report.verification_status !== 'verified' && (
+                      <Button
+                        onClick={() => handleVerify(report.id)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Verify
+                      </Button>
+                    )}
                   </div>
-                  <p className="text-sm text-yellow-700">SMS claiming package delivery issues</p>
-                  <p className="text-xs text-yellow-600 mt-1">Reported 8 times in the last 24 hours</p>
+                  <div className="text-sm text-gray-500">
+                    {report.reporter_name || 'Anonymous'}
+                  </div>
+                </div>
+
+                {/* Comments */}
+                {report.comments && report.comments.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Comments</h4>
+                    <div className="space-y-2">
+                      {report.comments.map((comment, index) => (
+                        <div key={index} className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                          <span className="font-medium">{comment.user_name || 'Anonymous'}:</span> {comment.comment}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add Comment */}
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Add a comment..."
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={() => handleAddComment(report.id)}
+                      size="sm"
+                      disabled={!commentText.trim()}
+                    >
+                      Comment
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-8">No reports yet. Be the first to report a threat!</p>
+          )}
+        </div>
+      </Card>
+
+      {/* Community Alerts */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Community Alerts</h2>
+        </div>
+        <div className="space-y-3">
+          {alerts && alerts.length > 0 ? (
+            alerts.map((alert) => (
+              <div key={alert.id} className="flex items-start space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-medium text-blue-900">{alert.title}</h4>
+                  <p className="text-sm text-blue-800">{alert.message}</p>
+                  <div className="flex items-center space-x-4 mt-2 text-xs text-blue-600">
+                    <span>Priority: {alert.priority}</span>
+                    <span>{new Date(alert.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-4">No active alerts</p>
+          )}
+        </div>
+      </Card>
+
+      {/* New Report Modal */}
+      {showNewReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
+            <h2 className="text-xl font-semibold mb-4">Report New Threat</h2>
+            <form onSubmit={handleSubmitReport} className="space-y-4">
+              <Input
+                placeholder="Threat Title"
+                value={newReport.title}
+                onChange={(e) => setNewReport({...newReport, title: e.target.value})}
+                required
+              />
+              <Textarea
+                placeholder="Detailed Description"
+                value={newReport.description}
+                onChange={(e) => setNewReport({...newReport, description: e.target.value})}
+                required
+                rows={4}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <select
+                  value={newReport.threat_type}
+                  onChange={(e) => setNewReport({...newReport, threat_type: e.target.value})}
+                  className="border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="phishing">Phishing</option>
+                  <option value="malware">Malware</option>
+                  <option value="scam">Scam</option>
+                  <option value="social_engineering">Social Engineering</option>
+                  <option value="other">Other</option>
+                </select>
+                <select
+                  value={newReport.severity}
+                  onChange={(e) => setNewReport({...newReport, severity: e.target.value})}
+                  className="border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <Input
+                placeholder="Location/URL"
+                value={newReport.location}
+                onChange={(e) => setNewReport({...newReport, location: e.target.value})}
+              />
+              <Textarea
+                placeholder="Evidence or Additional Details"
+                value={newReport.evidence}
+                onChange={(e) => setNewReport({...newReport, evidence: e.target.value})}
+                rows={3}
+              />
+              <div className="flex space-x-3">
+                <Button type="submit" className="flex-1">
+                  Submit Report
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewReport(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* New Alert Modal */}
+      {showNewAlert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
+            <h2 className="text-xl font-semibold mb-4">Create Community Alert</h2>
+            <form onSubmit={handleSubmitAlert} className="space-y-4">
+              <Input
+                placeholder="Alert Title"
+                value={newAlert.title}
+                onChange={(e) => setNewAlert({...newAlert, title: e.target.value})}
+                required
+              />
+              <Textarea
+                placeholder="Alert Message"
+                value={newAlert.message}
+                onChange={(e) => setNewAlert({...newAlert, message: e.target.value})}
+                required
+                rows={4}
+              />
+              <select
+                value={newAlert.priority}
+                onChange={(e) => setNewAlert({...newAlert, priority: e.target.value})}
+                className="border border-gray-300 rounded-md px-3 py-2 w-full"
+              >
+                <option value="low">Low Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="high">High Priority</option>
+                <option value="urgent">Urgent</option>
+              </select>
+              <div className="flex space-x-3">
+                <Button type="submit" className="flex-1">
+                  Create Alert
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewAlert(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
-  )
+  );
 }

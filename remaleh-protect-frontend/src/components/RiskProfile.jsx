@@ -1,34 +1,35 @@
 import React, { useState, useEffect } from 'react'
-import { User, Target, TrendingUp, BookOpen, Award, Shield, AlertTriangle, CheckCircle } from 'lucide-react'
+import { User, Target, TrendingUp, BookOpen, Award, Shield, AlertTriangle, CheckCircle, RefreshCw, Plus } from 'lucide-react'
 import { Card, CardHeader, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
+import { useRiskProfile } from '../hooks/useRiskProfile'
 
 export default function RiskProfile() {
-  const [userProfile, setUserProfile] = useState({
-    riskLevel: 'MEDIUM',
-    totalScans: 23,
-    threatsDetected: 8,
-    learningProgress: 65,
-    recentScans: [
-      { id: 1, message: 'URGENT: Package held at customs...', risk: 'HIGH', date: '2024-08-09', learned: true },
-      { id: 2, message: 'You won $1,000,000! Click here...', risk: 'CRITICAL', date: '2024-08-08', learned: true },
-      { id: 3, message: 'Your bank account is suspended...', risk: 'HIGH', date: '2024-08-07', learned: false },
-      { id: 4, message: 'Hello from your bank...', risk: 'LOW', date: '2024-08-06', learned: true }
-    ],
-    riskFactors: [
-      { factor: 'Delivery Scams', frequency: 3, risk: 'HIGH' },
-      { factor: 'Financial Fraud', frequency: 2, risk: 'MEDIUM' },
-      { factor: 'Bank Impersonation', frequency: 2, risk: 'HIGH' },
-      { factor: 'Tech Support', frequency: 1, risk: 'LOW' }
-    ],
-    learningModules: [
-      { id: 1, title: 'Delivery Scam Recognition', completed: true, score: 95 },
-      { id: 2, title: 'Financial Fraud Prevention', completed: true, score: 88 },
-      { id: 3, title: 'Bank Impersonation Detection', completed: false, score: 0 },
-      { id: 4, title: 'Social Engineering Awareness', completed: false, score: 0 }
-    ]
+  const {
+    profile,
+    scans,
+    learningModules,
+    recommendations,
+    isLoading,
+    error,
+    loadAllData,
+    startLearningModule,
+    completeLearningModule,
+    clearError
+  } = useRiskProfile()
+
+  const [showNewModuleForm, setShowNewModuleForm] = useState(false)
+  const [newModule, setNewModule] = useState({
+    title: '',
+    description: '',
+    category: '',
+    difficulty: 'BEGINNER'
   })
+
+  useEffect(() => {
+    loadAllData()
+  }, [loadAllData])
 
   const getRiskColor = (risk) => {
     const colors = {
@@ -47,9 +48,63 @@ export default function RiskProfile() {
   }
 
   const calculateRiskScore = () => {
-    const highRiskCount = userProfile.riskFactors.filter(f => f.risk === 'HIGH').length
-    const mediumRiskCount = userProfile.riskFactors.filter(f => f.risk === 'MEDIUM').length
+    if (!profile) return 0
+    
+    const highRiskCount = profile.risk_factors?.filter(f => f.risk_level === 'HIGH').length || 0
+    const mediumRiskCount = profile.risk_factors?.filter(f => f.risk_level === 'MEDIUM').length || 0
     return Math.min(100, (highRiskCount * 30) + (mediumRiskCount * 15))
+  }
+
+  const handleModuleAction = async (moduleId, action) => {
+    if (action === 'start') {
+      await startLearningModule(moduleId)
+    } else if (action === 'complete') {
+      await completeLearningModule(moduleId)
+    }
+  }
+
+  const handleNewModuleSubmit = async (e) => {
+    e.preventDefault()
+    // This would integrate with the createLearningModule function from the hook
+    setShowNewModuleForm(false)
+    setNewModule({ title: '', description: '', category: '', difficulty: 'BEGINNER' })
+  }
+
+  if (isLoading && !profile) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
+          <p className="text-gray-600">Loading your risk profile...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-red-800">
+            <AlertTriangle className="w-5 h-5" />
+            <span className="font-medium">Error loading profile</span>
+          </div>
+          <p className="text-red-700 mt-1">{error}</p>
+          <Button onClick={clearError} className="mt-2" variant="outline" size="sm">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Use real data or fallback to empty states
+  const userProfile = profile || {
+    risk_level: 'MEDIUM',
+    total_scans: 0,
+    threats_detected: 0,
+    learning_progress: 0,
+    risk_factors: []
   }
 
   const riskScore = calculateRiskScore()
@@ -57,9 +112,21 @@ export default function RiskProfile() {
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-6">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Security Profile</h1>
-        <p className="text-gray-600">Track your progress and learn from your experiences</p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="text-center flex-1">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Security Profile</h1>
+          <p className="text-gray-600">Track your progress and learn from your experiences</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => loadAllData()} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button onClick={() => setShowNewModuleForm(true)} size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            New Module
+          </Button>
+        </div>
       </div>
 
       {/* Profile Overview */}
@@ -70,8 +137,8 @@ export default function RiskProfile() {
               <User className="w-10 h-10 text-blue-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Risk Level</h3>
-            <Badge className={`text-lg px-4 py-2 ${getRiskColor(userProfile.riskLevel)}`}>
-              {userProfile.riskLevel}
+            <Badge className={`text-lg px-4 py-2 ${getRiskColor(userProfile.risk_level)}`}>
+              {userProfile.risk_level}
             </Badge>
             <p className="text-sm text-gray-600 mt-2">Based on your recent activity</p>
           </CardContent>
@@ -83,8 +150,8 @@ export default function RiskProfile() {
               <Target className="w-10 h-10 text-green-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Threats Detected</h3>
-            <p className="text-3xl font-bold text-green-600">{userProfile.threatsDetected}</p>
-            <p className="text-sm text-gray-600">Out of {userProfile.totalScans} scans</p>
+            <p className="text-3xl font-bold text-green-600">{userProfile.threats_detected}</p>
+            <p className="text-sm text-gray-600">Out of {userProfile.total_scans} scans</p>
           </CardContent>
         </Card>
 
@@ -95,8 +162,8 @@ export default function RiskProfile() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Learning Progress</h3>
             <div className="flex items-center justify-center gap-2 mb-2">
-              <p className={`text-3xl font-bold ${getProgressColor(userProfile.learningProgress)}`}>
-                {userProfile.learningProgress}%
+              <p className={`text-3xl font-bold ${getProgressColor(userProfile.learning_progress)}`}>
+                {userProfile.learning_progress}%
               </p>
               <Award className="w-6 h-6 text-yellow-500" />
             </div>
@@ -130,19 +197,26 @@ export default function RiskProfile() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {userProfile.riskFactors.map((factor, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-gray-900">{factor.factor}</h3>
-                  <Badge className={getRiskColor(factor.risk)}>
-                    {factor.risk}
-                  </Badge>
+          {userProfile.risk_factors && userProfile.risk_factors.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {userProfile.risk_factors.map((factor, index) => (
+                <div key={index} className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-gray-900">{factor.factor_name}</h3>
+                    <Badge className={getRiskColor(factor.risk_level)}>
+                      {factor.risk_level}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">Encountered {factor.frequency} times</p>
                 </div>
-                <p className="text-sm text-gray-600">Encountered {factor.frequency} times</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>No risk factors identified yet</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -152,26 +226,33 @@ export default function RiskProfile() {
           <h2 className="text-xl font-semibold text-gray-900">Recent Scam Analysis</h2>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {userProfile.recentScans.map((scan) => (
-              <div key={scan.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                <Badge className={getRiskColor(scan.risk)}>
-                  {scan.risk}
-                </Badge>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900 line-clamp-1">{scan.message}</p>
-                  <p className="text-xs text-gray-500">{scan.date}</p>
+          {scans && scans.length > 0 ? (
+            <div className="space-y-3">
+              {scans.slice(0, 4).map((scan) => (
+                <div key={scan.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                  <Badge className={getRiskColor(scan.risk_level)}>
+                    {scan.risk_level}
+                  </Badge>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-900 line-clamp-1">{scan.message || scan.description}</p>
+                    <p className="text-xs text-gray-500">{scan.created_at || 'Recently'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {scan.learned ? (
+                      <CheckCircle className="w-4 h-4 text-green-600" title="Lesson learned" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-yellow-600" title="Review recommended" />
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {scan.learned ? (
-                    <CheckCircle className="w-4 h-4 text-green-600" title="Lesson learned" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-yellow-600" title="Review recommended" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Target className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>No recent scans available</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -186,37 +267,47 @@ export default function RiskProfile() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {userProfile.learningModules.map((module) => (
-              <div key={module.id} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-gray-900">{module.title}</h3>
-                  {module.completed ? (
-                    <Badge className="bg-green-100 text-green-800">Completed</Badge>
-                  ) : (
-                    <Badge className="bg-gray-100 text-gray-800">Not Started</Badge>
-                  )}
-                </div>
-                
-                {module.completed ? (
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm text-gray-600">Score:</span>
-                    <span className="text-lg font-bold text-green-600">{module.score}%</span>
+          {learningModules && learningModules.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {learningModules.map((module) => (
+                <div key={module.id} className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium text-gray-900">{module.title}</h3>
+                    {module.status === 'completed' ? (
+                      <Badge className="bg-green-100 text-green-800">Completed</Badge>
+                    ) : module.status === 'in_progress' ? (
+                      <Badge className="bg-blue-100 text-blue-800">In Progress</Badge>
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-800">Not Started</Badge>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-sm text-gray-600 mb-3">Learn to recognize and avoid this type of scam</p>
-                )}
-                
-                <Button 
-                  variant={module.completed ? "outline" : "default"}
-                  size="sm"
-                  className="w-full"
-                >
-                  {module.completed ? 'Review Module' : 'Start Learning'}
-                </Button>
-              </div>
-            ))}
-          </div>
+                  
+                  {module.status === 'completed' ? (
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-sm text-gray-600">Score:</span>
+                      <span className="text-lg font-bold text-green-600">{module.score || 0}%</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600 mb-3">{module.description || 'Learn to recognize and avoid this type of scam'}</p>
+                  )}
+                  
+                  <Button 
+                    variant={module.status === 'completed' ? "outline" : "default"}
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleModuleAction(module.id, module.status === 'completed' ? 'review' : module.status === 'in_progress' ? 'complete' : 'start')}
+                  >
+                    {module.status === 'completed' ? 'Review Module' : module.status === 'in_progress' ? 'Complete Module' : 'Start Learning'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <BookOpen className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>No learning modules available</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -229,24 +320,104 @@ export default function RiskProfile() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-medium text-blue-900 mb-2">Complete Bank Impersonation Module</h3>
-              <p className="text-sm text-blue-700">You've encountered bank impersonation scams twice. Complete this module to better protect yourself.</p>
+          {recommendations && recommendations.length > 0 ? (
+            <div className="space-y-3">
+              {recommendations.map((rec, index) => (
+                <div key={index} className={`p-4 rounded-lg ${
+                  rec.priority === 'high' ? 'bg-red-50' : 
+                  rec.priority === 'medium' ? 'bg-yellow-50' : 'bg-green-50'
+                }`}>
+                  <h3 className={`font-medium mb-2 ${
+                    rec.priority === 'high' ? 'text-red-900' : 
+                    rec.priority === 'medium' ? 'text-yellow-900' : 'text-green-900'
+                  }`}>{rec.title}</h3>
+                  <p className={`text-sm ${
+                    rec.priority === 'high' ? 'text-red-700' : 
+                    rec.priority === 'medium' ? 'text-yellow-700' : 'text-green-700'
+                  }`}>{rec.description}</p>
+                </div>
+              ))}
             </div>
-            
-            <div className="p-4 bg-yellow-50 rounded-lg">
-              <h3 className="font-medium text-yellow-900 mb-2">Review Recent High-Risk Scan</h3>
-              <p className="text-sm text-yellow-700">Your recent "bank account suspended" message needs review. Learn from this experience.</p>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Shield className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>No recommendations available yet</p>
             </div>
-            
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h3 className="font-medium text-green-900 mb-2">Great Progress!</h3>
-              <p className="text-sm text-green-700">You've learned from 3 out of 4 recent scam encounters. Keep up the good work!</p>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* New Module Form Modal */}
+      {showNewModuleForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Create Learning Module</h3>
+            <form onSubmit={handleNewModuleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={newModule.title}
+                  onChange={(e) => setNewModule({...newModule, title: e.target.value})}
+                  className="w-full p-2 border rounded-md"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={newModule.description}
+                  onChange={(e) => setNewModule({...newModule, description: e.target.value})}
+                  className="w-full p-2 border rounded-md"
+                  rows="3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    value={newModule.category}
+                    onChange={(e) => setNewModule({...newModule, category: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  >
+                    <option value="">Select category</option>
+                    <option value="phishing">Phishing</option>
+                    <option value="scam">Scam</option>
+                    <option value="malware">Malware</option>
+                    <option value="fraud">Fraud</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                  <select
+                    value={newModule.difficulty}
+                    onChange={(e) => setNewModule({...newModule, difficulty: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  >
+                    <option value="BEGINNER">Beginner</option>
+                    <option value="INTERMEDIATE">Intermediate</option>
+                    <option value="ADVANCED">Advanced</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="flex-1">Create Module</Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowNewModuleForm(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
