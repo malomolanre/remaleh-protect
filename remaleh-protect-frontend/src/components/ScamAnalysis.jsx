@@ -94,13 +94,13 @@ export default function ScamAnalysis() {
       {result && (
         <>
           {/* Risk Assessment */}
-          <Card className={`mb-6 border-2 border-[${riskInfo.color}]`}>
+          <Card className="mb-6 border-2" style={{ borderColor: riskInfo.color }}>
             <CardContent>
-              <div className={`p-6 rounded-lg bg-[${riskInfo.color}] bg-opacity-10`}>
+              <div className="p-6 rounded-lg" style={{ backgroundColor: `${riskInfo.color}20` }}>
                 <div className="flex items-center gap-4 mb-4">
-                  <div className={`text-4xl`}>{riskInfo.icon}</div>
+                  <div className="text-4xl">{riskInfo.icon}</div>
                   <div>
-                    <h3 className={`text-2xl font-bold text-[${riskInfo.color}]`}>
+                    <h3 className="text-2xl font-bold" style={{ color: riskInfo.color }}>
                       {riskInfo.label}
                     </h3>
                     <p className="text-gray-700">
@@ -113,12 +113,16 @@ export default function ScamAnalysis() {
                   <div className="space-y-2">
                     <h4 className="font-medium text-gray-900">Key Indicators Found:</h4>
                     <div className="space-y-1">
-                      {result.indicators?.map((indicator, index) => (
-                        <div key={index} className="flex items-center gap-2 text-sm">
-                          <AlertTriangle className="w-4 h-4 text-orange-500" />
-                          <span>{indicator}</span>
-                        </div>
-                      ))}
+                      {result.indicators && result.indicators.length > 0 ? (
+                        result.indicators.map((indicator, index) => (
+                          <div key={index} className="flex items-center gap-2 text-sm">
+                            <AlertTriangle className="w-4 h-4 text-orange-500" />
+                            <span>{indicator}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-gray-500">No specific indicators detected</div>
+                      )}
                     </div>
                   </div>
                   
@@ -127,7 +131,7 @@ export default function ScamAnalysis() {
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-gray-200 rounded-full h-2">
                         <div 
-                          className={`h-2 rounded-full`}
+                          className="h-2 rounded-full"
                           style={{ 
                             width: `${result.confidence}%`,
                             backgroundColor: riskInfo.color

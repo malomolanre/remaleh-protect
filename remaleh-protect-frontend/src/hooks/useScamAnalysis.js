@@ -3,7 +3,7 @@ import { API } from '../lib/api'
 
 export function useScamAnalysis() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [resultHtml, setResultHtml] = useState(null)
+  const [result, setResult] = useState(null)
 
   const performEnhancedLocalAnalysis = (text, urls, emails) => {
     const textLower = text.toLowerCase()
@@ -133,6 +133,15 @@ export function useScamAnalysis() {
     return recommendations
   }
 
+  const generateSuspiciousElements = (indicators) => {
+    return indicators.filter(indicator => 
+      indicator.includes('suspicious') || 
+      indicator.includes('dangerous') || 
+      indicator.includes('highly suspicious') ||
+      indicator.includes('random character domain')
+    )
+  }
+
   const aggregateScamResults = (serviceResults, urls, emails, startTime) => {
     const endTime = Date.now()
     const analysisTime = endTime - startTime
@@ -140,12 +149,16 @@ export function useScamAnalysis() {
     let totalScore = 0
     let allIndicators = []
     let servicesUsed = []
+    let aiAnalysis = ''
 
     if (serviceResults.basicScam && !serviceResults.basicScam.error) {
       totalScore += (serviceResults.basicScam.risk_score || 0) * 100
       servicesUsed.push('✓ Basic Scam Detection')
       if (serviceResults.basicScam.indicators) {
         allIndicators.push(...serviceResults.basicScam.indicators)
+      }
+      if (serviceResults.basicScam.analysis) {
+        aiAnalysis = serviceResults.basicScam.analysis
       }
     } else {
       servicesUsed.push('✗ Basic Scam Detection (unavailable)')
@@ -179,85 +192,41 @@ export function useScamAnalysis() {
       servicesUsed.push('✓ Enhanced Pattern Analysis')
     }
 
-    let riskLevel, riskColor, riskIcon
-    if (totalScore >= 70) {
-      riskLevel = 'HIGH RISK'
-      riskColor = '#dc2626'
-      riskIcon = '🚨'
-    } else if (totalScore >= 40) {
-      riskLevel = 'MEDIUM RISK'
-      riskColor = '#ea580c'
-      riskIcon = '⚠️'
-    } else if (totalScore >= 15) {
-      riskLevel = 'LOW-MEDIUM RISK'
-      riskColor = '#ca8a04'
-      riskIcon = '⚡'
-    } else {
-      riskLevel = 'LOW RISK'
-      riskColor = '#16a34a'
-      riskIcon = '✅'
-    }
+    // Normalize score to 0-100 range
+    const normalizedScore = Math.min(Math.max(totalScore, 0), 100)
+    
+    // Calculate confidence based on services used and indicators found
+    const confidence = Math.min(
+      (servicesUsed.filter(s => s.includes('✓')).length / 4) * 100 + 
+      (allIndicators.length * 5), 
+      100
+    )
 
     const technicalErrorRegex = /Content analysis failed|HTTPSConnectionPool|NameResolutionError|Failed to resolve|Max retries exceeded|HTTP error/i
     const displayIndicators = allIndicators.filter(ind => !technicalErrorRegex.test(ind))
-    const topIndicators = displayIndicators.slice(0, 3).map(ind => ind.replace(/\"/g, '"'))
+    const topIndicators = displayIndicators.slice(0, 5).map(ind => ind.replace(/\"/g, '"'))
 
-    const recommendations = generateRecommendations(totalScore, allIndicators, urls, emails)
+    const recommendations = generateRecommendations(normalizedScore, allIndicators, urls, emails)
+    const suspiciousElements = generateSuspiciousElements(allIndicators)
 
-    return `
-      <div style="padding: 20px; border-radius: 8px; background: #f8fafc; border-left: 4px solid ${riskColor};">
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-          <span style="font-size: 26px; margin-right: 10px;">${riskIcon}</span>
-          <h3 style="margin: 0; color: ${riskColor}; font-size: 20px;">${riskLevel}</h3>
-          <span style="margin-left: 10px; color: #64748b; font-size: 14px;">(Score: ${totalScore.toFixed(0)})</span>
-        </div>
-        <p style="margin: 8px 0; color: #111827; font-size: 15px; font-weight: bold; line-height: 1.4;">
-          ${totalScore >= 70 ? '⚠️ This message looks like a scam. It contains multiple warning signs such as a suspicious link and urgent language.'
-          : totalScore >= 40 ? '⚠️ This message appears suspicious. It has several signs that it might be a scam.'
-          : totalScore >= 15 ? '⚠️ Be cautious. This message has some risky elements and could be a scam.'
-          : '✅ This message does not appear risky, but always be vigilant.'}
-        </p>
-        ${topIndicators.length > 0 ? `
-          <div style="margin: 12px 0;">
-            <h4 style="margin: 0 0 6px 0; color: #374151; font-size: 14px;">Why this looks risky:</h4>
-            <div style="color: #b91c1c; font-size: 13px; line-height: 1.4;">
-              ${topIndicators.map(ind => `• ${ind}`).join('<br>')}
-              ${displayIndicators.length > topIndicators.length ? `<br><em>...and more warning signs detected</em>` : ''}
-            </div>
-          </div>
-        ` : ''}
-        <div style="margin: 12px 0;">
-          <h4 style="margin: 0 0 6px 0; color: #374151; font-size: 14px;">What you should do:</h4>
-          <div style="color: #065f46; font-size: 13px; line-height: 1.4;">
-            ${recommendations.map(rec => `🛡️ ${rec}`).join('<br>')}
-          </div>
-        </div>
-        <div style="margin: 15px 0;">
-          <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">Detailed Analysis (for advanced users):</h4>
-          <div style="color: #6b7280; font-size: 13px;">
-            <strong>Components Detected:</strong><br>
-            ${urls.length > 0 ? `• URLs: ${urls.length} detected` : '• No URLs detected'}<br>
-            ${emails.length > 0 ? `• Emails: ${emails.length} detected` : '• No emails detected'}<br><br>
-            <strong>Analysis Services Used:</strong><br>
-            ${servicesUsed.map(service => `• ${service}`).join('<br>')}<br><br>
-            ${displayIndicators.length > 0 ? `
-              <strong>Threats Detected:</strong><br>
-              ${displayIndicators.slice(0, 8).map(ind => `✗ ${ind}`).join('<br>')}
-              ${displayIndicators.length > 8 ? `<br><em>...and ${displayIndicators.length - 8} more indicators</em>` : ''}<br>
-            ` : ''}
-          </div>
-        </div>
-        <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px;">
-          Analysis completed in ${analysisTime}ms using ${servicesUsed.filter(s => s.includes('✓')).length} services
-        </div>
-      </div>
-    `
+    return {
+      riskScore: Math.round(normalizedScore),
+      confidence: Math.round(confidence),
+      indicators: topIndicators,
+      analysis: aiAnalysis || `Analysis completed using ${servicesUsed.filter(s => s.includes('✓')).length} services in ${analysisTime}ms`,
+      recommendations,
+      suspiciousElements,
+      urlsDetected: urls.length,
+      emailsDetected: emails.length,
+      servicesUsed: servicesUsed.filter(s => s.includes('✓')),
+      analysisTime
+    }
   }
 
   const analyze = async (text) => {
     if (!text || !text.trim()) return null
     setIsAnalyzing(true)
-    setResultHtml(null)
+    setResult(null)
 
     try {
       const startTime = Date.now()
@@ -315,13 +284,13 @@ export function useScamAnalysis() {
       serviceResults.localAnalysis = performEnhancedLocalAnalysis(text, urls, emails)
 
       await Promise.all(servicePromises)
-      const html = aggregateScamResults(serviceResults, urls, emails, startTime)
-      setResultHtml(html)
-      return html
+      const analysisResult = aggregateScamResults(serviceResults, urls, emails, startTime)
+      setResult(analysisResult)
+      return analysisResult
     } finally {
       setIsAnalyzing(false)
     }
   }
 
-  return { isAnalyzing, resultHtml, analyze }
+  return { isAnalyzing, result, analyze }
 }
