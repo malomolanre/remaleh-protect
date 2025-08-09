@@ -116,3 +116,26 @@ def update_user_login(user_id):
     if user:
         user.last_login = datetime.utcnow()
         db.session.commit()
+
+def create_admin_user():
+    """Create a default admin user if it doesn't exist"""
+    try:
+        # Check if admin user already exists
+        admin_user = User.query.filter_by(email='admin@remaleh.com').first()
+        if not admin_user:
+            admin_user = User(
+                email='admin@remaleh.com',
+                first_name='Admin',
+                last_name='User',
+                risk_level='LOW',
+                is_active=True
+            )
+            admin_user.set_password('admin123')  # Change this in production
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Admin user created successfully")
+        else:
+            print("Admin user already exists")
+    except Exception as e:
+        print(f"Error creating admin user: {e}")
+        db.session.rollback()

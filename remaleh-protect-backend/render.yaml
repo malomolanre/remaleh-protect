@@ -2,12 +2,26 @@ services:
   - type: web
     name: remaleh-protect-api
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
     startCommand: python src/main.py
     envVars:
       - key: DEBUG
         value: false
       - key: FLASK_ENV
         value: production
-    healthCheckPath: /api/scam/health
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: remaleh-protect-db
+          property: connectionString
+    healthCheckPath: /api/health
+
+databases:
+  - name: remaleh-protect-db
+    databaseName: remaleh_protect
+    user: remaleh_protect_user
 

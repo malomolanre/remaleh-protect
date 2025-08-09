@@ -22,18 +22,83 @@ def create_app():
     app = Flask(__name__)
     
     # Database configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///remaleh_protect.db')
+    database_url = os.getenv('DATABASE_URL', 'sqlite:///remaleh_protect.db')
+    
+    # Handle Render's filesystem constraints
+    if database_url.startswith('sqlite:///'):
+        # For local development, use file-based SQLite
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        # For production (Render), use the provided DATABASE_URL
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Initialize database
     db.init_app(app)
+    
+    # Create database tables and admin user on startup
+    with app.app_context():
+        try:
+            db.create_all()
+            print("✓ Database tables created successfully")
+            
+            # Create admin user if it doesn't exist
+            from auth import create_admin_user
+            create_admin_user()
+            
+            # Create sample learning modules if they don't exist
+            from models import LearningModule
+            if LearningModule.query.count() == 0:
+                sample_modules = [
+                    {
+                        'title': 'Phishing Awareness',
+                        'description': 'Learn to identify and avoid phishing attempts',
+                        'difficulty': 'BEGINNER',
+                        'estimated_time': 15
+                    },
+                    {
+                        'title': 'Password Security',
+                        'description': 'Best practices for creating and managing strong passwords',
+                        'difficulty': 'BEGINNER',
+                        'estimated_time': 10
+                    },
+                    {
+                        'title': 'Social Engineering',
+                        'description': 'Understanding and defending against social engineering attacks',
+                        'difficulty': 'INTERMEDIATE',
+                        'estimated_time': 20
+                    }
+                ]
+                
+                for module_data in sample_modules:
+                    module = LearningModule(**module_data)
+                    db.session.add(module)
+                
+                db.session.commit()
+                print("✓ Sample learning modules created successfully")
+            
+            print(f"✓ Database initialized successfully with {LearningModule.query.count()} learning modules")
+            
+        except Exception as e:
+            print(f"❌ Database initialization error: {e}")
+            import traceback
+            traceback.print_exc()
+            # Continue anyway - the app might still work
 
     # Restrict CORS origins to the production front-end and local development
+    allowed_origins = [
+        "https://app.remalehprotect.remaleh.com.au",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:3000"
+    ]
+    
     CORS(app, resources={r"/api/*": {
-        "origins": [
-            "https://app.remalehprotect.remaleh.com.au",
-            "http://localhost:5173"
-        ]
+        "origins": allowed_origins,
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
     }})
 
     # Set up rate limiting: 60 requests per minute per IP by default
@@ -81,6 +146,15 @@ def create_app():
         return jsonify({
             "ok": True,
             "service": "remaleh-protect-api",
+            "timestamp": datetime.now().isoformat()
+        })
+    
+    @app.get("/api/test")
+    def test():
+        """Test endpoint for debugging deployment."""
+        return jsonify({
+            "message": "API is working!",
+            "database_url": app.config['SQLALCHEMY_DATABASE_URI'].replace('://', '://***:***@') if '://' in app.config['SQLALCHEMY_DATABASE_URI'] else 'sqlite',
             "timestamp": datetime.now().isoformat()
         })
 
