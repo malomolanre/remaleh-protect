@@ -3,7 +3,7 @@ import { TrendingUp, AlertTriangle, Users, Clock, BarChart3, Globe, Shield, Plus
 import { MobileCard } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
-import { MobileModal } from './ui/mobile-modal'
+import MobileModal from './MobileModal'
 import { MobileGrid, MobileGridItem, MobileStatsGrid } from './ui/mobile-grid'
 import { MobileList, MobileListItemWithBadge } from './ui/mobile-list'
 import { useThreatIntelligence } from '../hooks/useThreatIntelligence'
