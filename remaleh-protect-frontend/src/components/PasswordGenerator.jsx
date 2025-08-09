@@ -22,7 +22,7 @@ function buildAlphabet(opts) {
   if (opts.upper) alphabet += CHARSETS.upper + (opts.similar ? "IO" : "");
   if (opts.digits) alphabet += (opts.similar ? "01" : "") + CHARSETS.digits;
   if (opts.symbols) alphabet += CHARSETS.symbols;
-  if (opts.ambiguous) alphabet += "{}[]()/\\'\"`~,;:.<>";
+  if (opts.ambiguous) alphabet += "{}[]()/\\\\'\\\"`~,;:.<>";
   if (!opts.similar) {
     alphabet = [...alphabet].filter((c) => !CHARSETS.similar.includes(c)).join("");
   }
@@ -38,7 +38,7 @@ function generatePassword(length, opts) {
   if (opts.upper) requiredPools.push(CHARSETS.upper);
   if (opts.digits) requiredPools.push(opts.similar ? CHARSETS.digits + "01" : CHARSETS.digits);
   if (opts.symbols) requiredPools.push(CHARSETS.symbols);
-  if (opts.ambiguous) requiredPools.push("{}[]()/\\'\"`~,;:.<>");
+  if (opts.ambiguous) requiredPools.push("{}[]()/\\\\'\\\"`~,;:.<>");
 
   const out = [];
   requiredPools.forEach((pool) => {

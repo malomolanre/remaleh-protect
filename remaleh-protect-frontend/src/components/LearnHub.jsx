@@ -18,10 +18,10 @@ export default function LearnHub() {
         {!selected ? (
           <div className="grid gap-4">
             <Card onClick={() => setSelected('passwords')} icon={<Lock className="text-[#21a1ce] mr-3" size={24} />} title="Password Protection" subtitle="Learn to create and manage strong passwords" />
-            <Card onClick={() => setSelected('phishing')} icon={<Mail className="text-[#21a1ce] mr-3" size={24} />} title="Email & Text Scams" subtitle="Identify and avoid phishing attempts" />
-            <Card onClick={() => setSelected('devices')} icon={<Shield className="text-[#21a1ce] mr-3" size={24} />} title="Device & Home Security" subtitle="Secure your devices and home network" />
-            <Card onClick={() => setSelected('social')} icon={<Users className="text-[#21a1ce] mr-3" size={24} />} title="Social Media & Privacy" subtitle="Protect your privacy on social platforms" />
-            <Card onClick={() => setSelected('phone')} icon={<Smartphone className="text-[#21a1ce] mr-3" size={24} />} title="Phone & App Safety" subtitle="Keep your mobile devices secure" />
+            <Card onClick={() => setSelected('phishing')} icon={<Mail className="text-[#21a1ce] mr-3" size={24} />} title="Email &amp; Text Scams" subtitle="Identify and avoid phishing attempts" />
+            <Card onClick={() => setSelected('devices')} icon={<Shield className="text-[#21a1ce] mr-3" size={24} />} title="Device &amp; Home Security" subtitle="Secure your devices and home network" />
+            <Card onClick={() => setSelected('social')} icon={<Users className="text-[#21a1ce] mr-3" size={24} />} title="Social Media &amp; Privacy" subtitle="Protect your privacy on social platforms" />
+            <Card onClick={() => setSelected('phone')} icon={<Smartphone className="text-[#21a1ce] mr-3" size={24} />} title="Phone &amp; App Safety" subtitle="Keep your mobile devices secure" />
           </div>
         ) : (
           <div>
@@ -76,7 +76,7 @@ function PasswordsContent() {
       </div>
       <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
         <h4 className="font-bold mb-2">Australian Example</h4>
-        <p className="text-sm">Instead of "password123", try "KangarooJumping2025!Sydney" - it's long, memorable, and includes Australian references that are meaningful to you.</p>
+        <p className="text-sm">Instead of &quot;password123&quot;, try &quot;KangarooJumping2025!Sydney&quot; - it&apos;s long, memorable, and includes Australian references that are meaningful to you.</p>
       </div>
       <div>
         <h4 className="font-bold mb-3">Password Managers</h4>
@@ -104,7 +104,7 @@ function PasswordsContent() {
 function PhishingContent() {
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold">Email & Text Scams</h3>
+      <h3 className="text-xl font-bold">Email &amp; Text Scams</h3>
       <div className="bg-red-50 p-4 rounded-lg border border-red-200">
         <h4 className="font-bold mb-2">What is Phishing?</h4>
         <p className="text-sm">Phishing is when criminals send fake emails or texts pretending to be from legitimate companies to steal your personal information, passwords, or money.</p>
@@ -112,15 +112,15 @@ function PhishingContent() {
       <div>
         <h4 className="font-bold mb-3">Warning Signs to Look For</h4>
         <div className="space-y-3">
-          <Bullet danger={true} title="Urgent language" desc="'Act now!' 'Your account will be closed!' 'Immediate action required!'" />
-          <Bullet danger={true} title="Generic greetings" desc="'Dear Customer' instead of your actual name" />
+          <Bullet danger={true} title="Urgent language" desc="&apos;Act now!&apos; &apos;Your account will be closed!&apos; &apos;Immediate action required!&apos;" />
+          <Bullet danger={true} title="Generic greetings" desc="&apos;Dear Customer&apos; instead of your actual name" />
           <Bullet danger={true} title="Suspicious links" desc="Hover over links to see where they really go" />
           <Bullet danger={true} title="Poor grammar and spelling" desc="Legitimate companies proofread their communications" />
         </div>
       </div>
       <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
         <h4 className="font-bold mb-2">Australian Example</h4>
-        <p className="text-sm">"Your ATO tax refund is ready! Click here to claim $1,247.50 immediately or it will expire in 24 hours."<br/><br/><strong>Red flags:</strong> The ATO doesn't send refund notifications via email, uses urgent language, and asks you to click links.</p>
+        <p className="text-sm">&quot;Your ATO tax refund is ready! Click here to claim $1,247.50 immediately or it will expire in 24 hours.&quot;<br/><br/><strong>Red flags:</strong> The ATO doesn&apos;t send refund notifications via email, uses urgent language, and asks you to click links.</p>
       </div>
       <div>
         <h4 className="font-bold mb-3">How to Verify Suspicious Messages</h4>
@@ -147,7 +147,7 @@ function PhishingContent() {
 function DevicesContent() {
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold">Device & Home Security</h3>
+      <h3 className="text-xl font-bold">Device &amp; Home Security</h3>
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
         <h4 className="font-bold mb-2">Why Device Security Matters</h4>
         <p className="text-sm">Your devices contain personal photos, banking apps, emails, and more. Securing them protects your entire digital life.</p>
@@ -157,7 +157,7 @@ function DevicesContent() {
         <div className="space-y-3">
           <Bullet title="Keep software updated" desc="Enable automatic updates for your operating system and apps" />
           <Bullet title="Use antivirus software" desc="Windows Defender is built-in and effective for most users" />
-          <Bullet title="Enable firewall" desc="Your computer's firewall blocks unauthorized access" />
+          <Bullet title="Enable firewall" desc="Your computer&apos;s firewall blocks unauthorized access" />
         </div>
       </div>
       <div>
@@ -190,16 +190,16 @@ function DevicesContent() {
 function SocialContent() {
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold">Social Media & Privacy</h3>
+      <h3 className="text-xl font-bold">Social Media &amp; Privacy</h3>
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
         <h4 className="font-bold mb-2">Your Digital Footprint</h4>
-        <p className="text-sm">Everything you post online creates a permanent digital footprint. Even "private" posts can become public through data breaches or account compromises.</p>
+        <p className="text-sm">Everything you post online creates a permanent digital footprint. Even &quot;private&quot; posts can become public through data breaches or account compromises.</p>
       </div>
       <div>
         <h4 className="font-bold mb-3">Privacy Settings</h4>
         <div className="space-y-3">
           <Bullet title="Review privacy settings regularly" desc="Social media platforms often change their privacy policies" />
-          <Bullet title="Limit who can see your posts" desc="Set posts to 'Friends only' rather than 'Public'" />
+          <Bullet title="Limit who can see your posts" desc="Set posts to &apos;Friends only&apos; rather than &apos;Public&apos;" />
           <Bullet title="Control who can find you" desc="Limit search visibility and friend requests" />
         </div>
       </div>
@@ -216,7 +216,7 @@ function SocialContent() {
       </div>
       <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
         <h4 className="font-bold mb-2">Think Before You Post</h4>
-        <p className="text-sm">Ask yourself: "Would I be comfortable if my employer, family, or a stranger saw this?" If not, don't post it.</p>
+        <p className="text-sm">Ask yourself: &quot;Would I be comfortable if my employer, family, or a stranger saw this?&quot; If not, don&apos;t post it.</p>
       </div>
       <div className="bg-red-50 p-4 rounded-lg border border-red-200">
         <h4 className="font-bold mb-2">Recognizing Social Media Scams</h4>
@@ -234,7 +234,7 @@ function SocialContent() {
 function PhoneContent() {
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold">Phone & App Safety</h3>
+      <h3 className="text-xl font-bold">Phone &amp; App Safety</h3>
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
         <h4 className="font-bold mb-2">Your Phone is a Computer</h4>
         <p className="text-sm">Modern smartphones contain more personal information than most computers. They need the same level of security protection.</p>
@@ -244,7 +244,7 @@ function PhoneContent() {
         <div className="space-y-3">
           <Bullet title="Use a strong lock screen" desc="PIN, password, fingerprint, or face recognition" />
           <Bullet title="Keep your OS updated" desc="Enable automatic updates for security patches" />
-          <Bullet title="Enable remote wipe" desc="So you can erase your phone if it's lost or stolen" />
+          <Bullet title="Enable remote wipe" desc="So you can erase your phone if it&apos;s lost or stolen" />
         </div>
       </div>
       <div>
