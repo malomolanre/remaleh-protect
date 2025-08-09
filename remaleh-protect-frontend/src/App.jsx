@@ -4,6 +4,11 @@ import BreachChecker from './components/BreachChecker'
 import ScamAnalysis from './components/ScamAnalysis'
 import ChatAssistant from './components/ChatAssistant'
 import LearnHub from './components/LearnHub'
+import ThreatDashboard from './components/ThreatDashboard'
+import RiskProfile from './components/RiskProfile'
+import ProactiveProtection from './components/ProactiveProtection'
+import CommunityReporting from './components/CommunityReporting'
+import AdvancedAnalytics from './components/AdvancedAnalytics'
 import './App.css'
 
 function App() {
@@ -12,6 +17,11 @@ function App() {
   const tabs = [
     { id: 'breach', label: 'Breach Checker', icon: '🔒' },
     { id: 'scam', label: 'Scam Analysis', icon: '🚨' },
+    { id: 'threats', label: 'Threat Intel', icon: '📊' },
+    { id: 'profile', label: 'Risk Profile', icon: '👤' },
+    { id: 'protection', label: 'Protection', icon: '🛡️' },
+    { id: 'community', label: 'Community', icon: '👥' },
+    { id: 'analytics', label: 'Analytics', icon: '📈' },
     { id: 'chat', label: 'AI Assistant', icon: '🤖' },
     { id: 'learn', label: 'Learn Hub', icon: '📚' }
   ]
@@ -22,6 +32,16 @@ function App() {
         return <BreachChecker />
       case 'scam':
         return <ScamAnalysis />
+      case 'threats':
+        return <ThreatDashboard />
+      case 'profile':
+        return <RiskProfile />
+      case 'protection':
+        return <ProactiveProtection />
+      case 'community':
+        return <CommunityReporting />
+      case 'analytics':
+        return <AdvancedAnalytics />
       case 'chat':
         return <ChatAssistant />
       case 'learn':
