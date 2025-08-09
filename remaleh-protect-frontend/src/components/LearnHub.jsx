@@ -199,7 +199,7 @@ function SocialContent() {
         <h4 className="font-bold mb-3">Privacy Settings</h4>
         <div className="space-y-3">
           <Bullet title="Review privacy settings regularly" desc="Social media platforms often change their privacy policies" />
-          <Bullet title="Limit who can see your posts" desc="Set posts to \"Friends only\" rather than \"Public\"" />
+          <Bullet title="Limit who can see your posts" desc="Set posts to 'Friends only' rather than 'Public'" />
           <Bullet title="Control who can find you" desc="Limit search visibility and friend requests" />
         </div>
       </div>
