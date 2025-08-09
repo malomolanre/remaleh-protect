@@ -112,10 +112,10 @@ function PhishingContent() {
       <div>
         <h4 className="font-bold mb-3">Warning Signs to Look For</h4>
         <div className="space-y-3">
-          <Bullet danger title="Urgent language" desc="'Act now!' 'Your account will be closed!' 'Immediate action required!'" />
-          <Bullet danger title="Generic greetings" desc="'Dear Customer' instead of your actual name" />
-          <Bullet danger title="Suspicious links" desc="Hover over links to see where they really go" />
-          <Bullet danger title="Poor grammar and spelling" desc="Legitimate companies proofread their communications" />
+          <Bullet danger={true} title="Urgent language" desc="'Act now!' 'Your account will be closed!' 'Immediate action required!'" />
+          <Bullet danger={true} title="Generic greetings" desc="'Dear Customer' instead of your actual name" />
+          <Bullet danger={true} title="Suspicious links" desc="Hover over links to see where they really go" />
+          <Bullet danger={true} title="Poor grammar and spelling" desc="Legitimate companies proofread their communications" />
         </div>
       </div>
       <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
