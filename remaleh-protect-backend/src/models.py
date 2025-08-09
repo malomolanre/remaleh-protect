@@ -204,4 +204,28 @@ class LearningProgress(db.Model):
             'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }
 
+class ProtectionStatus(db.Model):
+    __tablename__ = 'protection_status'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    antivirus_enabled = db.Column(db.Boolean, default=False)
+    firewall_enabled = db.Column(db.Boolean, default=False)
+    vpn_enabled = db.Column(db.Boolean, default=False)
+    two_factor_enabled = db.Column(db.Boolean, default=False)
+    password_manager_enabled = db.Column(db.Boolean, default=False)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'antivirus_enabled': self.antivirus_enabled,
+            'firewall_enabled': self.firewall_enabled,
+            'vpn_enabled': self.vpn_enabled,
+            'two_factor_enabled': self.two_factor_enabled,
+            'password_manager_enabled': self.password_manager_enabled,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+        }
+
 
