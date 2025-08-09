@@ -1,55 +1,62 @@
 import React, { useState } from 'react'
 import { BookOpen, Lock, Mail, Shield, Users, Smartphone, ChevronRight, ChevronLeft } from 'lucide-react'
+import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 
 export default function LearnHub() {
   const [selected, setSelected] = useState(null)
 
   return (
-    <div className="p-4">
-      <div className="bg-white rounded-lg shadow p-5">
-        <div className="flex items-center mb-4">
-          <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-            <BookOpen className="text-white" size={24} />
+    <div className="p-4 md:p-6">
+      <MobileCard className="mb-6">
+        <MobileCardHeader>
+          <div className="flex items-center mb-3">
+            <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
+              <BookOpen className="text-white" size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">Cyber Sensei</h2>
+              <p className="text-sm md:text-base text-gray-600">Learn essential cybersecurity skills to protect yourself and your family</p>
+            </div>
           </div>
-          <h2 className="text-xl font-bold">Cyber Sensei</h2>
-        </div>
-        <p className="text-gray-600 mb-6">Learn essential cybersecurity skills to protect yourself and your family</p>
-
-        {!selected ? (
-          <div className="grid gap-4">
-            <Card onClick={() => setSelected('passwords')} icon={<Lock className="text-[#21a1ce] mr-3" size={24} />} title="Password Protection" subtitle="Learn to create and manage strong passwords" />
-            <Card onClick={() => setSelected('phishing')} icon={<Mail className="text-[#21a1ce] mr-3" size={24} />} title="Email &amp; Text Scams" subtitle="Identify and avoid phishing attempts" />
-            <Card onClick={() => setSelected('devices')} icon={<Shield className="text-[#21a1ce] mr-3" size={24} />} title="Device &amp; Home Security" subtitle="Secure your devices and home network" />
-            <Card onClick={() => setSelected('social')} icon={<Users className="text-[#21a1ce] mr-3" size={24} />} title="Social Media &amp; Privacy" subtitle="Protect your privacy on social platforms" />
-            <Card onClick={() => setSelected('phone')} icon={<Smartphone className="text-[#21a1ce] mr-3" size={24} />} title="Phone &amp; App Safety" subtitle="Keep your mobile devices secure" />
-          </div>
-        ) : (
-          <div>
-            <button className="flex items-center text-[#21a1ce] mb-4 hover:underline" onClick={() => setSelected(null)}>
-              <ChevronLeft size={20} className="mr-1" />
-              Back to topics
-            </button>
-            {selected === 'passwords' && <PasswordsContent />}
-            {selected === 'phishing' && <PhishingContent />}
-            {selected === 'devices' && <DevicesContent />}
-            {selected === 'social' && <SocialContent />}
-            {selected === 'phone' && <PhoneContent />}
-          </div>
-        )}
-      </div>
+        </MobileCardHeader>
+        
+        <MobileCardContent>
+          {!selected ? (
+            <div className="grid gap-4">
+              <Card onClick={() => setSelected('passwords')} icon={<Lock className="text-[#21a1ce] mr-3" size={24} />} title="Password Protection" subtitle="Learn to create and manage strong passwords" />
+              <Card onClick={() => setSelected('phishing')} icon={<Mail className="text-[#21a1ce] mr-3" size={24} />} title="Email &amp; Text Scams" subtitle="Identify and avoid phishing attempts" />
+              <Card onClick={() => setSelected('devices')} icon={<Shield className="text-[#21a1ce] mr-3" size={24} />} title="Device &amp; Home Security" subtitle="Secure your devices and home network" />
+              <Card onClick={() => setSelected('social')} icon={<Users className="text-[#21a1ce] mr-3" size={24} />} title="Social Media &amp; Privacy" subtitle="Protect your privacy on social platforms" />
+              <Card onClick={() => setSelected('phone')} icon={<Smartphone className="text-[#21a1ce] mr-3" size={24} />} title="Phone &amp; App Safety" subtitle="Keep your mobile devices secure" />
+            </div>
+          ) : (
+            <div>
+              <button className="flex items-center text-[#21a1ce] mb-4 hover:underline text-sm md:text-base" onClick={() => setSelected(null)}>
+                <ChevronLeft size={20} className="mr-1" />
+                Back to topics
+              </button>
+              {selected === 'passwords' && <PasswordsContent />}
+              {selected === 'phishing' && <PhishingContent />}
+              {selected === 'devices' && <DevicesContent />}
+              {selected === 'social' && <SocialContent />}
+              {selected === 'phone' && <PhoneContent />}
+            </div>
+          )}
+        </MobileCardContent>
+      </MobileCard>
     </div>
   )
 }
 
 function Card({ onClick, icon, title, subtitle }) {
   return (
-    <div className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" onClick={onClick}>
+    <div className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors active:bg-gray-100" onClick={onClick}>
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           {icon}
           <div>
-            <h3 className="font-medium">{title}</h3>
-            <p className="text-sm text-gray-600">{subtitle}</p>
+            <h3 className="font-medium text-sm md:text-base">{title}</h3>
+            <p className="text-xs md:text-sm text-gray-600">{subtitle}</p>
           </div>
         </div>
         <ChevronRight className="text-gray-400" size={20} />

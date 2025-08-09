@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { User, Target, TrendingUp, BookOpen, Award, Shield, AlertTriangle, CheckCircle, RefreshCw, Plus } from 'lucide-react'
-import { Card, CardHeader, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
+import { MobileCard } from './ui/mobile-card'
+import { MobileButton } from './ui/mobile-button'
+import { MobileInput } from './ui/mobile-input'
+import { MobileModal } from './ui/mobile-modal'
+import { MobileGrid, MobileGridItem, MobileStatsGrid } from './ui/mobile-grid'
+import { MobileList, MobileListItemWithBadge } from './ui/mobile-list'
 import { useRiskProfile } from '../hooks/useRiskProfile'
 
 export default function RiskProfile() {
@@ -83,17 +86,17 @@ export default function RiskProfile() {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-red-800">
+      <div className="p-4">
+        <MobileCard className="bg-red-50 border-red-200">
+          <div className="flex items-center gap-2 text-red-800 mb-2">
             <AlertTriangle className="w-5 h-5" />
             <span className="font-medium">Error loading profile</span>
           </div>
-          <p className="text-red-700 mt-1">{error}</p>
-          <Button onClick={clearError} className="mt-2" variant="outline" size="sm">
+          <p className="text-red-700 text-sm mb-3">{error}</p>
+          <MobileButton onClick={clearError} variant="outline" size="sm" className="w-full">
             Try Again
-          </Button>
-        </div>
+          </MobileButton>
+        </MobileCard>
       </div>
     )
   }
@@ -110,77 +113,82 @@ export default function RiskProfile() {
   const riskScore = calculateRiskScore()
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-6">
+    <div className="space-y-4 p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="text-center flex-1">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Security Profile</h1>
-          <p className="text-gray-600">Track your progress and learn from your experiences</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => loadAllData()} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button onClick={() => setShowNewModuleForm(true)} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            New Module
-          </Button>
-        </div>
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Security Profile</h1>
+        <p className="text-gray-600 text-sm">Track your progress and learn from experiences</p>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 mb-4">
+        <MobileButton onClick={() => loadAllData()} variant="outline" size="sm" className="flex-1">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </MobileButton>
+        <MobileButton onClick={() => setShowNewModuleForm(true)} size="sm" className="flex-1">
+          <Plus className="w-4 h-4 mr-2" />
+          New Module
+        </MobileButton>
       </div>
 
       {/* Profile Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-10 h-10 text-blue-600" />
+      <MobileStatsGrid>
+        <MobileGridItem>
+          <MobileCard>
+            <div className="p-4 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <User className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Risk Level</h3>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRiskColor(userProfile.risk_level)}`}>
+                {userProfile.risk_level}
+              </span>
+              <p className="text-xs text-gray-600 mt-2">Based on recent activity</p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Risk Level</h3>
-            <Badge className={`text-lg px-4 py-2 ${getRiskColor(userProfile.risk_level)}`}>
-              {userProfile.risk_level}
-            </Badge>
-            <p className="text-sm text-gray-600 mt-2">Based on your recent activity</p>
-          </CardContent>
-        </Card>
+          </MobileCard>
+        </MobileGridItem>
 
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Target className="w-10 h-10 text-green-600" />
+        <MobileGridItem>
+          <MobileCard>
+            <div className="p-4 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Target className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Threats Detected</h3>
+              <p className="text-2xl font-bold text-green-600">{userProfile.threats_detected}</p>
+              <p className="text-xs text-gray-600">Out of {userProfile.total_scans} scans</p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Threats Detected</h3>
-            <p className="text-3xl font-bold text-green-600">{userProfile.threats_detected}</p>
-            <p className="text-sm text-gray-600">Out of {userProfile.total_scans} scans</p>
-          </CardContent>
-        </Card>
+          </MobileCard>
+        </MobileGridItem>
 
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-10 h-10 text-purple-600" />
+        <MobileGridItem>
+          <MobileCard>
+            <div className="p-4 text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <BookOpen className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Learning Progress</h3>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <p className={`text-2xl font-bold ${getProgressColor(userProfile.learning_progress)}`}>
+                  {userProfile.learning_progress}%
+                </p>
+                <Award className="w-5 h-5 text-yellow-500" />
+              </div>
+              <p className="text-xs text-gray-600">Security education completed</p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Learning Progress</h3>
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <p className={`text-3xl font-bold ${getProgressColor(userProfile.learning_progress)}`}>
-                {userProfile.learning_progress}%
-              </p>
-              <Award className="w-6 h-6 text-yellow-500" />
-            </div>
-            <p className="text-sm text-gray-600">Security education completed</p>
-          </CardContent>
-        </Card>
-      </div>
+          </MobileCard>
+        </MobileGridItem>
+      </MobileStatsGrid>
 
       {/* Risk Analysis */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
+      <MobileCard>
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Your Risk Analysis</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Risk Analysis</h2>
           </div>
-        </CardHeader>
-        <CardContent>
+          
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">Overall Risk Score</span>
@@ -198,226 +206,219 @@ export default function RiskProfile() {
           </div>
           
           {userProfile.risk_factors && userProfile.risk_factors.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MobileList>
               {userProfile.risk_factors.map((factor, index) => (
-                <div key={index} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-gray-900">{factor.factor_name}</h3>
-                    <Badge className={getRiskColor(factor.risk_level)}>
-                      {factor.risk_level}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600">Encountered {factor.frequency} times</p>
-                </div>
+                <MobileListItemWithBadge
+                  key={index}
+                  title={factor.factor_name}
+                  subtitle={`Encountered ${factor.frequency} times`}
+                  badge={factor.risk_level}
+                  badgeColor={factor.risk_level === 'CRITICAL' ? 'red' : 
+                             factor.risk_level === 'HIGH' ? 'orange' : 
+                             factor.risk_level === 'MEDIUM' ? 'yellow' : 'green'}
+                  icon={<TrendingUp className="w-4 h-4 text-blue-400" />}
+                />
               ))}
-            </div>
+            </MobileList>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No risk factors identified yet</p>
+            <div className="text-center py-6 text-gray-500">
+              <TrendingUp className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">No risk factors identified yet</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </MobileCard>
 
       {/* Recent Scans */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold text-gray-900">Recent Scam Analysis</h2>
-        </CardHeader>
-        <CardContent>
+      <MobileCard>
+        <div className="p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Scam Analysis</h2>
+          
           {scans && scans.length > 0 ? (
-            <div className="space-y-3">
+            <MobileList>
               {scans.slice(0, 4).map((scan) => (
-                <div key={scan.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <Badge className={getRiskColor(scan.risk_level)}>
-                    {scan.risk_level}
-                  </Badge>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900 line-clamp-1">{scan.message || scan.description}</p>
-                    <p className="text-xs text-gray-500">{scan.created_at || 'Recently'}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {scan.learned ? (
-                      <CheckCircle className="w-4 h-4 text-green-600" title="Lesson learned" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-yellow-600" title="Review recommended" />
-                    )}
-                  </div>
-                </div>
+                <MobileListItemWithBadge
+                  key={scan.id}
+                  title={scan.message || scan.description}
+                  subtitle={scan.created_at || 'Recently'}
+                  badge={scan.risk_level}
+                  badgeColor={scan.risk_level === 'CRITICAL' ? 'red' : 
+                             scan.risk_level === 'HIGH' ? 'orange' : 
+                             scan.risk_level === 'MEDIUM' ? 'yellow' : 'green'}
+                  icon={<Target className="w-4 h-4 text-green-400" />}
+                  rightContent={
+                    <div className="flex items-center gap-2">
+                      {scan.learned ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" title="Lesson learned" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-yellow-600" title="Review recommended" />
+                      )}
+                    </div>
+                  }
+                />
               ))}
-            </div>
+            </MobileList>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Target className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No recent scans available</p>
+            <div className="text-center py-6 text-gray-500">
+              <Target className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">No recent scans available</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </MobileCard>
 
       {/* Learning Modules */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Security Learning Modules</h2>
-            <Button variant="outline" size="sm">
-              View All Modules
-            </Button>
+      <MobileCard>
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Learning Modules</h2>
+            <MobileButton variant="outline" size="sm">
+              View All
+            </MobileButton>
           </div>
-        </CardHeader>
-        <CardContent>
+          
           {learningModules && learningModules.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MobileList>
               {learningModules.map((module) => (
-                <div key={module.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-gray-900">{module.title}</h3>
-                    {module.status === 'completed' ? (
-                      <Badge className="bg-green-100 text-green-800">Completed</Badge>
-                    ) : module.status === 'in_progress' ? (
-                      <Badge className="bg-blue-100 text-blue-800">In Progress</Badge>
-                    ) : (
-                      <Badge className="bg-gray-100 text-gray-800">Not Started</Badge>
-                    )}
-                  </div>
-                  
-                  {module.status === 'completed' ? (
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-sm text-gray-600">Score:</span>
-                      <span className="text-lg font-bold text-green-600">{module.score || 0}%</span>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-600 mb-3">{module.description || 'Learn to recognize and avoid this type of scam'}</p>
-                  )}
-                  
-                  <Button 
-                    variant={module.status === 'completed' ? "outline" : "default"}
-                    size="sm"
-                    className="w-full"
-                    onClick={() => handleModuleAction(module.id, module.status === 'completed' ? 'review' : module.status === 'in_progress' ? 'complete' : 'start')}
-                  >
-                    {module.status === 'completed' ? 'Review Module' : module.status === 'in_progress' ? 'Complete Module' : 'Start Learning'}
-                  </Button>
-                </div>
+                <MobileListItemWithBadge
+                  key={module.id}
+                  title={module.title}
+                  subtitle={module.description || 'Learn to recognize and avoid this type of scam'}
+                  badge={module.status === 'completed' ? 'Completed' : 
+                         module.status === 'in_progress' ? 'In Progress' : 'Not Started'}
+                  badgeColor={module.status === 'completed' ? 'green' : 
+                             module.status === 'in_progress' ? 'blue' : 'gray'}
+                  icon={<BookOpen className="w-4 h-4 text-purple-400" />}
+                  rightContent={
+                    <MobileButton 
+                      variant={module.status === 'completed' ? "outline" : "default"}
+                      size="sm"
+                      onClick={() => handleModuleAction(module.id, module.status === 'completed' ? 'review' : module.status === 'in_progress' ? 'complete' : 'start')}
+                    >
+                      {module.status === 'completed' ? 'Review' : module.status === 'in_progress' ? 'Complete' : 'Start'}
+                    </MobileButton>
+                  }
+                />
               ))}
-            </div>
+            </MobileList>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <BookOpen className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No learning modules available</p>
+            <div className="text-center py-6 text-gray-500">
+              <BookOpen className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">No learning modules available</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </MobileCard>
 
       {/* Recommendations */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
+      <MobileCard>
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-4">
             <Shield className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Personalized Recommendations</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Recommendations</h2>
           </div>
-        </CardHeader>
-        <CardContent>
+          
           {recommendations && recommendations.length > 0 ? (
-            <div className="space-y-3">
+            <MobileList>
               {recommendations.map((rec, index) => (
-                <div key={index} className={`p-4 rounded-lg ${
-                  rec.priority === 'high' ? 'bg-red-50' : 
-                  rec.priority === 'medium' ? 'bg-yellow-50' : 'bg-green-50'
-                }`}>
-                  <h3 className={`font-medium mb-2 ${
-                    rec.priority === 'high' ? 'text-red-900' : 
-                    rec.priority === 'medium' ? 'text-yellow-900' : 'text-green-900'
-                  }`}>{rec.title}</h3>
-                  <p className={`text-sm ${
-                    rec.priority === 'high' ? 'text-red-700' : 
-                    rec.priority === 'medium' ? 'text-yellow-700' : 'text-green-700'
-                  }`}>{rec.description}</p>
-                </div>
+                <MobileListItemWithBadge
+                  key={index}
+                  title={rec.title}
+                  subtitle={rec.description}
+                  badge={rec.priority}
+                  badgeColor={rec.priority === 'high' ? 'red' : 
+                             rec.priority === 'medium' ? 'yellow' : 'green'}
+                  icon={<Shield className="w-4 h-4 text-blue-400" />}
+                />
               ))}
-            </div>
+            </MobileList>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Shield className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No recommendations available yet</p>
+            <div className="text-center py-6 text-gray-500">
+              <Shield className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">No recommendations available yet</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </MobileCard>
 
       {/* New Module Form Modal */}
-      {showNewModuleForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Create Learning Module</h3>
-            <form onSubmit={handleNewModuleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={newModule.title}
-                  onChange={(e) => setNewModule({...newModule, title: e.target.value})}
-                  className="w-full p-2 border rounded-md"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={newModule.description}
-                  onChange={(e) => setNewModule({...newModule, description: e.target.value})}
-                  className="w-full p-2 border rounded-md"
-                  rows="3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select
-                    value={newModule.category}
-                    onChange={(e) => setNewModule({...newModule, category: e.target.value})}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  >
-                    <option value="">Select category</option>
-                    <option value="phishing">Phishing</option>
-                    <option value="scam">Scam</option>
-                    <option value="malware">Malware</option>
-                    <option value="fraud">Fraud</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-                  <select
-                    value={newModule.difficulty}
-                    onChange={(e) => setNewModule({...newModule, difficulty: e.target.value})}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  >
-                    <option value="BEGINNER">Beginner</option>
-                    <option value="INTERMEDIATE">Intermediate</option>
-                    <option value="ADVANCED">Advanced</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" className="flex-1">Create Module</Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowNewModuleForm(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
+      <MobileModal
+        isOpen={showNewModuleForm}
+        onClose={() => setShowNewModuleForm(false)}
+        title="Create Learning Module"
+        size="full"
+      >
+        <form onSubmit={handleNewModuleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+            <MobileInput
+              type="text"
+              value={newModule.title}
+              onChange={(e) => setNewModule({...newModule, title: e.target.value})}
+              placeholder="Enter module title"
+              required
+            />
           </div>
-        </div>
-      )}
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              value={newModule.description}
+              onChange={(e) => setNewModule({...newModule, description: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows="3"
+              placeholder="Describe the learning module"
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <select
+                value={newModule.category}
+                onChange={(e) => setNewModule({...newModule, category: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Select category</option>
+                <option value="phishing">Phishing</option>
+                <option value="scam">Scam</option>
+                <option value="malware">Malware</option>
+                <option value="fraud">Fraud</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+              <select
+                value={newModule.difficulty}
+                onChange={(e) => setNewModule({...newModule, difficulty: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="BEGINNER">Beginner</option>
+                <option value="INTERMEDIATE">Intermediate</option>
+                <option value="ADVANCED">Advanced</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex gap-3 pt-4">
+            <MobileButton type="submit" className="flex-1">
+              Create Module
+            </MobileButton>
+            <MobileButton 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowNewModuleForm(false)}
+              className="flex-1"
+            >
+              Cancel
+            </MobileButton>
+          </div>
+        </form>
+      </MobileModal>
     </div>
   )
 }

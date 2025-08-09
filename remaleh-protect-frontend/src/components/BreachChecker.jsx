@@ -4,7 +4,8 @@ import { useBreachCheck } from '../hooks/useBreachCheck'
 import { useForm } from '../hooks/useForm'
 import { validateEmail } from '../utils/validation'
 import { Button } from './ui/button'
-import { Card, CardHeader, CardContent } from './ui/card'
+import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
+import { MobileInput } from './ui/mobile-input'
 import PasswordGenerator from './PasswordGenerator'
 
 export default function BreachChecker() {
@@ -35,45 +36,36 @@ export default function BreachChecker() {
   const riskInfo = result ? getRiskLevel(result.breaches?.length || 0) : null
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center gap-3 mb-2">
+    <div className="max-w-2xl mx-auto p-4 md:p-6">
+      <MobileCard className="mb-6">
+        <MobileCardHeader>
+          <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <Shield className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Breach Checker</h2>
-              <p className="text-gray-600">Check if your email has been compromised in data breaches</p>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">Breach Checker</h2>
+              <p className="text-sm md:text-base text-gray-600">Check if your email has been compromised in data breaches</p>
             </div>
           </div>
-        </CardHeader>
+        </MobileCardHeader>
         
-        <CardContent>
+        <MobileCardContent>
           <form onSubmit={(e) => {
             e.preventDefault()
             handleSubmit(onSubmit)
           }} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={values.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                onBlur={() => handleBlur('email')}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.email && touched.email ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Enter your email address"
-                disabled={isChecking}
-              />
-              {errors.email && touched.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
+            <MobileInput
+              label="Email Address"
+              type="email"
+              value={values.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              onBlur={() => handleBlur('email')}
+              error={errors.email && touched.email ? errors.email : undefined}
+              placeholder="Enter your email address"
+              disabled={isChecking}
+              fullWidth
+            />
             
             <Button
               type="submit"
@@ -81,81 +73,48 @@ export default function BreachChecker() {
               size="lg"
               loading={isChecking}
               disabled={!values.email.trim()}
-              className="w-full"
+              className="w-full py-3 text-base"
             >
               {isChecking ? 'Checking...' : 'Check for Breaches'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </MobileCardContent>
+      </MobileCard>
 
       {result && (
-        <Card className={`mb-6 border-2 ${riskInfo.borderColor}`}>
-          <CardContent>
-            <div className={`p-4 rounded-lg ${riskInfo.bgColor}`}>
+        <MobileCard className={`mb-6 border-2 ${riskInfo.borderColor}`}>
+          <MobileCardContent>
+            <div className={`p-4 md:p-6 rounded-lg ${riskInfo.bgColor}`}>
               <div className="flex items-start gap-3">
                 {result.breaches?.length > 0 ? (
                   <AlertCircle className={`w-6 h-6 ${riskInfo.color} mt-1 flex-shrink-0`} />
                 ) : (
                   <Shield className={`w-6 h-6 ${riskInfo.color} mt-1 flex-shrink-0`} />
                 )}
-                
                 <div className="flex-1">
                   <h3 className={`text-lg font-semibold ${riskInfo.color} mb-2`}>
                     {result.breaches?.length > 0 
-                      ? `Found ${result.breaches.length} breach${result.breaches.length > 1 ? 'es' : ''}`
+                      ? `Found ${result.breaches.length} breach${result.breaches.length === 1 ? '' : 'es'}`
                       : 'No breaches found!'
                     }
                   </h3>
-                  
-                  {result.breaches?.length > 0 ? (
-                    <div className="space-y-3">
-                      <p className="text-gray-700">
-                        Your email has been found in {result.breaches.length} data breach{result.breaches.length > 1 ? 'es' : ''}. 
-                        It's recommended to change your password immediately.
-                      </p>
-                      
-                      <div className="space-y-2">
-                        {result.breaches.map((breach, index) => (
-                          <div key={index} className="p-3 bg-white rounded border border-gray-200">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-medium text-gray-900">{breach.name}</span>
-                              <span className="text-sm text-gray-500">{breach.breachDate}</span>
-                            </div>
-                            <p className="text-sm text-gray-600">{breach.description}</p>
-                            {breach.dataClasses && (
-                              <div className="mt-2">
-                                <span className="text-xs font-medium text-gray-500">Compromised data:</span>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {breach.dataClasses.map((dataClass, idx) => (
-                                    <span key={idx} className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
-                                      {dataClass}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-gray-700">
-                      Great news! Your email hasn't been found in any known data breaches. 
-                      Keep up the good security practices!
-                    </p>
-                  )}
+                  <p className={`text-sm ${riskInfo.color.replace('text-', 'text-').replace('-600', '-700')}`}>
+                    {result.breaches?.length > 0 
+                      ? `Your email was found in ${result.breaches.length} data breach${result.breaches.length === 1 ? '' : 'es'}. Consider changing your passwords.`
+                      : 'Great news! Your email address hasn\'t been found in any known data breaches.'
+                    }
+                  </p>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </MobileCardContent>
+        </MobileCard>
       )}
 
       {/* Password Generator Section */}
       {result && (
-        <Card className="mb-6">
-          <CardContent>
+        <MobileCard className="mb-6">
+          <MobileCardContent>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Lock className="w-5 h-5 text-gray-600" />
@@ -196,21 +155,21 @@ export default function BreachChecker() {
                 <PasswordGenerator onUsePassword={handleUsePassword} />
               </div>
             )}
-          </CardContent>
-        </Card>
+          </MobileCardContent>
+        </MobileCard>
       )}
 
       {/* Security Tips */}
       {result && (
-        <Card>
-          <CardHeader>
+        <MobileCard>
+          <MobileCardHeader>
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Shield className="w-5 h-5 text-blue-600" />
               Security Recommendations
             </h3>
-          </CardHeader>
+          </MobileCardHeader>
           
-          <CardContent>
+          <MobileCardContent>
             <div className="space-y-3">
               {result.breaches?.length > 0 ? (
                 <>
@@ -253,8 +212,8 @@ export default function BreachChecker() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </MobileCardContent>
+        </MobileCard>
       )}
     </div>
   )

@@ -5,7 +5,8 @@ import { useForm } from '../hooks/useForm'
 import { validateRequired } from '../utils/validation'
 import { APP_CONFIG } from '../config/constants'
 import { Button } from './ui/button'
-import { Card, CardHeader, CardContent } from './ui/card'
+import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
+import { MobileTextarea } from './ui/mobile-input'
 
 export default function ScamAnalysis() {
   const [showDetails, setShowDetails] = useState(false)
@@ -37,45 +38,36 @@ export default function ScamAnalysis() {
   const riskInfo = result ? getRiskLevel(result.riskScore) : null
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center gap-3 mb-2">
+    <div className="max-w-4xl mx-auto p-4 md:p-6">
+      <MobileCard className="mb-6">
+        <MobileCardHeader>
+          <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-red-100 rounded-lg">
               <MessageSquare className="w-6 h-6 text-red-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Scam Analysis</h2>
-              <p className="text-gray-600">Analyze suspicious messages for potential scams and fraud attempts</p>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">Scam Analysis</h2>
+              <p className="text-sm md:text-base text-gray-600">Analyze suspicious messages for potential scams and fraud attempts</p>
             </div>
           </div>
-        </CardHeader>
+        </MobileCardHeader>
         
-        <CardContent>
+        <MobileCardContent>
           <form onSubmit={(e) => {
             e.preventDefault()
             handleSubmit(onSubmit)
           }} className="space-y-4">
-            <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                Suspicious Message
-              </label>
-              <textarea
-                id="message"
-                value={values.message}
-                onChange={(e) => handleChange('message', e.target.value)}
-                onBlur={() => handleBlur('message')}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none ${
-                  errors.message && touched.message ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Paste the suspicious message, email, or text here..."
-                rows={6}
-                disabled={isAnalyzing}
-              />
-              {errors.message && touched.message && (
-                <p className="mt-1 text-sm text-red-600">{errors.message}</p>
-              )}
-            </div>
+            <MobileTextarea
+              label="Suspicious Message"
+              value={values.message}
+              onChange={(e) => handleChange('message', e.target.value)}
+              onBlur={() => handleBlur('message')}
+              error={errors.message && touched.message ? errors.message : undefined}
+              placeholder="Paste the suspicious message, email, or text here..."
+              rows={6}
+              disabled={isAnalyzing}
+              fullWidth
+            />
             
             <Button
               type="submit"
@@ -83,19 +75,19 @@ export default function ScamAnalysis() {
               size="lg"
               loading={isAnalyzing}
               disabled={!values.message.trim()}
-              className="w-full"
+              className="w-full py-3 text-base"
             >
               {isAnalyzing ? 'Analyzing...' : 'Analyze for Scams'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </MobileCardContent>
+      </MobileCard>
 
       {result && (
         <>
           {/* Risk Assessment */}
-          <Card className="mb-6 border-2" style={{ borderColor: riskInfo.color }}>
-            <CardContent>
+          <MobileCard className="mb-6 border-2" style={{ borderColor: riskInfo.color }}>
+            <MobileCardContent>
               <div className="p-6 rounded-lg" style={{ backgroundColor: `${riskInfo.color}20` }}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="text-4xl">{riskInfo.icon}</div>
@@ -143,12 +135,12 @@ export default function ScamAnalysis() {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </MobileCardContent>
+          </MobileCard>
 
           {/* Detailed Analysis */}
-          <Card className="mb-6">
-            <CardHeader>
+          <MobileCard className="mb-6">
+            <MobileCardHeader>
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Info className="w-5 h-5 text-blue-600" />
@@ -162,9 +154,9 @@ export default function ScamAnalysis() {
                   {showDetails ? 'Hide Details' : 'Show Details'}
                 </Button>
               </div>
-            </CardHeader>
+            </MobileCardHeader>
             
-            <CardContent>
+            <MobileCardContent>
               {showDetails && (
                 <div className="space-y-4">
                   {result.analysis && (
@@ -203,16 +195,16 @@ export default function ScamAnalysis() {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </MobileCardContent>
+          </MobileCard>
 
           {/* Quick Actions */}
-          <Card>
-            <CardHeader>
+          <MobileCard>
+            <MobileCardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-            </CardHeader>
+            </MobileCardHeader>
             
-            <CardContent>
+            <MobileCardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button
                   variant="outline"
@@ -240,22 +232,22 @@ export default function ScamAnalysis() {
                   report it to relevant authorities and never provide personal information or click suspicious links.
                 </p>
               </div>
-            </CardContent>
-          </Card>
+            </MobileCardContent>
+          </MobileCard>
         </>
       )}
 
       {/* Information Section */}
       {!result && (
-        <Card>
-          <CardHeader>
+        <MobileCard>
+          <MobileCardHeader>
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Info className="w-5 h-5 text-blue-600" />
               How It Works
             </h3>
-          </CardHeader>
+          </MobileCardHeader>
           
-          <CardContent>
+          <MobileCardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -287,8 +279,8 @@ export default function ScamAnalysis() {
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </MobileCardContent>
+        </MobileCard>
       )}
     </div>
   )

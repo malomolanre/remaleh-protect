@@ -1,4 +1,8 @@
 import React, { useMemo, useRef, useState } from "react";
+import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card';
+import { MobileInput } from './ui/mobile-input';
+import { Button } from './ui/button';
+import { Lock } from 'lucide-react';
 
 /* Crypto‑safe password generator. Uses Web Crypto API for randomness. */
 const DEFAULT_LENGTH = 16;
@@ -99,113 +103,155 @@ export default function PasswordGenerator({ onUse }) {
   const [copied, setCopied] = useState(false);
   const inputRef = useRef(null);
 
-  const bits = useMemo(() => estimateEntropy(length, opts), [length, opts]);
+  const entropy = useMemo(() => estimateEntropy(length, opts), [length, opts]);
 
   function toggle(key) {
-    setOpts((o) => ({ ...o, [key]: !o[key] }));
+    setOpts(prev => ({ ...prev, [key]: !prev[key] }));
   }
 
   function handleGenerate() {
     try {
-      const pwd = generatePassword(length, opts);
-      setValue(pwd);
+      const password = generatePassword(length, opts);
+      setValue(password);
       setCopied(false);
-    } catch (e) {
-      alert(e.message);
+    } catch (error) {
+      console.error("Failed to generate password:", error);
     }
   }
 
   async function handleCopy() {
+    if (!value) return;
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
-    } catch {
-      inputRef.current?.select();
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy password:", error);
+    }
+  }
+
+  function handleUse() {
+    if (onUse && value) {
+      onUse(value);
     }
   }
 
   return (
-    <div className="rounded-2xl border p-4 shadow-sm bg-white">
-      <h3 className="text-lg font-semibold mb-3">Password Generator</h3>
+    <MobileCard className="mb-6">
+      <MobileCardHeader>
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <Lock className="w-5 h-5 text-blue-600" />
+          Password Generator
+        </h3>
+        <p className="text-sm text-gray-600">Generate secure, random passwords</p>
+      </MobileCardHeader>
+      
+      <MobileCardContent>
+        <div className="space-y-4">
+          {/* Generated Password Display */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Generated Password
+            </label>
+            <div className="flex space-x-2">
+              <MobileInput
+                ref={inputRef}
+                value={value}
+                readOnly
+                className="flex-1 font-mono text-sm"
+                placeholder="Click 'Generate' to create a password"
+              />
+              <Button
+                onClick={handleCopy}
+                variant="outline"
+                size="sm"
+                className="px-3"
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </Button>
+            </div>
+            {value && <StrengthBar bits={entropy} />}
+          </div>
 
-      <div className="flex gap-2 mb-3">
-        <input
-          ref={inputRef}
-          className="flex-1 border rounded-lg px-3 py-2 font-mono text-sm"
-          readOnly
-          value={value}
-          placeholder="Click Generate"
-        />
-        <button
-          onClick={handleCopy}
-          disabled={!value}
-          className="px-3 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
-        <button
-          onClick={() => onUse?.(value)}
-          disabled={!value}
-          className="px-3 py-2 rounded-lg bg-black text-white disabled:opacity-50"
-        >
-          Use this
-        </button>
-      </div>
+          {/* Length Control */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password Length: {length}
+            </label>
+            <input
+              type="range"
+              min="8"
+              max="64"
+              value={length}
+              onChange={(e) => setLength(parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>8</span>
+              <span>16</span>
+              <span>32</span>
+              <span>64</span>
+            </div>
+          </div>
 
-      <div className="mb-3">
-        <label className="text-sm font-medium">Length: {length}</label>
-        <input
-          type="range"
-          min={8}
-          max={64}
-          value={length}
-          onChange={(e) => setLength(parseInt(e.target.value, 10))}
-          className="w-full"
-        />
-      </div>
+          {/* Character Set Options */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Character Sets
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(opts).map(([key, enabled]) => (
+                <label key={key} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={() => toggle(key)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 capitalize">
+                    {key === 'lower' ? 'Lowercase' : 
+                     key === 'upper' ? 'Uppercase' : 
+                     key === 'digits' ? 'Numbers' : 
+                     key === 'symbols' ? 'Symbols' : 
+                     key === 'ambiguous' ? 'Ambiguous' : 
+                     key === 'similar' ? 'Similar' : key}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
 
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={opts.lower} onChange={() => toggle("lower")} /> Lowercase
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={opts.upper} onChange={() => toggle("upper")} /> Uppercase
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={opts.digits} onChange={() => toggle("digits")} /> Digits
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={opts.symbols} onChange={() => toggle("symbols")} /> Symbols
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={opts.ambiguous} onChange={() => toggle("ambiguous")} /> Extra ambiguous symbols
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={opts.similar} onChange={() => toggle("similar")} /> Include look‑alikes (I/l/1/O/0)
-        </label>
-      </div>
+          {/* Action Buttons */}
+          <div className="flex space-x-2">
+            <Button
+              onClick={handleGenerate}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Generate Password
+            </Button>
+            {value && onUse && (
+              <Button
+                onClick={handleUse}
+                variant="outline"
+                className="flex-1"
+              >
+                Use This Password
+              </Button>
+            )}
+          </div>
 
-      <StrengthBar bits={bits} />
-
-      <div className="mt-4 flex gap-2">
-      <button
-        onClick={handleGenerate}
-        className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-      >
-        Generate
-      </button>
-      <button
-        onClick={() => setValue("")}
-        className="px-4 py-2 rounded-lg border hover:bg-gray-50"
-      >
-        Clear
-      </button>
-      </div>
-
-      <p className="text-xs text-gray-500 mt-3">
-        Tip: store in a password manager; never reuse passwords across sites.
-      </p>
-    </div>
+          {/* Security Tips */}
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <h4 className="text-sm font-medium text-blue-900 mb-1">Security Tips</h4>
+            <ul className="text-xs text-blue-800 space-y-1">
+              <li>• Use at least 16 characters for maximum security</li>
+              <li>• Include uppercase, lowercase, numbers, and symbols</li>
+              <li>• Avoid similar-looking characters (l, 1, I, O, 0)</li>
+              <li>• Store passwords in a secure password manager</li>
+            </ul>
+          </div>
+        </div>
+      </MobileCardContent>
+    </MobileCard>
   );
 }

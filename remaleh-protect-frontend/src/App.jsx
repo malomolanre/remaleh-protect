@@ -7,6 +7,9 @@ import LearnHub from './components/LearnHub'
 import ThreatDashboard from './components/ThreatDashboard'
 import RiskProfile from './components/RiskProfile'
 import CommunityReporting from './components/CommunityReporting'
+import MobileHeader from './components/MobileHeader'
+import MobileNavigation from './components/MobileNavigation'
+import FloatingActionButton from './components/FloatingActionButton'
 import './App.css'
 
 function App() {
@@ -46,8 +49,11 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
+        {/* Mobile Header */}
+        <MobileHeader />
+        
+        {/* Desktop Header */}
+        <header className="bg-white shadow-sm border-b hidden md:block">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center">
@@ -65,8 +71,8 @@ function App() {
           </div>
         </header>
 
-        {/* Navigation Tabs */}
-        <nav className="bg-white border-b">
+        {/* Navigation Tabs - Desktop Only */}
+        <nav className="bg-white border-b hidden md:block">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex space-x-8">
               {tabs.map((tab) => (
@@ -88,7 +94,7 @@ function App() {
         </nav>
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto py-6">
+        <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 pb-24 md:pb-6">
           {renderContent()}
         </main>
 
@@ -103,6 +109,26 @@ function App() {
             </div>
           </div>
         </footer>
+
+        {/* Mobile Navigation */}
+        <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        
+        {/* Floating Action Button */}
+        <FloatingActionButton onAction={(action) => {
+          switch (action) {
+            case 'report-threat':
+              setActiveTab('community');
+              break;
+            case 'ask-ai':
+              setActiveTab('chat');
+              break;
+            case 'quick-scan':
+              setActiveTab('breach');
+              break;
+            default:
+              break;
+          }
+        }} />
       </div>
     </ErrorBoundary>
   )

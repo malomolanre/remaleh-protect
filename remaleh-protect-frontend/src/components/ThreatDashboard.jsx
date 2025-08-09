@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { TrendingUp, AlertTriangle, Users, Clock, BarChart3, Globe, Shield, Plus, RefreshCw } from 'lucide-react'
-import { Card, CardHeader, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
+import { MobileCard } from './ui/mobile-card'
+import { MobileButton } from './ui/mobile-button'
+import { MobileInput } from './ui/mobile-input'
+import { MobileModal } from './ui/mobile-modal'
+import { MobileGrid, MobileGridItem, MobileStatsGrid } from './ui/mobile-grid'
+import { MobileList, MobileListItemWithBadge } from './ui/mobile-list'
 import { useThreatIntelligence } from '../hooks/useThreatIntelligence'
 
 export default function ThreatDashboard() {
@@ -64,17 +67,17 @@ export default function ThreatDashboard() {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-red-800">
+      <div className="p-4">
+        <MobileCard className="bg-red-50 border-red-200">
+          <div className="flex items-center gap-2 text-red-800 mb-2">
             <AlertTriangle className="w-5 h-5" />
             <span className="font-medium">Error loading data</span>
           </div>
-          <p className="text-red-700 mt-1">{error}</p>
-          <Button onClick={clearError} className="mt-2" variant="outline" size="sm">
+          <p className="text-red-700 text-sm mb-3">{error}</p>
+          <MobileButton onClick={clearError} variant="outline" size="sm" className="w-full">
             Try Again
-          </Button>
-        </div>
+          </MobileButton>
+        </MobileCard>
       </div>
     )
   }
@@ -91,245 +94,246 @@ export default function ThreatDashboard() {
   const recentAlerts = alerts?.slice(0, 3) || []
 
   return (
-    <div className="max-w-7xl mx-auto p-4 space-y-6">
+    <div className="space-y-4 p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="text-center flex-1">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Threat Intelligence Dashboard</h1>
-          <p className="text-gray-600">Real-time insights into emerging scams and community protection</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => loadAllData()} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button onClick={() => setShowNewThreatForm(true)} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            New Threat
-          </Button>
-        </div>
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Threat Intelligence</h1>
+        <p className="text-gray-600 text-sm">Real-time insights into emerging scams</p>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 mb-4">
+        <MobileButton onClick={() => loadAllData()} variant="outline" size="sm" className="flex-1">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </MobileButton>
+        <MobileButton onClick={() => setShowNewThreatForm(true)} size="sm" className="flex-1">
+          <Plus className="w-4 h-4 mr-2" />
+          New Threat
+        </MobileButton>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+      <MobileStatsGrid>
+        <MobileGridItem>
+          <MobileCard>
+            <div className="flex items-center gap-3 p-3">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Shield className="w-6 h-6 text-blue-600" />
+                <Shield className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Reports</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalReports.toLocaleString()}</p>
+                <p className="text-xs text-gray-600">Total Reports</p>
+                <p className="text-lg font-bold text-gray-900">{stats.totalReports.toLocaleString()}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </MobileCard>
+        </MobileGridItem>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+        <MobileGridItem>
+          <MobileCard>
+            <div className="flex items-center gap-3 p-3">
               <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="w-6 h-6 text-green-600" />
+                <Users className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Active Users</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeUsers.toLocaleString()}</p>
+                <p className="text-xs text-gray-600">Active Users</p>
+                <p className="text-lg font-bold text-gray-900">{stats.activeUsers.toLocaleString()}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </MobileCard>
+        </MobileGridItem>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+        <MobileGridItem>
+          <MobileCard>
+            <div className="flex items-center gap-3 p-3">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <BarChart3 className="w-6 h-6 text-purple-600" />
+                <BarChart3 className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Threats Blocked</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.threatsBlocked.toLocaleString()}</p>
+                <p className="text-xs text-gray-600">Threats Blocked</p>
+                <p className="text-lg font-bold text-gray-900">{stats.threatsBlocked.toLocaleString()}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </MobileCard>
+        </MobileGridItem>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+        <MobileGridItem>
+          <MobileCard>
+            <div className="flex items-center gap-3 p-3">
               <div className="p-2 bg-orange-100 rounded-lg">
-                <Clock className="w-6 h-6 text-orange-600" />
+                <Clock className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Avg Response</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.avgResponseTime}</p>
+                <p className="text-xs text-gray-600">Avg Response</p>
+                <p className="text-lg font-bold text-gray-900">{stats.avgResponseTime}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </MobileCard>
+        </MobileGridItem>
+      </MobileStatsGrid>
 
       {/* Trending Threats */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
+      <MobileCard>
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Trending Threats</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Trending Threats</h2>
           </div>
-        </CardHeader>
-        <CardContent>
+          
           {trendingThreats.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MobileList>
               {trendingThreats.map((threat, index) => (
-                <div key={threat.id || index} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-gray-900">{threat.title || threat.threat_type}</h3>
-                    <Badge className={getSeverityColor(threat.severity)}>
-                      {threat.severity}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>{threat.report_count || 0} reports</span>
-                    <span className={`font-medium ${getTrendColor(threat.trend || '+0%')}`}>
+                <MobileListItemWithBadge
+                  key={threat.id || index}
+                  title={threat.title || threat.threat_type}
+                  subtitle={`${threat.report_count || 0} reports • ${threat.region || 'Global'}`}
+                  badge={threat.severity}
+                  badgeColor={threat.severity === 'CRITICAL' ? 'red' : 
+                             threat.severity === 'HIGH' ? 'orange' : 
+                             threat.severity === 'MEDIUM' ? 'yellow' : 'green'}
+                  icon={<Globe className="w-4 h-4 text-gray-400" />}
+                  rightContent={
+                    <span className={`text-sm font-medium ${getTrendColor(threat.trend || '+0%')}`}>
                       {threat.trend || '+0%'}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                    <Globe className="w-3 h-3" />
-                    <span>{threat.region || 'Global'}</span>
-                  </div>
-                </div>
+                  }
+                />
               ))}
-            </div>
+            </MobileList>
           ) : (
             <div className="text-center py-8 text-gray-500">
               <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No trending threats available</p>
+              <p className="text-sm">No trending threats available</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </MobileCard>
 
       {/* Recent Community Alerts */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
+      <MobileCard>
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-5 h-5 text-orange-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Recent Community Alerts</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Recent Alerts</h2>
           </div>
-        </CardHeader>
-        <CardContent>
+          
           {recentAlerts.length > 0 ? (
-            <div className="space-y-3">
+            <MobileList>
               {recentAlerts.map((alert) => (
-                <div key={alert.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <Badge className={getSeverityColor(alert.severity)}>
-                    {alert.severity}
-                  </Badge>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{alert.message || alert.description}</p>
-                    <p className="text-xs text-gray-500">{alert.created_at || 'Recently'}</p>
-                  </div>
-                </div>
+                <MobileListItemWithBadge
+                  key={alert.id}
+                  title={alert.message || alert.description}
+                  subtitle={alert.created_at || 'Recently'}
+                  badge={alert.severity}
+                  badgeColor={alert.severity === 'CRITICAL' ? 'red' : 
+                             alert.severity === 'HIGH' ? 'orange' : 
+                             alert.severity === 'MEDIUM' ? 'yellow' : 'green'}
+                  icon={<AlertTriangle className="w-4 h-4 text-orange-400" />}
+                />
               ))}
-            </div>
+            </MobileList>
           ) : (
             <div className="text-center py-8 text-gray-500">
               <AlertTriangle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No recent alerts</p>
+              <p className="text-sm">No recent alerts</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </MobileCard>
 
       {/* Threat Map Preview */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold text-gray-900">Global Threat Distribution</h2>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 bg-gradient-to-br from-blue-50 to-red-50 rounded-lg flex items-center justify-center">
+      <MobileCard>
+        <div className="p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Global Threat Distribution</h2>
+          <div className="h-48 bg-gradient-to-br from-blue-50 to-red-50 rounded-lg flex items-center justify-center">
             <div className="text-center text-gray-600">
-              <Globe className="w-16 h-16 mx-auto mb-2 text-gray-400" />
+              <Globe className="w-12 h-12 mx-auto mb-2 text-gray-400" />
               <p className="text-sm">Interactive threat map coming soon</p>
               <p className="text-xs">Real-time visualization of global scam patterns</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </MobileCard>
 
       {/* New Threat Form Modal */}
-      {showNewThreatForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Report New Threat</h3>
-            <form onSubmit={handleNewThreatSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={newThreat.title}
-                  onChange={(e) => setNewThreat({...newThreat, title: e.target.value})}
-                  className="w-full p-2 border rounded-md"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={newThreat.description}
-                  onChange={(e) => setNewThreat({...newThreat, description: e.target.value})}
-                  className="w-full p-2 border rounded-md"
-                  rows="3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select
-                    value={newThreat.threat_type}
-                    onChange={(e) => setNewThreat({...newThreat, threat_type: e.target.value})}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  >
-                    <option value="">Select type</option>
-                    <option value="phishing">Phishing</option>
-                    <option value="scam">Scam</option>
-                    <option value="malware">Malware</option>
-                    <option value="fraud">Fraud</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
-                  <select
-                    value={newThreat.severity}
-                    onChange={(e) => setNewThreat({...newThreat, severity: e.target.value})}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  >
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="CRITICAL">Critical</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" className="flex-1">Submit Report</Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowNewThreatForm(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
+      <MobileModal
+        isOpen={showNewThreatForm}
+        onClose={() => setShowNewThreatForm(false)}
+        title="Report New Threat"
+        size="full"
+      >
+        <form onSubmit={handleNewThreatSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+            <MobileInput
+              type="text"
+              value={newThreat.title}
+              onChange={(e) => setNewThreat({...newThreat, title: e.target.value})}
+              placeholder="Enter threat title"
+              required
+            />
           </div>
-        </div>
-      )}
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              value={newThreat.description}
+              onChange={(e) => setNewThreat({...newThreat, description: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows="3"
+              placeholder="Describe the threat in detail"
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <select
+                value={newThreat.threat_type}
+                onChange={(e) => setNewThreat({...newThreat, threat_type: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Select type</option>
+                <option value="phishing">Phishing</option>
+                <option value="scam">Scam</option>
+                <option value="malware">Malware</option>
+                <option value="fraud">Fraud</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Severity</label>
+              <select
+                value={newThreat.severity}
+                onChange={(e) => setNewThreat({...newThreat, severity: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex gap-3 pt-4">
+            <MobileButton type="submit" className="flex-1">
+              Submit Report
+            </MobileButton>
+            <MobileButton 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowNewThreatForm(false)}
+              className="flex-1"
+            >
+              Cancel
+            </MobileButton>
+          </div>
+        </form>
+      </MobileModal>
     </div>
   )
 }
