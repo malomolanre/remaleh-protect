@@ -16,3 +16,4 @@ certifi==2023.7.22
 charset-normalizer==3.3.2
 idna==3.4
 openai==0.28.1
+flask-limiter>=3.7.0
