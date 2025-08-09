@@ -1,14 +1,21 @@
 import React, { useState } from 'react'
-import { AlertCircle, Shield } from 'lucide-react'
+import { AlertCircle, Shield, Lock, ChevronDown, ChevronUp } from 'lucide-react'
 import { useBreachCheck } from '../hooks/useBreachCheck'
+import PasswordGenerator from './PasswordGenerator'
 
 export default function BreachChecker() {
   const [email, setEmail] = useState('')
+  const [showPasswordGenerator, setShowPasswordGenerator] = useState(false)
   const { isChecking, result, check } = useBreachCheck()
 
   const onSubmit = async (e) => {
     e.preventDefault()
     await check(email)
+  }
+
+  const handleUsePassword = (password) => {
+    // You could implement a way to save this password or show it prominently
+    alert(`Generated password: ${password}\n\nPlease save this in your password manager and update your compromised accounts.`)
   }
 
   return (
@@ -69,6 +76,44 @@ export default function BreachChecker() {
                     <li>• Consider using a password manager</li>
                   </ul>
                 </div>
+
+                {/* Password Generator Section */}
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <Lock className="text-blue-600 mr-2" size={20} />
+                      <h4 className="font-medium text-blue-800">Generate a Strong Password</h4>
+                    </div>
+                    <button
+                      onClick={() => setShowPasswordGenerator(!showPasswordGenerator)}
+                      className="flex items-center text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      {showPasswordGenerator ? (
+                        <>
+                          <ChevronUp size={16} className="mr-1" />
+                          Hide Generator
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={16} className="mr-1" />
+                          Show Generator
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
+                  {showPasswordGenerator && (
+                    <div className="mt-3">
+                      <PasswordGenerator onUse={handleUsePassword} />
+                    </div>
+                  )}
+                  
+                  {!showPasswordGenerator && (
+                    <p className="text-sm text-blue-700">
+                      Click "Show Generator" to create a strong, unique password for your compromised accounts.
+                    </p>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="p-4 rounded-lg bg-green-100 border border-green-200">
@@ -87,6 +132,44 @@ export default function BreachChecker() {
                     <li>• Regularly monitor your accounts</li>
                     <li>• Stay informed about new security threats</li>
                   </ul>
+                </div>
+
+                {/* Password Generator Section for Proactive Users */}
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <Lock className="text-green-600 mr-2" size={20} />
+                      <h4 className="font-medium text-green-800">Proactive Password Security</h4>
+                    </div>
+                    <button
+                      onClick={() => setShowPasswordGenerator(!showPasswordGenerator)}
+                      className="flex items-center text-green-600 hover:text-green-800 text-sm"
+                    >
+                      {showPasswordGenerator ? (
+                        <>
+                          <ChevronUp size={16} className="mr-1" />
+                          Hide Generator
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={16} className="mr-1" />
+                          Show Generator
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
+                  {showPasswordGenerator && (
+                    <div className="mt-3">
+                      <PasswordGenerator onUse={handleUsePassword} />
+                    </div>
+                  )}
+                  
+                  {!showPasswordGenerator && (
+                    <p className="text-sm text-green-700">
+                      Want to improve your password security? Click "Show Generator" to create strong passwords for your accounts.
+                    </p>
+                  )}
                 </div>
               </div>
             )}
