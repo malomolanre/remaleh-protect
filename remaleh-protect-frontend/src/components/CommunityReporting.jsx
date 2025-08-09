@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Textarea, Input } from './ui';
+import { Card } from './ui/card';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Textarea } from './ui/textarea';
+import { Input } from './ui/input';
 import { 
   AlertTriangle, 
   TrendingUp, 
