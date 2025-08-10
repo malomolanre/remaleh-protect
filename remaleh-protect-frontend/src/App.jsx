@@ -72,7 +72,7 @@ function App() {
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50">
         {/* Mobile Header */}
-        <MobileHeader />
+        <MobileHeader setActiveTab={setActiveTab} />
         
         {/* Desktop Header */}
         <header className="bg-white shadow-sm border-b hidden md:block">

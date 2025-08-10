@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { Menu, X, Bell, User } from 'lucide-react';
 import { Button } from './ui/button';
 
-export default function MobileHeader() {
+export default function MobileHeader({ setActiveTab }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuItems = [
-    { label: 'Breach Checker', href: '#breach' },
-    { label: 'Scam Analysis', href: '#scam' },
-    { label: 'Threat Intel', href: '#threats' },
-    { label: 'Risk Profile', href: '#profile' },
-    { label: 'Community', href: '#community' },
-    { label: 'AI Assistant', href: '#chat' },
-    { label: 'Learn Hub', href: '#learn' }
+    { label: 'Breach Checker', tab: 'breach' },
+    { label: 'Scam Analysis', tab: 'scam' },
+    { label: 'Threat Intel', tab: 'threats' },
+    { label: 'Risk Profile', tab: 'profile' },
+    { label: 'Community', tab: 'community' },
+    { label: 'AI Assistant', tab: 'chat' },
+    { label: 'Learn Hub', tab: 'learn' }
   ];
 
   return (
@@ -57,14 +57,18 @@ export default function MobileHeader() {
           <div className="mt-3 pt-3 border-t border-gray-200">
             <nav className="space-y-1">
               {menuItems.map((item) => (
-                <a
+                <button
                   key={item.label}
-                  href={item.href}
-                  className="block px-3 py-2 text-base font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => {
+                    if (setActiveTab) {
+                      setActiveTab(item.tab);
+                    }
+                    setIsMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
                 >
                   {item.label}
-                </a>
+                </button>
               ))}
             </nav>
           </div>

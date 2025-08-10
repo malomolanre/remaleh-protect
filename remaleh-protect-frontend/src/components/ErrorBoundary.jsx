@@ -36,8 +36,8 @@ export class ErrorBoundary extends Component {
 
   handleGoHome = () => {
     this.setState({ hasError: false, error: null, errorInfo: null })
-    // Navigate to home or reset the app state
-    window.location.href = '/'
+    // Reset the error state instead of navigating to a non-existent route
+    // The parent component should handle any necessary navigation
   }
 
   render() {
