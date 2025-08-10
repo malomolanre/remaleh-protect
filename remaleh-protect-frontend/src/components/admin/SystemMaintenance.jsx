@@ -22,9 +22,9 @@ const SystemMaintenance = () => {
     try {
       setIsLoading(true);
       const [statsRes, threatsRes, modulesRes] = await Promise.all([
-        api.get('/admin/system-stats'),
-        api.get('/admin/threats'),
-        api.get('/admin/learning-modules')
+        api.get('/api/admin/system-stats'),
+        api.get('/api/admin/threats'),
+        api.get('/api/admin/learning-modules')
       ]);
       
       setSystemStats(statsRes.data);
@@ -41,7 +41,7 @@ const SystemMaintenance = () => {
 
   const performSystemCleanup = async () => {
     try {
-      const response = await api.post('/admin/maintenance/cleanup');
+      const response = await api.post('/api/admin/maintenance/cleanup');
       setMaintenanceLog(prev => [{
         action: 'System Cleanup',
         timestamp: new Date().toISOString(),
@@ -65,13 +65,13 @@ const SystemMaintenance = () => {
 
       switch (action) {
         case 'deactivate':
-          endpoint = `/admin/threats/${threatId}/deactivate`;
+          endpoint = `/api/admin/threats/${threatId}/deactivate`;
           break;
         case 'activate':
-          endpoint = `/admin/threats/${threatId}/activate`;
+          endpoint = `/api/admin/threats/${threatId}/activate`;
           break;
         case 'delete':
-          endpoint = `/admin/threats/${threatId}`;
+          endpoint = `/api/admin/threats/${threatId}`;
           method = 'DELETE';
           break;
         default:
@@ -84,7 +84,7 @@ const SystemMaintenance = () => {
       });
 
       // Refresh threats list
-      const response = await api.get('/admin/threats');
+      const response = await api.get('/api/admin/threats');
       setThreats(response.data.threats || []);
     } catch (err) {
       console.error('Threat action error:', err);
@@ -99,13 +99,13 @@ const SystemMaintenance = () => {
 
       switch (action) {
         case 'deactivate':
-          endpoint = `/admin/learning-modules/${moduleId}/deactivate`;
+          endpoint = `/api/admin/learning-modules/${moduleId}/deactivate`;
           break;
         case 'activate':
-          endpoint = `/admin/learning-modules/${moduleId}/activate`;
+          endpoint = `/api/admin/learning-modules/${moduleId}/activate`;
           break;
         case 'delete':
-          endpoint = `/admin/learning-modules/${moduleId}`;
+          endpoint = `/api/admin/learning-modules/${moduleId}`;
           method = 'DELETE';
           break;
         default:

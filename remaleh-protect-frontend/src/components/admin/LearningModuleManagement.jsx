@@ -40,7 +40,7 @@ const LearningModuleManagement = () => {
         if (value) params.append(key, value);
       });
 
-      const response = await api.get(`/admin/learning-modules?${params}`);
+      const response = await api.get(`/api/admin/learning-modules?${params}`);
       setModules(response.data.modules || []);
       setPagination(response.data.pagination);
       setError(null);
@@ -60,7 +60,7 @@ const LearningModuleManagement = () => {
         content: JSON.parse(formData.content || '{}')
       };
 
-      await api.post('/admin/learning-modules', moduleData);
+              await api.post('/api/admin/learning-modules', moduleData);
       
       // Reset form and refresh
       setFormData({
@@ -87,7 +87,7 @@ const LearningModuleManagement = () => {
         content: JSON.parse(formData.content || '{}')
       };
 
-      await api.put(`/admin/learning-modules/${selectedModule.id}`, moduleData);
+              await api.put(`/api/admin/learning-modules/${selectedModule.id}`, moduleData);
       
       // Reset form and refresh
       setShowEditModal(false);
@@ -106,13 +106,13 @@ const LearningModuleManagement = () => {
 
       switch (action) {
         case 'deactivate':
-          endpoint = `/admin/learning-modules/${moduleId}/deactivate`;
+          endpoint = `/api/admin/learning-modules/${moduleId}/deactivate`;
           break;
         case 'activate':
-          endpoint = `/admin/learning-modules/${moduleId}/activate`;
+          endpoint = `/api/admin/learning-modules/${moduleId}/activate`;
           break;
         case 'delete':
-          endpoint = `/admin/learning-modules/${moduleId}`;
+          endpoint = `/api/admin/learning-modules/${moduleId}`;
           method = 'DELETE';
           break;
         default:

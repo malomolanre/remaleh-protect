@@ -701,6 +701,281 @@ def admin_bulk_report_action(current_user):
 # SYSTEM MAINTENANCE
 # ============================================================================
 
+@admin_bp.route('/system-stats', methods=['GET'])
+@admin_required
+def get_system_stats(current_user):
+    """Get system statistics for admin dashboard"""
+    try:
+        # Get user counts
+        total_users = User.query.count()
+        active_users = User.query.filter_by(is_active=True).count()
+        admin_users = User.query.filter_by(is_admin=True).count()
+        
+        # Get scan counts
+        total_scans = UserScan.query.count()
+        recent_scans = UserScan.query.filter(
+            UserScan.scanned_at >= datetime.utcnow() - timedelta(days=7)
+        ).count()
+        
+        # Get report counts
+        total_reports = CommunityReport.query.count()
+        pending_reports = CommunityReport.query.filter_by(status='PENDING').count()
+        verified_reports = CommunityReport.query.filter_by(verified=True).count()
+        
+        # Get learning progress
+        total_progress = LearningProgress.query.count()
+        completed_modules = LearningProgress.query.filter_by(completed=True).count()
+        
+        return jsonify({
+            'users': {
+                'total': total_users,
+                'active': active_users,
+                'admin': admin_users
+            },
+            'scans': {
+                'total': total_scans,
+                'recent_7_days': recent_scans
+            },
+            'reports': {
+                'total': total_reports,
+                'pending': pending_reports,
+                'verified': verified_reports
+            },
+            'learning': {
+                'total_progress': total_progress,
+                'completed_modules': completed_modules
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in get_system_stats: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/threats', methods=['GET'])
+@admin_required
+def get_admin_threats(current_user):
+    """Get threats for admin management"""
+    try:
+        from ..models import Threat
+        
+        threats = Threat.query.order_by(Threat.reported_at.desc()).all()
+        
+        return jsonify({
+            'threats': [threat.to_dict() for threat in threats]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in get_admin_threats: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/threats/<int:threat_id>/deactivate', methods=['POST'])
+@admin_required
+def deactivate_threat(current_user, threat_id):
+    """Deactivate a threat"""
+    try:
+        from ..models import Threat
+        
+        threat = Threat.query.get_or_404(threat_id)
+        threat.status = 'INACTIVE'
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Threat deactivated successfully',
+            'threat': threat.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/threats/<int:threat_id>/activate', methods=['POST'])
+@admin_required
+def activate_threat(current_user, threat_id):
+    """Activate a threat"""
+    try:
+        from ..models import Threat
+        
+        threat = Threat.query.get_or_404(threat_id)
+        threat.status = 'ACTIVE'
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Threat activated successfully',
+            'threat': threat.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/threats/<int:threat_id>', methods=['DELETE'])
+@admin_required
+def delete_threat(current_user, threat_id):
+    """Delete a threat"""
+    try:
+        from ..models import Threat
+        
+        threat = Threat.query.get_or_404(threat_id)
+        db.session.delete(threat)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Threat deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/learning-modules', methods=['GET'])
+@admin_required
+def get_admin_learning_modules(current_user):
+    """Get learning modules for admin management"""
+    try:
+        from ..models import LearningModule
+        
+        modules = LearningModule.query.order_by(LearningModule.created_at.desc()).all()
+        
+        return jsonify({
+            'modules': [module.to_dict() for module in modules]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in get_admin_learning_modules: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/learning-modules', methods=['POST'])
+@admin_required
+def create_learning_module(current_user):
+    """Create a new learning module"""
+    try:
+        from ..models import LearningModule
+        
+        data = request.get_json()
+        
+        if not data or not data.get('title') or not data.get('description'):
+            return jsonify({'error': 'Title and description are required'}), 400
+        
+        module = LearningModule(
+            title=data['title'],
+            description=data['description'],
+            difficulty=data.get('difficulty', 'BEGINNER'),
+            estimated_time=data.get('estimated_time', 15),
+            content=data.get('content', {}),
+            is_active=data.get('is_active', True)
+        )
+        
+        db.session.add(module)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Learning module created successfully',
+            'module': module.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/learning-modules/<int:module_id>', methods=['PUT'])
+@admin_required
+def update_learning_module(current_user, module_id):
+    """Update a learning module"""
+    try:
+        from ..models import LearningModule
+        
+        module = LearningModule.query.get_or_404(module_id)
+        data = request.get_json()
+        
+        if data.get('title'):
+            module.title = data['title']
+        if data.get('description'):
+            module.description = data['description']
+        if data.get('difficulty'):
+            module.difficulty = data['difficulty']
+        if data.get('estimated_time'):
+            module.estimated_time = data['estimated_time']
+        if data.get('content'):
+            module.content = data['content']
+        if data.get('is_active') is not None:
+            module.is_active = data['is_active']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Learning module updated successfully',
+            'module': module.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/learning-modules/<int:module_id>/deactivate', methods=['POST'])
+@admin_required
+def deactivate_learning_module(current_user, module_id):
+    """Deactivate a learning module"""
+    try:
+        from ..models import LearningModule
+        
+        module = LearningModule.query.get_or_404(module_id)
+        module.is_active = False
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Learning module deactivated successfully',
+            'module': module.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/learning-modules/<int:module_id>/activate', methods=['POST'])
+@admin_required
+def activate_learning_module(current_user, module_id):
+    """Activate a learning module"""
+    try:
+        from ..models import LearningModule
+        
+        module = LearningModule.query.get_or_404(module_id)
+        module.is_active = True
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Learning module activated successfully',
+            'module': module.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/learning-modules/<int:module_id>', methods=['DELETE'])
+@admin_required
+def delete_learning_module(current_user, module_id):
+    """Delete a learning module"""
+    try:
+        from ..models import LearningModule
+        
+        module = LearningModule.query.get_or_404(module_id)
+        db.session.delete(module)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Learning module deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @admin_bp.route('/maintenance/cleanup', methods=['POST'])
 @admin_required
 def system_cleanup(current_user):

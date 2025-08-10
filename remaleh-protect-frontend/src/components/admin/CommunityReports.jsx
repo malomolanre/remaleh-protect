@@ -35,7 +35,7 @@ const CommunityReports = () => {
         if (value) params.append(key, value);
       });
 
-      const response = await api.get(`/admin/community-reports?${params}`);
+      const response = await api.get(`/api/admin/community-reports?${params}`);
       setReports(response.data.reports);
       setPagination(response.data.pagination);
       setError(null);
@@ -54,16 +54,16 @@ const CommunityReports = () => {
 
       switch (action) {
         case 'verify':
-          endpoint = `/admin/community-reports/${reportId}/verify`;
+          endpoint = `/api/admin/community-reports/${reportId}/verify`;
           break;
         case 'reject':
-          endpoint = `/admin/community-reports/${reportId}/reject`;
+          endpoint = `/api/admin/community-reports/${reportId}/reject`;
           break;
         case 'escalate':
-          endpoint = `/admin/community-reports/${reportId}/escalate`;
+          endpoint = `/api/admin/community-reports/${reportId}/escalate`;
           break;
         case 'delete':
-          endpoint = `/admin/community-reports/${reportId}`;
+          endpoint = `/api/admin/community-reports/${reportId}`;
           method = 'DELETE';
           break;
         default:
@@ -88,7 +88,7 @@ const CommunityReports = () => {
     if (!bulkAction || selectedReports.length === 0) return;
 
     try {
-      await api.post('/admin/community-reports/bulk-action', {
+      await api.post('/api/admin/community-reports/bulk-action', {
         report_ids: selectedReports,
         action: bulkAction
       });

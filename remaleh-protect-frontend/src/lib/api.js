@@ -35,7 +35,13 @@ export const API_ENDPOINTS = {
     BULK_ACTION: '/api/admin/users/bulk-action',
     BULK_RESET_PASSWORD: '/api/admin/users/bulk-reset-password',
     DASHBOARD: '/api/admin/dashboard',
-    MAINTENANCE: '/api/admin/maintenance'
+    MAINTENANCE: '/api/admin/maintenance',
+    COMMUNITY_REPORTS: '/api/admin/community-reports',
+    COMMUNITY_REPORTS_VERIFY: '/api/admin/community-reports',
+    COMMUNITY_REPORTS_REJECT: '/api/admin/community-reports',
+    COMMUNITY_REPORTS_ESCALATE: '/api/admin/community-reports',
+    COMMUNITY_REPORTS_DELETE: '/api/admin/community-reports',
+    COMMUNITY_REPORTS_BULK_ACTION: '/api/admin/community-reports/bulk-action'
   },
   
   // Threat Intelligence
