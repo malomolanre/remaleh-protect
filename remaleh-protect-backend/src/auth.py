@@ -154,6 +154,7 @@ def create_admin_user():
                 logger.warning(f"ADMIN_PASSWORD not set. Generated temporary password: {admin_password}")
                 logger.warning("Please set ADMIN_PASSWORD environment variable in production!")
             
+            # Create admin user with explicit password setting
             admin_user = User(
                 email='admin@remaleh.com',
                 first_name='Admin',
@@ -164,14 +165,24 @@ def create_admin_user():
                 role='ADMIN',
                 account_status='ACTIVE'
             )
+            
+            # Set password using the method
             admin_user.set_password(admin_password)
+            
+            # Add to session and commit
             db.session.add(admin_user)
             db.session.commit()
-            logger.info("Admin user created successfully")
             
-            # Log admin creation for security audit
+            logger.info("Admin user created successfully")
             logger.info(f"Admin user created with email: {admin_user.email}")
             
+            # Verify the user was actually created
+            created_user = User.query.filter_by(email='admin@remaleh.com').first()
+            if created_user and created_user.check_password(admin_password):
+                logger.info("✓ Admin user verified and password working correctly")
+            else:
+                logger.error("❌ Admin user creation verification failed")
+                
         else:
             # Ensure existing admin user has proper permissions
             if not admin_user.is_admin:
@@ -182,9 +193,20 @@ def create_admin_user():
             else:
                 logger.info("Admin user already exists")
                 
+            # Test password verification for existing admin
+            test_password = os.getenv('ADMIN_PASSWORD')
+            if test_password and admin_user.check_password(test_password):
+                logger.info("✓ Existing admin user password verified")
+            else:
+                logger.warning("⚠ Existing admin user password verification failed")
+                
     except Exception as e:
         logger.error(f"Error creating admin user: {e}")
         db.session.rollback()
+        # Try to get more detailed error information
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        raise
 
 def validate_password_strength(password):
     """Validate password strength for production security"""

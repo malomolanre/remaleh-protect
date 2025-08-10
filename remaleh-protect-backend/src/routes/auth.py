@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt
+import os
 try:
     from ..models import db, User
     from ..auth import create_tokens, token_required, get_current_user_id, update_user_login
@@ -62,11 +63,22 @@ def login():
         
         user = User.query.filter_by(email=data['email']).first()
         
-        if not user or not user.check_password(data['password']):
-            return jsonify({'error': 'Invalid email or password'}), 401
+        if not user:
+            return jsonify({'error': 'Invalid email or password', 'debug': 'User not found'}), 401
         
         if not user.is_active:
             return jsonify({'error': 'Account is deactivated'}), 403
+        
+        # Test password verification
+        password_valid = user.check_password(data['password'])
+        if not password_valid:
+            return jsonify({
+                'error': 'Invalid email or password', 
+                'debug': 'Password verification failed',
+                'user_found': True,
+                'user_active': user.is_active,
+                'user_admin': user.is_admin
+            }), 401
         
         # Update last login
         update_user_login(user.id)
@@ -258,3 +270,49 @@ def get_user_activity(current_user):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/debug/admin-check', methods=['GET'])
+def debug_admin_check():
+    """Debug endpoint to check admin user status"""
+    try:
+        admin_user = User.query.filter_by(email='admin@remaleh.com').first()
+        
+        if not admin_user:
+            return jsonify({
+                'status': 'error',
+                'message': 'Admin user not found',
+                'admin_exists': False
+            }), 404
+        
+        # Test password verification with environment variable
+        admin_password = os.getenv('ADMIN_PASSWORD')
+        password_works = False
+        
+        if admin_password:
+            password_works = admin_user.check_password(admin_password)
+        
+        return jsonify({
+            'status': 'success',
+            'admin_exists': True,
+            'admin_user': {
+                'id': admin_user.id,
+                'email': admin_user.email,
+                'is_admin': admin_user.is_admin,
+                'is_active': admin_user.is_active,
+                'role': admin_user.role,
+                'account_status': admin_user.account_status,
+                'created_at': admin_user.created_at.isoformat() if admin_user.created_at else None
+            },
+            'password_check': {
+                'admin_password_set': bool(admin_password),
+                'password_verification_works': password_works,
+                'password_length': len(admin_password) if admin_password else 0
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'admin_exists': False
+        }), 500
