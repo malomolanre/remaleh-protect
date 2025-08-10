@@ -316,3 +316,35 @@ def debug_admin_check():
             'message': str(e),
             'admin_exists': False
         }), 500
+
+@auth_bp.route('/reset-admin-password', methods=['POST'])
+def reset_admin_password():
+    """Reset admin user password - use only in emergency"""
+    try:
+        data = request.get_json()
+        new_password = data.get('new_password')
+        
+        if not new_password:
+            return jsonify({'error': 'New password is required'}), 400
+        
+        # Find admin user
+        admin_user = User.query.filter_by(email='admin@remaleh.com').first()
+        
+        if not admin_user:
+            return jsonify({'error': 'Admin user not found'}), 404
+        
+        if not admin_user.is_admin:
+            return jsonify({'error': 'User is not an admin'}), 403
+        
+        # Set new password
+        admin_user.set_password(new_password)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Admin password reset successfully',
+            'email': admin_user.email
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
