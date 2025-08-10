@@ -22,6 +22,19 @@ export const API_ENDPOINTS = {
     CHANGE_PASSWORD: '/api/auth/change-password'
   },
   
+  // Admin
+  ADMIN: {
+    USERS: '/api/admin/users',
+    USER_DETAILS: '/api/admin/users',
+    USER_UPDATE: '/api/admin/users',
+    USER_SUSPEND: '/api/admin/users',
+    USER_ACTIVATE: '/api/admin/users',
+    USER_DELETE: '/api/admin/users',
+    BULK_ACTION: '/api/admin/users/bulk-action',
+    DASHBOARD: '/api/admin/dashboard',
+    MAINTENANCE: '/api/admin/maintenance'
+  },
+  
   // Threat Intelligence
   THREAT_INTELLIGENCE: {
     DASHBOARD: '/api/threat_intelligence/dashboard',

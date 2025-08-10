@@ -12,6 +12,32 @@ import json
 admin_bp = Blueprint('admin', __name__)
 
 # ============================================================================
+# DEBUG ENDPOINT
+# ============================================================================
+
+@admin_bp.route('/ping', methods=['GET'])
+def admin_ping():
+    """Simple ping endpoint to test if admin routes are accessible"""
+    return jsonify({
+        'message': 'Admin routes are working',
+        'timestamp': datetime.utcnow().isoformat()
+    }), 200
+
+@admin_bp.route('/test', methods=['GET'])
+@admin_required
+def test_admin_access(current_user):
+    """Test endpoint to verify admin access"""
+    return jsonify({
+        'message': 'Admin access verified',
+        'user': {
+            'id': current_user.id,
+            'email': current_user.email,
+            'is_admin': current_user.is_admin,
+            'role': current_user.role
+        }
+    }), 200
+
+# ============================================================================
 # USER MANAGEMENT
 # ============================================================================
 
@@ -20,6 +46,8 @@ admin_bp = Blueprint('admin', __name__)
 def get_all_users(current_user):
     """Get all users with pagination and filtering"""
     try:
+        print(f"Admin users endpoint called by user: {current_user.email} (is_admin: {current_user.is_admin})")
+        
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         role = request.args.get('role')
@@ -43,6 +71,8 @@ def get_all_users(current_user):
             page=page, per_page=per_page, error_out=False
         )
         
+        print(f"Found {users.total} users, returning {len(users.items)} for page {page}")
+        
         return jsonify({
             'users': [user.to_dict() for user in users.items],
             'pagination': {
@@ -54,6 +84,9 @@ def get_all_users(current_user):
         }), 200
         
     except Exception as e:
+        print(f"Error in get_all_users: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])

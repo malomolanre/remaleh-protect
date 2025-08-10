@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../lib/api';
+import { api, API_ENDPOINTS } from '../../lib/api';
 import MobileModal from '../MobileModal';
 
 const UserManagement = () => {
@@ -34,13 +34,20 @@ const UserManagement = () => {
         if (value) params.append(key, value);
       });
 
-      const response = await api.get(`/admin/users?${params}`);
-      setUsers(response.data.users);
-      setPagination(response.data.pagination);
-      setError(null);
+      const response = await api.get(`${API_ENDPOINTS.ADMIN.USERS}?${params}`);
+      console.log('Users response:', response);
+      
+      if (response.data && response.data.users) {
+        setUsers(response.data.users);
+        setPagination(response.data.pagination || {});
+        setError(null);
+      } else {
+        console.error('Unexpected response format:', response);
+        setError('Invalid response format from server');
+      }
     } catch (err) {
-      setError('Failed to load users');
       console.error('Users error:', err);
+      setError(`Failed to load users: ${err.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }

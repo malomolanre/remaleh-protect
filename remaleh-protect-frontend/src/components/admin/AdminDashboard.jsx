@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../lib/api';
+import { api, API_ENDPOINTS } from '../../lib/api';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -13,12 +13,19 @@ const AdminDashboard = () => {
   const fetchDashboardStats = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/admin/dashboard');
-      setStats(response.data);
-      setError(null);
+      const response = await api.get(API_ENDPOINTS.ADMIN.DASHBOARD);
+      console.log('Dashboard response:', response);
+      
+      if (response.data) {
+        setStats(response.data);
+        setError(null);
+      } else {
+        console.error('Unexpected dashboard response format:', response);
+        setError('Invalid response format from server');
+      }
     } catch (err) {
-      setError('Failed to load dashboard statistics');
       console.error('Dashboard error:', err);
+      setError(`Failed to load dashboard statistics: ${err.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }

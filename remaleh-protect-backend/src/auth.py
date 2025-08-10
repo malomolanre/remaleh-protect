@@ -81,33 +81,59 @@ def admin_required(f):
     """Decorator to protect routes that require admin privileges"""
     @wraps(f)
     def decorated(*args, **kwargs):
+        print(f"=== ADMIN_REQUIRED DEBUG ===")
+        print(f"Headers: {dict(request.headers)}")
+        
         token = None
         
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
+            print(f"Auth header: {auth_header}")
             try:
                 token = auth_header.split(" ")[1]
+                print(f"Extracted token: {token[:20]}...")
             except IndexError:
+                print("Token format error")
                 return jsonify({'message': 'Invalid token format'}), 401
         
         if not token:
+            print("No token found")
             return jsonify({'message': 'Token is missing'}), 401
         
         try:
+            print(f"Decoding token with secret key: {current_app.config['SECRET_KEY'][:20] if current_app.config['SECRET_KEY'] else 'None'}...")
             data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+            print(f"Token decoded successfully: {data}")
+            
             current_user = User.query.get(data['user_id'])
+            print(f"Current user: {current_user}")
             
             if not current_user:
+                print("User not found")
                 return jsonify({'message': 'Invalid token'}), 401
+            
+            print(f"User is_admin: {current_user.is_admin}")
+            print(f"User role: {current_user.role}")
             
             # Check if user is admin (you can add an admin field to User model)
             if not getattr(current_user, 'is_admin', False):
+                print("User is not admin")
                 return jsonify({'message': 'Admin privileges required'}), 403
                 
+            print("Admin access granted")
+            print("===============================")
+                
         except jwt.ExpiredSignatureError:
+            print("Token expired")
             return jsonify({'message': 'Token has expired'}), 401
-        except jwt.InvalidTokenError:
+        except jwt.InvalidTokenError as e:
+            print(f"Invalid token: {e}")
             return jsonify({'message': 'Invalid token'}), 401
+        except Exception as e:
+            print(f"Unexpected error in admin_required: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'message': 'Authentication error'}), 500
         
         return f(current_user, *args, **kwargs)
     
