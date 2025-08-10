@@ -243,6 +243,47 @@ def update_user(current_user, user_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@admin_bp.route('/users/<int:user_id>/reset-password', methods=['POST'])
+@admin_required
+def reset_user_password(current_user, user_id):
+    """Reset a user's password (admin only)"""
+    try:
+        user = User.query.get_or_404(user_id)
+        data = request.get_json()
+        
+        if not data or 'new_password' not in data:
+            return jsonify({'error': 'New password is required'}), 400
+        
+        new_password = data['new_password']
+        
+        # Validate password strength
+        from ..auth import validate_password_strength
+        is_valid, message = validate_password_strength(new_password)
+        if not is_valid:
+            return jsonify({'error': f'Password validation failed: {message}'}), 400
+        
+        # Set new password
+        user.set_password(new_password)
+        
+        # Update last modified timestamp if available
+        if hasattr(user, 'updated_at'):
+            user.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'Password for user {user.email} has been reset successfully',
+            'user_id': user.id,
+            'email': user.email
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error resetting user password: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @admin_bp.route('/users/<int:user_id>/suspend', methods=['POST'])
 @admin_required
 def suspend_user(current_user, user_id):
@@ -414,6 +455,54 @@ def bulk_user_action(current_user):
         
     except Exception as e:
         db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/users/bulk-reset-password', methods=['POST'])
+@admin_required
+def bulk_reset_passwords(current_user):
+    """Reset passwords for multiple users (admin only)"""
+    try:
+        data = request.get_json()
+        user_ids = data.get('user_ids', [])
+        new_password = data.get('new_password')
+        
+        if not user_ids or not new_password:
+            return jsonify({'error': 'User IDs and new password are required'}), 400
+        
+        # Prevent admin from affecting themselves
+        if current_user.id in user_ids:
+            return jsonify({'error': 'Cannot reset your own password through bulk operation'}), 400
+        
+        # Validate password strength
+        from ..auth import validate_password_strength
+        is_valid, message = validate_password_strength(new_password)
+        if not is_valid:
+            return jsonify({'error': f'Password validation failed: {message}'}), 400
+        
+        users = User.query.filter(User.id.in_(user_ids)).all()
+        
+        if not users:
+            return jsonify({'error': 'No valid users found'}), 404
+        
+        # Reset passwords for all users
+        for user in users:
+            user.set_password(new_password)
+            # Update last modified timestamp if available
+            if hasattr(user, 'updated_at'):
+                user.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'Passwords reset successfully for {len(users)} users',
+            'affected_users': [{'id': user.id, 'email': user.email} for user in users]
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in bulk password reset: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 # ============================================================================

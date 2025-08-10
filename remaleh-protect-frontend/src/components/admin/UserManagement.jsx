@@ -15,6 +15,11 @@ const UserManagement = () => {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkAction, setBulkAction] = useState('');
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [passwordResetForm, setPasswordResetForm] = useState({
+    new_password: '',
+    confirm_password: ''
+  });
   const [createUserForm, setCreateUserForm] = useState({
     email: '',
     password: '',
@@ -101,39 +106,105 @@ const UserManagement = () => {
       if (response.ok) {
         // Refresh users list
         fetchUsers();
-        setSelectedUsers([]);
+        setError(null);
       } else {
         const errorData = await response.json();
-        alert(`Failed to ${action} user: ${errorData.error || 'Unknown error'}`);
+        setError(errorData.error || 'Action failed');
       }
     } catch (err) {
-      console.error('User action error:', err);
-      alert(`Failed to ${action} user: ${err.message || 'Unknown error'}`);
+      console.error('Action error:', err);
+      setError(`Failed to perform action: ${err.message || 'Unknown error'}`);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    try {
+      if (passwordResetForm.new_password !== passwordResetForm.confirm_password) {
+        setError('Passwords do not match');
+        return;
+      }
+
+      if (passwordResetForm.new_password.length < 8) {
+        setError('Password must be at least 8 characters long');
+        return;
+      }
+
+      const response = await api.post(
+        `${API_ENDPOINTS.ADMIN.USER_RESET_PASSWORD}/${selectedUser.id}/reset-password`,
+        { new_password: passwordResetForm.new_password }
+      );
+
+      if (response.ok) {
+        setShowPasswordResetModal(false);
+        setPasswordResetForm({ new_password: '', confirm_password: '' });
+        setError(null);
+        // Show success message or refresh users list
+        fetchUsers();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Password reset failed');
+      }
+    } catch (err) {
+      console.error('Password reset error:', err);
+      setError(`Failed to reset password: ${err.message || 'Unknown error'}`);
     }
   };
 
   const handleBulkAction = async () => {
-    if (!bulkAction || selectedUsers.length === 0) return;
-
     try {
+      if (!bulkAction) return;
+
       const response = await api.post(API_ENDPOINTS.ADMIN.BULK_ACTION, {
         user_ids: selectedUsers,
         action: bulkAction
       });
 
       if (response.ok) {
-        // Refresh users list
-        fetchUsers();
-        setSelectedUsers([]);
         setShowBulkModal(false);
         setBulkAction('');
+        setSelectedUsers([]);
+        fetchUsers();
+        setError(null);
       } else {
         const errorData = await response.json();
-        alert(`Failed to perform bulk action: ${errorData.error || 'Unknown error'}`);
+        setError(errorData.error || 'Bulk action failed');
       }
     } catch (err) {
       console.error('Bulk action error:', err);
-      alert(`Failed to perform bulk action: ${err.message || 'Unknown error'}`);
+      setError(`Failed to perform bulk action: ${err.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleBulkPasswordReset = async () => {
+    try {
+      if (passwordResetForm.new_password !== passwordResetForm.confirm_password) {
+        setError('Passwords do not match');
+        return;
+      }
+
+      if (passwordResetForm.new_password.length < 8) {
+        setError('Password must be at least 8 characters long');
+        return;
+      }
+
+      const response = await api.post(API_ENDPOINTS.ADMIN.BULK_RESET_PASSWORD, {
+        user_ids: selectedUsers,
+        new_password: passwordResetForm.new_password
+      });
+
+      if (response.ok) {
+        setShowPasswordResetModal(false);
+        setPasswordResetForm({ new_password: '', confirm_password: '' });
+        setSelectedUsers([]);
+        fetchUsers();
+        setError(null);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Bulk password reset failed');
+      }
+    } catch (err) {
+      console.error('Bulk password reset error:', err);
+      setError(`Failed to reset passwords: ${err.message || 'Unknown error'}`);
     }
   };
 
@@ -245,11 +316,19 @@ const UserManagement = () => {
           </button>
           <div className="relative">
             <select
-              onChange={(e) => handleUserAction(user.id, e.target.value)}
+              onChange={(e) => {
+                if (e.target.value === 'reset-password') {
+                  setSelectedUser(user);
+                  setShowPasswordResetModal(true);
+                } else {
+                  handleUserAction(user.id, e.target.value);
+                }
+              }}
               className="text-sm border rounded px-2 py-1"
               defaultValue=""
             >
               <option value="" disabled>Actions</option>
+              <option value="reset-password">Reset Password</option>
               {user.account_status === 'ACTIVE' && (
                 <option value="suspend">Suspend</option>
               )}
@@ -304,6 +383,14 @@ const UserManagement = () => {
           <div className="pt-4 border-t">
             <h4 className="font-medium text-gray-900 mb-2">Quick Actions</h4>
             <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  setShowPasswordResetModal(true);
+                }}
+                className="bg-yellow-600 text-white px-3 py-2 rounded text-sm hover:bg-yellow-700"
+              >
+                Reset Password
+              </button>
               {selectedUser.account_status === 'ACTIVE' && (
                 <button
                   onClick={() => {
@@ -359,23 +446,127 @@ const UserManagement = () => {
             className="w-full border rounded-lg px-3 py-2"
           >
             <option value="">Select action...</option>
+            <option value="reset-passwords">Reset Passwords</option>
             <option value="suspend">Suspend</option>
             <option value="activate">Activate</option>
             <option value="delete">Delete</option>
           </select>
         </div>
         
+        {bulkAction === 'reset-passwords' && (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={passwordResetForm.new_password}
+                onChange={(e) => setPasswordResetForm({...passwordResetForm, new_password: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Enter new password"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={passwordResetForm.confirm_password}
+                onChange={(e) => setPasswordResetForm({...passwordResetForm, confirm_password: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Confirm new password"
+              />
+            </div>
+          </div>
+        )}
+        
         <div className="pt-4 border-t">
           <div className="flex space-x-2">
             <button
-              onClick={handleBulkAction}
-              disabled={!bulkAction}
+              onClick={bulkAction === 'reset-passwords' ? handleBulkPasswordReset : handleBulkAction}
+              disabled={!bulkAction || (bulkAction === 'reset-passwords' && (!passwordResetForm.new_password || !passwordResetForm.confirm_password))}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
             >
-              Apply Action
+              {bulkAction === 'reset-passwords' ? 'Reset Passwords' : 'Apply Action'}
             </button>
             <button
               onClick={() => setShowBulkModal(false)}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+
+  const PasswordResetModal = () => (
+    <Modal
+      isOpen={showPasswordResetModal}
+      onClose={() => {
+        setShowPasswordResetModal(false);
+        setPasswordResetForm({ new_password: '', confirm_password: '' });
+      }}
+      title={`Reset Password${selectedUsers.length > 1 ? 's' : ''}`}
+    >
+      <div className="space-y-4">
+        {selectedUser && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              {selectedUsers.length > 1 
+                ? `Resetting password for ${selectedUsers.length} selected users`
+                : `Resetting password for ${selectedUser.email}`
+              }
+            </p>
+          </div>
+        )}
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            New Password
+          </label>
+          <input
+            type="password"
+            value={passwordResetForm.new_password}
+            onChange={(e) => setPasswordResetForm({...passwordResetForm, new_password: e.target.value})}
+            className="w-full border rounded-lg px-3 py-2"
+            placeholder="Enter new password"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Password must be at least 8 characters long
+          </p>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Confirm Password
+          </label>
+          <input
+            type="password"
+            value={passwordResetForm.confirm_password}
+            onChange={(e) => setPasswordResetForm({...passwordResetForm, confirm_password: e.target.value})}
+            className="w-full border rounded-lg px-3 py-2"
+            placeholder="Confirm new password"
+          />
+        </div>
+        
+        <div className="pt-4 border-t">
+          <div className="flex space-x-2">
+            <button
+              onClick={selectedUsers.length > 1 ? handleBulkPasswordReset : handlePasswordReset}
+              disabled={!passwordResetForm.new_password || !passwordResetForm.confirm_password}
+              className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:bg-gray-400"
+            >
+              Reset Password{selectedUsers.length > 1 ? 's' : ''}
+            </button>
+            <button
+              onClick={() => {
+                setShowPasswordResetModal(false);
+                setPasswordResetForm({ new_password: '', confirm_password: '' });
+              }}
               className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
             >
               Cancel
@@ -410,6 +601,14 @@ const UserManagement = () => {
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
               >
                 Bulk Actions ({selectedUsers.length})
+              </button>
+            )}
+            {selectedUsers.length > 0 && (
+              <button
+                onClick={() => setShowPasswordResetModal(true)}
+                className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700"
+              >
+                Reset Passwords ({selectedUsers.length})
               </button>
             )}
             <button
@@ -561,6 +760,7 @@ const UserManagement = () => {
       {/* Modals */}
       <UserDetailModal />
       <BulkActionModal />
+      <PasswordResetModal />
       
       {/* Create User Modal */}
       <Modal

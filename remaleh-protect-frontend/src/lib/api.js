@@ -31,7 +31,9 @@ export const API_ENDPOINTS = {
     USER_SUSPEND: '/api/admin/users',
     USER_ACTIVATE: '/api/admin/users',
     USER_DELETE: '/api/admin/users',
+    USER_RESET_PASSWORD: '/api/admin/users',
     BULK_ACTION: '/api/admin/users/bulk-action',
+    BULK_RESET_PASSWORD: '/api/admin/users/bulk-reset-password',
     DASHBOARD: '/api/admin/dashboard',
     MAINTENANCE: '/api/admin/maintenance'
   },
