@@ -1,6 +1,15 @@
 // Central API base for all fetch calls.
 export const API = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || "http://localhost:10000";
 
+// Log the API base URL for debugging (remove in production)
+if (import.meta.env.DEV) {
+  console.log('API Base URL:', API);
+  console.log('Environment Variables:', {
+    VITE_API_BASE: import.meta.env.VITE_API_BASE,
+    VITE_API_URL: import.meta.env.VITE_API_URL
+  });
+}
+
 // API endpoints for all features
 export const API_ENDPOINTS = {
   // Authentication

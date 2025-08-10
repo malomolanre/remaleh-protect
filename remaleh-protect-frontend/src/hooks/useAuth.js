@@ -39,6 +39,8 @@ export const useAuth = () => {
       setError(null);
       setIsLoading(true);
       
+      console.log('Attempting login to:', API_ENDPOINTS.AUTH.LOGIN);
+      
       const response = await apiPost(API_ENDPOINTS.AUTH.LOGIN, {
         email,
         password
@@ -59,8 +61,18 @@ export const useAuth = () => {
         return { success: false, error: errorData.message };
       }
     } catch (err) {
-      setError('Network error occurred');
-      return { success: false, error: 'Network error occurred' };
+      console.error('Login error details:', err);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Network error occurred';
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        errorMessage = 'Cannot connect to server. Please check your internet connection or server status.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
