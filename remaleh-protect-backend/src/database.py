@@ -149,14 +149,22 @@ class DatabaseManager:
         
         try:
             pool = self.engine.pool
-            return {
+            # Use safe methods that exist in all SQLAlchemy versions
+            pool_info = {
                 "status": "connected",
-                "pool_size": pool.size(),
-                "checked_in": pool.checkedin(),
-                "checked_out": pool.checkedout(),
-                "overflow": pool.overflow(),
-                "invalid": pool.invalid()
+                "pool_size": getattr(pool, 'size', lambda: 'unknown')(),
+                "checked_in": getattr(pool, 'checkedin', lambda: 'unknown')(),
+                "checked_out": getattr(pool, 'checkedout', lambda: 'unknown')(),
+                "overflow": getattr(pool, 'overflow', lambda: 'unknown')()
             }
+            
+            # Only add invalid count if the method exists
+            if hasattr(pool, 'invalid'):
+                pool_info["invalid"] = pool.invalid()
+            else:
+                pool_info["invalid"] = "not_available"
+                
+            return pool_info
         except Exception as e:
             logger.error(f"Error getting connection info: {e}")
             return {"status": "error", "message": str(e)}
