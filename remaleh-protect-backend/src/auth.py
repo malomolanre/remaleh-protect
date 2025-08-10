@@ -128,14 +128,24 @@ def create_admin_user():
                 first_name='Admin',
                 last_name='User',
                 risk_level='LOW',
-                is_active=True
+                is_active=True,
+                is_admin=True,
+                role='ADMIN',
+                account_status='ACTIVE'
             )
             admin_user.set_password('admin123')  # Change this in production
             db.session.add(admin_user)
             db.session.commit()
             print("Admin user created successfully")
         else:
-            print("Admin user already exists")
+            # Ensure existing admin user has proper permissions
+            if not admin_user.is_admin:
+                admin_user.is_admin = True
+                admin_user.role = 'ADMIN'
+                db.session.commit()
+                print("Existing user upgraded to admin")
+            else:
+                print("Admin user already exists")
     except Exception as e:
         print(f"Error creating admin user: {e}")
         db.session.rollback()

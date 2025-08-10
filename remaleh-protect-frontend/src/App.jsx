@@ -7,13 +7,18 @@ import LearnHub from './components/LearnHub'
 import ThreatDashboard from './components/ThreatDashboard'
 import RiskProfile from './components/RiskProfile'
 import CommunityReporting from './components/CommunityReporting'
+import AdminPanel from './components/AdminPanel'
+import Login from './components/Login'
+import Register from './components/Register'
 import MobileHeader from './components/MobileHeader'
 import MobileNavigation from './components/MobileNavigation'
 import FloatingActionButton from './components/FloatingActionButton'
+import { useAuth } from './hooks/useAuth'
 import './App.css'
 
 function App() {
   const [activeTab, setActiveTab] = useState('breach')
+  const { user, isAuthenticated } = useAuth()
 
   const tabs = [
     { id: 'breach', label: 'Breach Checker', icon: '🔒' },
@@ -22,7 +27,8 @@ function App() {
     { id: 'profile', label: 'Risk Profile', icon: '👤' },
     { id: 'community', label: 'Community', icon: '👥' },
     { id: 'chat', label: 'AI Assistant', icon: '🤖' },
-    { id: 'learn', label: 'Learn Hub', icon: '📚' }
+    { id: 'learn', label: 'Learn Hub', icon: '📚' },
+    ...(user?.is_admin ? [{ id: 'admin', label: 'Admin', icon: '⚙️' }] : [])
   ]
 
   const renderContent = () => {
@@ -41,6 +47,12 @@ function App() {
         return <ChatAssistant />
       case 'learn':
         return <LearnHub />
+      case 'admin':
+        return <AdminPanel />
+      case 'login':
+        return <Login />
+      case 'register':
+        return <Register />
       default:
         return <BreachChecker />
     }
@@ -64,8 +76,42 @@ function App() {
                 />
                 <h1 className="text-xl font-bold text-gray-900">Remaleh Protect</h1>
               </div>
-              <div className="text-sm text-gray-500">
-                Your Digital Security Companion
+              <div className="flex items-center space-x-4">
+                <div className="text-sm text-gray-500">
+                  Your Digital Security Companion
+                </div>
+                {isAuthenticated ? (
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-gray-700">
+                      Welcome, {user?.first_name || 'User'}
+                    </span>
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('refreshToken');
+                        window.location.reload();
+                      }}
+                      className="text-sm text-red-600 hover:text-red-800 font-medium"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setActiveTab('login')}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('register')}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -111,7 +157,7 @@ function App() {
         </footer>
 
         {/* Mobile Navigation */}
-        <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
         
         {/* Floating Action Button */}
         <FloatingActionButton onAction={(action) => {

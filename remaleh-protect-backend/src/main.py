@@ -118,6 +118,7 @@ def create_app():
     from routes.threat_intelligence import threat_intel_bp
     from routes.risk_profile import risk_profile_bp
     from routes.community import community_bp
+    from routes.admin import admin_bp
 
     # Example of applying a per-route limit on a heavy endpoint:
     # @scam_bp.route('/comprehensive', methods=['POST'])
@@ -134,6 +135,7 @@ def create_app():
     app.register_blueprint(threat_intel_bp, url_prefix="/api/threat_intelligence")
     app.register_blueprint(risk_profile_bp, url_prefix="/api/risk_profile")
     app.register_blueprint(community_bp, url_prefix="/api/community")
+    app.register_blueprint(admin_bp, url_prefix="/api/admin")
 
     @app.errorhandler(429)
     def ratelimit_handler(e):

@@ -17,6 +17,9 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     is_active = db.Column(db.Boolean, default=True)
+    is_admin = db.Column(db.Boolean, default=False)
+    role = db.Column(db.String(20), default='USER')  # USER, MODERATOR, ADMIN
+    account_status = db.Column(db.String(20), default='ACTIVE')  # ACTIVE, SUSPENDED, BANNED
     
     # Relationships
     scans = db.relationship('UserScan', backref='user', lazy=True)
@@ -38,7 +41,11 @@ class User(db.Model):
             'last_name': self.last_name,
             'risk_level': self.risk_level,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'last_login': self.last_login.isoformat() if self.last_login else None
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'is_active': self.is_active,
+            'is_admin': self.is_admin,
+            'role': self.role,
+            'account_status': self.account_status
         }
 
 class UserScan(db.Model):

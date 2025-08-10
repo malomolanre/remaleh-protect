@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, Shield, Users, User, MessageSquare, BookOpen } from 'lucide-react';
+import { Home, Shield, Users, User, MessageSquare, BookOpen, Settings } from 'lucide-react';
 
-export default function MobileNavigation({ activeTab, setActiveTab }) {
+export default function MobileNavigation({ activeTab, setActiveTab, user }) {
   const tabs = [
     { id: 'breach', label: 'Breach', icon: Shield, color: 'text-blue-600' },
     { id: 'scam', label: 'Scam', icon: Shield, color: 'text-red-600' },
@@ -9,7 +9,8 @@ export default function MobileNavigation({ activeTab, setActiveTab }) {
     { id: 'profile', label: 'Profile', icon: User, color: 'text-purple-600' },
     { id: 'community', label: 'Community', icon: Users, color: 'text-orange-600' },
     { id: 'chat', label: 'AI Chat', icon: MessageSquare, color: 'text-indigo-600' },
-    { id: 'learn', label: 'Learn', icon: BookOpen, color: 'text-teal-600' }
+    { id: 'learn', label: 'Learn', icon: BookOpen, color: 'text-teal-600' },
+    ...(user?.is_admin ? [{ id: 'admin', label: 'Admin', icon: Settings, color: 'text-gray-600' }] : [])
   ];
 
   return (

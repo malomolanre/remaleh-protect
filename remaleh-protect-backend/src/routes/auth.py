@@ -166,3 +166,91 @@ def logout(current_user):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/profile/delete-account', methods=['POST'])
+@token_required
+def delete_own_account(current_user):
+    """Allow users to delete their own account"""
+    try:
+        data = request.get_json()
+        
+        if not data.get('confirm_password'):
+            return jsonify({'error': 'Password confirmation required'}), 400
+        
+        if not current_user.check_password(data['confirm_password']):
+            return jsonify({'error': 'Password confirmation incorrect'}), 401
+        
+        # Soft delete - mark as deleted instead of actually removing
+        current_user.account_status = 'DELETED'
+        current_user.is_active = False
+        current_user.email = f"deleted_{current_user.id}_{current_user.email}"
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Account deleted successfully'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/profile/recovery', methods=['POST'])
+def recover_account():
+    """Account recovery endpoint for suspended users"""
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+        
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        if user.account_status != 'SUSPENDED':
+            return jsonify({'error': 'Account is not suspended'}), 400
+        
+        # In a real implementation, you would send a recovery email
+        # For now, we'll just return a message
+        return jsonify({
+            'message': 'Recovery instructions sent to your email',
+            'note': 'Contact support for immediate assistance'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/profile/activity', methods=['GET'])
+@token_required
+def get_user_activity(current_user):
+    """Get user's recent activity"""
+    try:
+        # Get recent scans
+        recent_scans = UserScan.query.filter_by(
+            user_id=current_user.id
+        ).order_by(
+            UserScan.scanned_at.desc()
+        ).limit(10).all()
+        
+        # Get learning progress
+        learning_progress = LearningProgress.query.filter_by(
+            user_id=current_user.id
+        ).order_by(
+            LearningProgress.started_at.desc()
+        ).limit(10).all()
+        
+        # Get community reports
+        community_reports = CommunityReport.query.filter_by(
+            user_id=current_user.id
+        ).order_by(
+            CommunityReport.created_at.desc()
+        ).limit(5).all()
+        
+        return jsonify({
+            'recent_scans': [scan.to_dict() for scan in recent_scans],
+            'learning_progress': [progress.to_dict() for progress in learning_progress],
+            'community_reports': [report.to_dict() for report in community_reports]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
