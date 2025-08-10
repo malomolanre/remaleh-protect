@@ -41,7 +41,7 @@ npm install && npm run build
 VITE_API_BASE=https://your-backend-service-name.onrender.com
 
 # Example:
-VITE_API_BASE=https://remaleh-protect-api.onrender.com
+VITE_API_BASE=https://api.remalehprotect.remaleh.com.au
 ```
 
 ### How to Set Environment Variables
@@ -56,7 +56,7 @@ VITE_API_BASE=https://remaleh-protect-api.onrender.com
 To find your backend service URL:
 
 1. Go to your backend service in Render dashboard
-2. Copy the URL shown (e.g., `https://remaleh-protect-api.onrender.com`)
+2. Copy the URL shown (e.g., `https://api.remalehprotect.remaleh.com.au`)
 3. Use this as your `VITE_API_BASE` value
 
 ## 🚨 Common Issues & Solutions

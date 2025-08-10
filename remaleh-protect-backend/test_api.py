@@ -7,8 +7,13 @@ import requests
 import json
 import sys
 
-# Update this to your actual Render URL
-BASE_URL = "https://remaleh-protect-api.onrender.com"
+# Test API endpoints for Remaleh Protect Backend
+import requests
+import json
+import time
+
+# Configuration
+BASE_URL = "https://api.remalehprotect.remaleh.com.au"
 
 def test_health_endpoints():
     """Test health and status endpoints"""
