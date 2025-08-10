@@ -114,6 +114,61 @@ def get_all_users(current_user):
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@admin_bp.route('/users', methods=['POST'])
+@admin_required
+def create_user(current_user):
+    """Create a new user (admin only)"""
+    try:
+        print(f"Admin create user endpoint called by: {current_user.email}")
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Required fields
+        required_fields = ['email', 'password', 'first_name', 'last_name']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=data['email']).first()
+        if existing_user:
+            return jsonify({'error': 'User with this email already exists'}), 400
+        
+        # Create new user
+        new_user = User(
+            email=data['email'],
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            risk_level=data.get('risk_level', 'MEDIUM'),
+            role=data.get('role', 'USER'),
+            account_status=data.get('account_status', 'ACTIVE'),
+            is_active=data.get('is_active', True),
+            is_admin=data.get('is_admin', False)
+        )
+        
+        # Set password
+        new_user.set_password(data['password'])
+        
+        # Add to database
+        db.session.add(new_user)
+        db.session.commit()
+        
+        print(f"User created successfully: {new_user.email}")
+        
+        return jsonify({
+            'message': 'User created successfully',
+            'user': new_user.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating user: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
 @admin_required
 def get_user_details(current_user, user_id):

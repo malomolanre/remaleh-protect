@@ -12,6 +12,18 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkAction, setBulkAction] = useState('');
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({
+    email: '',
+    password: '',
+    first_name: '',
+    last_name: '',
+    role: 'USER',
+    risk_level: 'MEDIUM',
+    account_status: 'ACTIVE',
+    is_active: true,
+    is_admin: false
+  });
 
   // Filters
   const [filters, setFilters] = useState({
@@ -122,6 +134,46 @@ const UserManagement = () => {
     } catch (err) {
       console.error('Bulk action error:', err);
       alert(`Failed to perform bulk action: ${err.message || 'Unknown error'}`);
+    }
+  };
+
+  const createUser = async () => {
+    try {
+      // Validate required fields
+      if (!createUserForm.email || !createUserForm.password || !createUserForm.first_name || !createUserForm.last_name) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const response = await api.post(API_ENDPOINTS.ADMIN.CREATE_USER, createUserForm);
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`User created successfully: ${data.user.email}`);
+        
+        // Reset form and close modal
+        setCreateUserForm({
+          email: '',
+          password: '',
+          first_name: '',
+          last_name: '',
+          role: 'USER',
+          risk_level: 'MEDIUM',
+          account_status: 'ACTIVE',
+          is_active: true,
+          is_admin: false
+        });
+        setShowCreateUserModal(false);
+        
+        // Refresh users list
+        fetchUsers();
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to create user: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Create user error:', err);
+      alert(`Failed to create user: ${err.message || 'Unknown error'}`);
     }
   };
 
@@ -344,6 +396,12 @@ const UserManagement = () => {
             <p className="text-gray-600">Manage user accounts and permissions</p>
           </div>
           <div className="mt-4 sm:mt-0 flex space-x-2">
+            <button
+              onClick={() => setShowCreateUserModal(true)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+            >
+              Create User
+            </button>
             {selectedUsers.length > 0 && (
               <button
                 onClick={() => setShowBulkModal(true)}
@@ -501,6 +559,157 @@ const UserManagement = () => {
       {/* Modals */}
       <UserDetailModal />
       <BulkActionModal />
+      
+      {/* Create User Modal */}
+      <MobileModal
+        isOpen={showCreateUserModal}
+        onClose={() => setShowCreateUserModal(false)}
+        title="Create New User"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email *
+              </label>
+              <input
+                type="email"
+                value={createUserForm.email}
+                onChange={(e) => setCreateUserForm({...createUserForm, email: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="user@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password *
+              </label>
+              <input
+                type="password"
+                value={createUserForm.password}
+                onChange={(e) => setCreateUserForm({...createUserForm, password: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Enter password"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First Name *
+              </label>
+              <input
+                type="text"
+                value={createUserForm.first_name}
+                onChange={(e) => setCreateUserForm({...createUserForm, first_name: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="John"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last Name *
+              </label>
+              <input
+                type="text"
+                value={createUserForm.last_name}
+                onChange={(e) => setCreateUserForm({...createUserForm, last_name: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Doe"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Role
+              </label>
+              <select
+                value={createUserForm.role}
+                onChange={(e) => setCreateUserForm({...createUserForm, role: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                <option value="USER">User</option>
+                <option value="MODERATOR">Moderator</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Risk Level
+              </label>
+              <select
+                value={createUserForm.risk_level}
+                onChange={(e) => setCreateUserForm({...createUserForm, risk_level: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={createUserForm.account_status}
+                onChange={(e) => setCreateUserForm({...createUserForm, account_status: e.target.value})}
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                <option value="ACTIVE">Active</option>
+                <option value="SUSPENDED">Suspended</option>
+                <option value="BANNED">Banned</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              id="is_active"
+              checked={createUserForm.is_active}
+              onChange={(e) => setCreateUserForm({...createUserForm, is_active: e.target.checked})}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+              Account is active
+            </label>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              id="is_admin"
+              checked={createUserForm.is_admin}
+              onChange={(e) => setCreateUserForm({...createUserForm, is_admin: e.target.checked})}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="is_admin" className="text-sm font-medium text-gray-700">
+              Admin privileges
+            </label>
+          </div>
+          
+          <div className="pt-4 border-t">
+            <div className="flex space-x-2">
+              <button
+                onClick={createUser}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+              >
+                Create User
+              </button>
+              <button
+                onClick={() => setShowCreateUserModal(false)}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </MobileModal>
     </div>
   );
 };

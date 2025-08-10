@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
   // Admin
   ADMIN: {
     USERS: '/api/admin/users',
+    CREATE_USER: '/api/admin/users',
     USER_DETAILS: '/api/admin/users',
     USER_UPDATE: '/api/admin/users',
     USER_SUSPEND: '/api/admin/users',
