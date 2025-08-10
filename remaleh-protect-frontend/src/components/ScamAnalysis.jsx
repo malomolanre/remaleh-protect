@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle, X, ArrowLeft, Shield, MessageSquare, Link, 
 import { MobileCard } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
-import { MobileTextarea } from './ui/textarea'
+import { MobileTextarea } from './ui/mobile-input'
 import { useScamAnalysis } from '../hooks/useScamAnalysis'
 
 export default function ScamAnalysis({ setActiveTab }) {
