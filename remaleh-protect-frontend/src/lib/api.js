@@ -114,3 +114,24 @@ export const apiPut = (endpoint, data) => apiCall(endpoint, {
 
 // Helper function for DELETE requests
 export const apiDelete = (endpoint) => apiCall(endpoint, { method: 'DELETE' });
+
+// Create a unified API object for admin components
+export const api = {
+  get: (endpoint) => apiGet(endpoint),
+  post: (endpoint, data) => apiPost(endpoint, data),
+  put: (endpoint, data) => apiPut(endpoint, data),
+  delete: (endpoint) => apiDelete(endpoint),
+  request: (options) => {
+    const { method = 'GET', url, data, ...rest } = options;
+    if (method === 'GET') {
+      return apiGet(url);
+    } else if (method === 'POST') {
+      return apiPost(url, data);
+    } else if (method === 'PUT') {
+      return apiPut(url, data);
+    } else if (method === 'DELETE') {
+      return apiDelete(url);
+    }
+    return apiCall(url, { method, body: data ? JSON.stringify(data) : undefined, ...rest });
+  }
+};
