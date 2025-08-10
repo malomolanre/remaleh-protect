@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
 
-const Register = () => {
+const Register = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -12,8 +11,14 @@ const Register = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const { register, error } = useAuth();
-  const navigate = useNavigate();
+  const { register, error, user, isAuthenticated } = useAuth();
+
+  // Watch for authentication changes and redirect accordingly
+  useEffect(() => {
+    if (isAuthenticated && user && onRegisterSuccess) {
+      onRegisterSuccess();
+    }
+  }, [isAuthenticated, user, onRegisterSuccess]);
 
   const validateForm = () => {
     const errors = {};
@@ -63,9 +68,7 @@ const Register = () => {
     };
     
     const result = await register(userData);
-    if (result.success) {
-      navigate('/');
-    }
+    // The useEffect will handle the redirect when authentication state changes
     setIsLoading(false);
   };
 
@@ -278,7 +281,7 @@ const Register = () => {
 
             <div className="mt-6">
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => onRegisterSuccess()}
                 className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Sign in instead

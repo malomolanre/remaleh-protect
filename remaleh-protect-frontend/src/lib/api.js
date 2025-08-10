@@ -85,7 +85,8 @@ export const apiCall = async (endpoint, options = {}) => {
         // Redirect to login if refresh fails
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        // Don't redirect - let the component handle authentication failures
+        // window.location.href = '/login';
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }

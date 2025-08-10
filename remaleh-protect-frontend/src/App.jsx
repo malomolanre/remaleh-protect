@@ -50,9 +50,19 @@ function App() {
       case 'admin':
         return <AdminPanel />
       case 'login':
-        return <Login />
+        return <Login onLoginSuccess={() => {
+          // After successful login, redirect to appropriate tab based on user role
+          if (user?.is_admin) {
+            setActiveTab('admin');
+          } else {
+            setActiveTab('breach'); // Default to breach checker for regular users
+          }
+        }} onSwitchToRegister={() => setActiveTab('register')} />
       case 'register':
-        return <Register />
+        return <Register onRegisterSuccess={() => {
+          // After successful registration, redirect to login tab
+          setActiveTab('login');
+        }} />
       default:
         return <BreachChecker />
     }
