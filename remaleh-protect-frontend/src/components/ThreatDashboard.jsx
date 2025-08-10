@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { TrendingUp, AlertTriangle, Users, Clock, BarChart3, Globe, Shield, Plus, RefreshCw } from 'lucide-react'
+import { TrendingUp, AlertTriangle, Users, Clock, BarChart3, Globe, Shield, Plus, RefreshCw, Lock } from 'lucide-react'
 import { MobileCard } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
@@ -7,8 +7,10 @@ import MobileModal from './MobileModal'
 import { MobileGrid, MobileGridItem, MobileStatsGrid } from './ui/mobile-grid'
 import { MobileList, MobileListItemWithBadge } from './ui/mobile-list'
 import { useThreatIntelligence } from '../hooks/useThreatIntelligence'
+import { useAuth } from '../hooks/useAuth'
 
 export default function ThreatDashboard() {
+  const { isAuthenticated } = useAuth()
   const {
     dashboardData,
     threats,
@@ -30,8 +32,10 @@ export default function ThreatDashboard() {
   })
 
   useEffect(() => {
-    loadAllData()
-  }, [loadAllData])
+    if (isAuthenticated) {
+      loadAllData()
+    }
+  }, [loadAllData, isAuthenticated])
 
   const getSeverityColor = (severity) => {
     const colors = {
@@ -54,6 +58,19 @@ export default function ThreatDashboard() {
     setNewThreat({ title: '', description: '', threat_type: '', severity: 'MEDIUM', region: 'Global' })
   }
 
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+          <p className="text-gray-600 mb-2">Login required to access Threat Intelligence</p>
+          <p className="text-gray-500 text-sm">Please log in to view threat data and analytics</p>
+        </div>
+      </div>
+    )
+  }
+
   if (isLoading && !dashboardData) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -66,17 +83,40 @@ export default function ThreatDashboard() {
   }
 
   if (error) {
+    // Check if it's an authentication error
+    const isAuthError = error.includes('Token is missing') || error.includes('401') || error.includes('Unauthorized')
+    
     return (
       <div className="p-4">
         <MobileCard className="bg-red-50 border-red-200">
           <div className="flex items-center gap-2 text-red-800 mb-2">
             <AlertTriangle className="w-5 h-5" />
-            <span className="font-medium">Error loading data</span>
+            <span className="font-medium">
+              {isAuthError ? 'Authentication Required' : 'Error loading data'}
+            </span>
           </div>
-          <p className="text-red-700 text-sm mb-3">{error}</p>
-          <MobileButton onClick={clearError} variant="outline" size="sm" className="w-full">
-            Try Again
-          </MobileButton>
+          <p className="text-red-700 text-sm mb-3">
+            {isAuthError 
+              ? 'Please log in to access threat intelligence data. Your session may have expired.'
+              : error
+            }
+          </p>
+          <div className="flex gap-2">
+            {isAuthError ? (
+              <MobileButton 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+              >
+                Go to Login
+              </MobileButton>
+            ) : (
+              <MobileButton onClick={clearError} variant="outline" size="sm" className="flex-1">
+                Try Again
+              </MobileButton>
+            )}
+          </div>
         </MobileCard>
       </div>
     )
@@ -102,16 +142,18 @@ export default function ThreatDashboard() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-2 mb-4">
-        <MobileButton onClick={() => loadAllData()} variant="outline" size="sm" className="flex-1">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </MobileButton>
-        <MobileButton onClick={() => setShowNewThreatForm(true)} size="sm" className="flex-1">
-          <Plus className="w-4 h-4 mr-2" />
-          New Threat
-        </MobileButton>
-      </div>
+      {isAuthenticated && (
+        <div className="flex gap-2 mb-4">
+          <MobileButton onClick={() => loadAllData()} variant="outline" size="sm" className="flex-1">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </MobileButton>
+          <MobileButton onClick={() => setShowNewThreatForm(true)} size="sm" className="flex-1">
+            <Plus className="w-4 h-4 mr-2" />
+            New Threat
+          </MobileButton>
+        </div>
+      )}
 
       {/* Stats Overview */}
       <MobileStatsGrid>

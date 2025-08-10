@@ -14,11 +14,14 @@ import {
   ThumbsDown,
   CheckCircle,
   Clock,
-  Star
+  Star,
+  Lock
 } from 'lucide-react';
 import { useCommunity } from '../hooks/useCommunity';
+import { useAuth } from '../hooks/useAuth';
 
 export default function CommunityReporting() {
+  const { isAuthenticated } = useAuth();
   const {
     reports,
     trendingThreats,
@@ -53,8 +56,10 @@ export default function CommunityReporting() {
   const [commentText, setCommentText] = useState('');
 
   useEffect(() => {
-    loadAllData();
-  }, [loadAllData]);
+    if (isAuthenticated) {
+      loadAllData();
+    }
+  }, [loadAllData, isAuthenticated]);
 
   const handleSubmitReport = async (e) => {
     e.preventDefault();
@@ -100,6 +105,19 @@ export default function CommunityReporting() {
     }
   };
 
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+          <p className="text-gray-600 mb-2">Login required to access Community</p>
+          <p className="text-gray-500 text-sm">Please log in to view and contribute to community reports</p>
+        </div>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -112,15 +130,38 @@ export default function CommunityReporting() {
   }
 
   if (error) {
+    // Check if it's an authentication error
+    const isAuthError = error.includes('Token is missing') || error.includes('401') || error.includes('Unauthorized')
+    
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
         <div className="flex items-center">
           <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
-          <span className="text-red-800">{error}</span>
+          <span className="text-red-800">
+            {isAuthError ? 'Authentication Required' : error}
+          </span>
         </div>
-        <Button onClick={clearError} className="mt-2" variant="outline" size="sm">
-          Dismiss
-        </Button>
+        <p className="text-red-700 text-sm mt-2">
+          {isAuthError 
+            ? 'Please log in to access community features. Your session may have expired.'
+            : ''
+          }
+        </p>
+        <div className="flex gap-2 mt-3">
+          {isAuthError ? (
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline" 
+              size="sm"
+            >
+              Go to Login
+            </Button>
+          ) : (
+            <Button onClick={clearError} variant="outline" size="sm">
+              Dismiss
+            </Button>
+          )}
+        </div>
       </div>
     );
   }

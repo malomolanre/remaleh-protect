@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Target, TrendingUp, BookOpen, Award, Shield, AlertTriangle, CheckCircle, RefreshCw, Plus } from 'lucide-react'
+import { User, Target, TrendingUp, BookOpen, Award, Shield, AlertTriangle, CheckCircle, RefreshCw, Plus, Lock } from 'lucide-react'
 import { MobileCard } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
@@ -7,8 +7,10 @@ import MobileModal from './MobileModal'
 import { MobileGrid, MobileGridItem, MobileStatsGrid } from './ui/mobile-grid'
 import { MobileList, MobileListItemWithBadge } from './ui/mobile-list'
 import { useRiskProfile } from '../hooks/useRiskProfile'
+import { useAuth } from '../hooks/useAuth'
 
 export default function RiskProfile() {
+  const { isAuthenticated } = useAuth()
   const {
     profile,
     scans,
@@ -31,8 +33,10 @@ export default function RiskProfile() {
   })
 
   useEffect(() => {
-    loadAllData()
-  }, [loadAllData])
+    if (isAuthenticated) {
+      loadAllData()
+    }
+  }, [loadAllData, isAuthenticated])
 
   const getRiskColor = (risk) => {
     const colors = {
@@ -73,6 +77,19 @@ export default function RiskProfile() {
     setNewModule({ title: '', description: '', category: '', difficulty: 'BEGINNER' })
   }
 
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+          <p className="text-gray-600 mb-2">Login required to access Risk Profile</p>
+          <p className="text-gray-500 text-sm">Please log in to view your security profile and recommendations</p>
+        </div>
+      </div>
+    )
+  }
+
   if (isLoading && !profile) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -85,17 +102,40 @@ export default function RiskProfile() {
   }
 
   if (error) {
+    // Check if it's an authentication error
+    const isAuthError = error.includes('Token is missing') || error.includes('401') || error.includes('Unauthorized')
+    
     return (
       <div className="p-4">
         <MobileCard className="bg-red-50 border-red-200">
           <div className="flex items-center gap-2 text-red-800 mb-2">
             <AlertTriangle className="w-5 h-5" />
-            <span className="font-medium">Error loading profile</span>
+            <span className="font-medium">
+              {isAuthError ? 'Authentication Required' : 'Error loading profile'}
+            </span>
           </div>
-          <p className="text-red-700 text-sm mb-3">{error}</p>
-          <MobileButton onClick={clearError} variant="outline" size="sm" className="w-full">
-            Try Again
-          </MobileButton>
+          <p className="text-red-700 text-sm mb-3">
+            {isAuthError 
+              ? 'Please log in to access your risk profile. Your session may have expired.'
+              : error
+            }
+          </p>
+          <div className="flex gap-2">
+            {isAuthError ? (
+              <MobileButton 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+              >
+                Go to Login
+              </MobileButton>
+            ) : (
+              <MobileButton onClick={clearError} variant="outline" size="sm" className="flex-1">
+                Try Again
+              </MobileButton>
+            )}
+          </div>
         </MobileCard>
       </div>
     )
