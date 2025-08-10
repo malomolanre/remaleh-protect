@@ -5,7 +5,10 @@ from flask_limiter.util import get_remote_address
 import logging
 import os
 from datetime import datetime
-from models import db
+try:
+    from src.models import db
+except ImportError:
+    from models import db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -47,11 +50,17 @@ def create_app():
             print("✓ Database tables created successfully")
             
             # Create admin user if it doesn't exist
-            from auth import create_admin_user
+            try:
+                from src.auth import create_admin_user
+            except ImportError:
+                from auth import create_admin_user
             create_admin_user()
             
             # Create sample learning modules if they don't exist
-            from models import LearningModule
+            try:
+                from src.models import LearningModule
+            except ImportError:
+                from models import LearningModule
             if LearningModule.query.count() == 0:
                 sample_modules = [
                     {
@@ -112,16 +121,28 @@ def create_app():
     )
 
     # Import and register blueprints
-    from routes.scam import scam_bp
-    from routes.enhanced_scam import enhanced_scam_bp
-    from routes.link_analysis import link_analysis_bp
-    from routes.breach_check import breach_bp
-    from routes.chat import chat_bp
-    from routes.auth import auth_bp
-    from routes.threat_intelligence import threat_intel_bp
-    from routes.risk_profile import risk_profile_bp
-    from routes.community import community_bp
-    from routes.admin import admin_bp
+    try:
+        from src.routes.scam import scam_bp
+        from src.routes.enhanced_scam import enhanced_scam_bp
+        from src.routes.link_analysis import link_analysis_bp
+        from src.routes.breach_check import breach_bp
+        from src.routes.chat import chat_bp
+        from src.routes.auth import auth_bp
+        from src.routes.threat_intelligence import threat_intel_bp
+        from src.routes.risk_profile import risk_profile_bp
+        from src.routes.community import community_bp
+        from src.routes.admin import admin_bp
+    except ImportError:
+        from routes.scam import scam_bp
+        from routes.enhanced_scam import enhanced_scam_bp
+        from routes.link_analysis import link_analysis_bp
+        from routes.breach_check import breach_bp
+        from routes.chat import chat_bp
+        from routes.auth import auth_bp
+        from routes.threat_intelligence import threat_intel_bp
+        from routes.risk_profile import risk_profile_bp
+        from routes.community import community_bp
+        from routes.admin import admin_bp
 
     # Example of applying a per-route limit on a heavy endpoint:
     # @scam_bp.route('/comprehensive', methods=['POST'])

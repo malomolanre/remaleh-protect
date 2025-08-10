@@ -19,3 +19,17 @@ Admin user already exists
 2025-08-10 09:58:54,462 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 09:58:54] "POST /api/auth/login HTTP/1.1" 200 -
 2025-08-10 09:58:58,646 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 09:58:58] "GET /api/threat_intelligence/dashboard HTTP/1.1" 200 -
 2025-08-10 09:59:03,106 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 09:59:03] "GET /api/threat_intelligence/dashboard HTTP/1.1" 200 -
+2025-08-10 10:07:47,815 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 10:07:47] "GET /api/health HTTP/1.1" 200 -
+2025-08-10 10:07:50,880 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 10:07:50] "GET /api/test HTTP/1.1" 200 -
+2025-08-10 10:07:54,676 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 10:07:54] "POST /api/scam/comprehensive HTTP/1.1" 200 -
+2025-08-10 10:07:58,154 - routes.breach_check - INFO - === BREACH CHECK API CALL STARTED ===
+2025-08-10 10:07:58,154 - routes.breach_check - INFO - Single email detected: test@example.com
+2025-08-10 10:07:58,154 - routes.breach_check - INFO - API key check - Present: False
+2025-08-10 10:07:58,154 - routes.breach_check - INFO - API key value (first 10 chars): None...
+2025-08-10 10:07:58,154 - routes.breach_check - WARNING - No valid API key found, using enhanced simulation
+2025-08-10 10:07:58,154 - routes.breach_check - INFO - === USING ENHANCED SIMULATION MODE ===
+2025-08-10 10:07:58,154 - routes.breach_check - INFO - Simulating breach check for: test@example.com
+2025-08-10 10:07:58,154 - routes.breach_check - INFO - Simulation result: CLEAN
+2025-08-10 10:07:58,155 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 10:07:58] "POST /api/breach/check HTTP/1.1" 200 -
+2025-08-10 10:09:47,554 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 10:09:47] "GET /api/health HTTP/1.1" 200 -
+2025-08-10 10:09:51,533 - werkzeug - INFO - 127.0.0.1 - - [10/Aug/2025 10:09:51] "POST /api/scam/comprehensive HTTP/1.1" 200 -

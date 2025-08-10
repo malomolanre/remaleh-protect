@@ -1,6 +1,10 @@
 from flask import Blueprint, request, jsonify
-from models import db, User, UserScan, LearningModule, LearningProgress, ProtectionStatus
-from auth import token_required, get_current_user_id
+try:
+    from src.models import db, User, UserScan, LearningModule, LearningProgress, ProtectionStatus
+    from src.auth import token_required, get_current_user_id
+except ImportError:
+    from models import db, User, UserScan, LearningModule, LearningProgress, ProtectionStatus
+    from auth import token_required, get_current_user_id
 from datetime import datetime, timedelta
 from sqlalchemy import func, desc
 import json

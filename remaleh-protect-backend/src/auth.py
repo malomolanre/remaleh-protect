@@ -4,7 +4,10 @@ from flask import request, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt
-from models import db, User
+try:
+    from src.models import db, User
+except ImportError:
+    from models import db, User
 
 def create_tokens(user_id):
     """Create access and refresh tokens for a user"""
