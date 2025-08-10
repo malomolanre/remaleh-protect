@@ -9,7 +9,7 @@ import { MobileList, MobileListItemWithBadge } from './ui/mobile-list'
 import { useRiskProfile } from '../hooks/useRiskProfile'
 import { useAuth } from '../hooks/useAuth'
 
-export default function RiskProfile() {
+export default function RiskProfile({ setActiveTab }) {
   const { isAuthenticated } = useAuth()
   const {
     profile,
@@ -82,9 +82,15 @@ export default function RiskProfile() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+          <Lock className="w-8 h-8 mx-auto mb-4 text-gray-400" />
           <p className="text-gray-600 mb-2">Login required to access Risk Profile</p>
-          <p className="text-gray-500 text-sm">Please log in to view your security profile and recommendations</p>
+          <p className="text-gray-500 text-sm mb-4">Please log in to view your security profile and recommendations</p>
+          <button
+            onClick={() => setActiveTab('login')}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+          >
+            Go to Login
+          </button>
         </div>
       </div>
     )
@@ -123,7 +129,7 @@ export default function RiskProfile() {
           <div className="flex gap-2">
             {isAuthError ? (
               <MobileButton 
-                onClick={() => window.location.reload()} 
+                onClick={() => setActiveTab('login')} 
                 variant="outline" 
                 size="sm" 
                 className="flex-1"

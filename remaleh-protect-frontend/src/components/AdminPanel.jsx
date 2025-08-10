@@ -7,6 +7,9 @@ import LearningModuleManagement from './admin/LearningModuleManagement';
 import SystemMaintenance from './admin/SystemMaintenance';
 import MobileHeader from './MobileHeader';
 import MobileNavigation from './MobileNavigation';
+import { Settings, Users, Shield, BarChart3, ArrowLeft, Cog, UserCheck, Activity } from 'lucide-react'
+import { MobileCard } from './ui/mobile-card'
+import { MobileButton } from './ui/mobile-button'
 
 const AdminPanel = () => {
   const { user, isAuthenticated } = useAuth();
@@ -73,6 +76,20 @@ const AdminPanel = () => {
     <div className="min-h-screen bg-gray-50">
       <MobileHeader title="Admin Panel" />
       
+      {/* Header with Back Button */}
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => setActiveTab('admin')}
+          className="p-2 mr-3 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+          <p className="text-gray-600 text-sm">System administration and management</p>
+        </div>
+      </div>
+
       {/* Admin Navigation Tabs */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

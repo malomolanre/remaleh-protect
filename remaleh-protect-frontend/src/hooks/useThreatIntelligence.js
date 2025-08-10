@@ -15,17 +15,50 @@ export const useThreatIntelligence = () => {
       setIsLoading(true);
       setError(null);
       
+      // Debug: Check authentication token
+      const token = localStorage.getItem('authToken');
+      console.log('🔐 Threat Intelligence - Auth Token:', token ? 'Present' : 'Missing');
+      console.log('🔐 Threat Intelligence - Token value:', token ? `${token.substring(0, 20)}...` : 'None');
+      
+      console.log('📡 Threat Intelligence - Fetching dashboard from:', API_ENDPOINTS.THREAT_INTELLIGENCE.DASHBOARD);
+      
       const response = await apiGet(API_ENDPOINTS.THREAT_INTELLIGENCE.DASHBOARD);
+      console.log('📡 Threat Intelligence - Dashboard response status:', response.status);
+      console.log('📡 Threat Intelligence - Dashboard response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('📡 Threat Intelligence - Dashboard data received:', data);
         setDashboardData(data);
         return data;
       } else {
-        throw new Error('Failed to fetch dashboard data');
+        const errorText = await response.text();
+        console.error('📡 Threat Intelligence - Dashboard error response:', errorText);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to fetch dashboard data';
+        if (response.status === 401) {
+          errorMessage = 'Authentication required. Please log in to access threat intelligence data.';
+        } else if (response.status === 403) {
+          errorMessage = 'Access denied. You do not have permission to view this data.';
+        } else if (response.status === 404) {
+          errorMessage = 'Threat intelligence service not found. Please contact support.';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (errorText) {
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch {
+            errorMessage = `${errorMessage}: ${errorText}`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (err) {
+      console.error('📡 Threat Intelligence - Dashboard fetch error:', err);
       setError(err.message);
-      console.error('Error fetching dashboard:', err);
     } finally {
       setIsLoading(false);
     }
@@ -40,17 +73,44 @@ export const useThreatIntelligence = () => {
       const queryParams = new URLSearchParams(filters).toString();
       const endpoint = `${API_ENDPOINTS.THREAT_INTELLIGENCE.THREATS}${queryParams ? `?${queryParams}` : ''}`;
       
+      console.log('📡 Threat Intelligence - Fetching threats from:', endpoint);
+      
       const response = await apiGet(endpoint);
+      console.log('📡 Threat Intelligence - Threats response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('📡 Threat Intelligence - Threats data received:', data);
         setThreats(data.threats || data);
         return data;
       } else {
-        throw new Error('Failed to fetch threats');
+        const errorText = await response.text();
+        console.error('📡 Threat Intelligence - Threats error response:', errorText);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to fetch threats';
+        if (response.status === 401) {
+          errorMessage = 'Authentication required. Please log in to access threat data.';
+        } else if (response.status === 403) {
+          errorMessage = 'Access denied. You do not have permission to view threat data.';
+        } else if (response.status === 404) {
+          errorMessage = 'Threat service not found. Please contact support.';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (errorText) {
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch {
+            errorMessage = `${errorMessage}: ${errorText}`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (err) {
+      console.error('📡 Threat Intelligence - Threats fetch error:', err);
       setError(err.message);
-      console.error('Error fetching threats:', err);
     } finally {
       setIsLoading(false);
     }
@@ -62,17 +122,44 @@ export const useThreatIntelligence = () => {
       setIsLoading(true);
       setError(null);
       
+      console.log('📡 Threat Intelligence - Fetching alerts from:', API_ENDPOINTS.THREAT_INTELLIGENCE.ALERTS);
+      
       const response = await apiGet(API_ENDPOINTS.THREAT_INTELLIGENCE.ALERTS);
+      console.log('📡 Threat Intelligence - Alerts response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('📡 Threat Intelligence - Alerts data received:', data);
         setAlerts(data.alerts || data);
         return data;
       } else {
-        throw new Error('Failed to fetch alerts');
+        const errorText = await response.text();
+        console.error('📡 Threat Intelligence - Alerts error response:', errorText);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to fetch alerts';
+        if (response.status === 401) {
+          errorMessage = 'Authentication required. Please log in to access alert data.';
+        } else if (response.status === 403) {
+          errorMessage = 'Access denied. You do not have permission to view alert data.';
+        } else if (response.status === 404) {
+          errorMessage = 'Alert service not found. Please contact support.';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (errorText) {
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch {
+            errorMessage = `${errorMessage}: ${errorText}`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (err) {
+      console.error('📡 Threat Intelligence - Alerts fetch error:', err);
       setError(err.message);
-      console.error('Error fetching alerts:', err);
     } finally {
       setIsLoading(false);
     }
@@ -84,17 +171,44 @@ export const useThreatIntelligence = () => {
       setIsLoading(true);
       setError(null);
       
+      console.log('📡 Threat Intelligence - Fetching trends from:', API_ENDPOINTS.THREAT_INTELLIGENCE.TRENDS);
+      
       const response = await apiGet(API_ENDPOINTS.THREAT_INTELLIGENCE.TRENDS);
+      console.log('📡 Threat Intelligence - Trends response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('📡 Threat Intelligence - Trends data received:', data);
         setTrends(data.trends || data);
         return data;
       } else {
-        throw new Error('Failed to fetch trends');
+        const errorText = await response.text();
+        console.error('📡 Threat Intelligence - Trends error response:', errorText);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to fetch trends';
+        if (response.status === 401) {
+          errorMessage = 'Authentication required. Please log in to access trend data.';
+        } else if (response.status === 403) {
+          errorMessage = 'Access denied. You do not have permission to view trend data.';
+        } else if (response.status === 404) {
+          errorMessage = 'Trend service not found. Please contact support.';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (errorText) {
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch {
+            errorMessage = `${errorMessage}: ${errorText}`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (err) {
+      console.error('📡 Threat Intelligence - Trends fetch error:', err);
       setError(err.message);
-      console.error('Error fetching trends:', err);
     } finally {
       setIsLoading(false);
     }

@@ -3,11 +3,15 @@ export const API = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL
 
 // Log the API base URL for debugging (remove in production)
 if (import.meta.env.DEV) {
-  console.log('API Base URL:', API);
-  console.log('Environment Variables:', {
+  console.log('🌐 API Configuration - API Base URL:', API);
+  console.log('🌐 API Configuration - Environment Variables:', {
     VITE_API_BASE: import.meta.env.VITE_API_BASE,
-    VITE_API_URL: import.meta.env.VITE_API_URL
+    VITE_API_URL: import.meta.env.VITE_API_URL,
+    NODE_ENV: import.meta.env.NODE_ENV,
+    MODE: import.meta.env.MODE
   });
+} else {
+  console.log('🌐 API Configuration - Production API Base URL:', API);
 }
 
 // API endpoints for all features
@@ -81,6 +85,10 @@ export const API_ENDPOINTS = {
 export const apiCall = async (endpoint, options = {}) => {
   const token = localStorage.getItem('authToken');
   
+  console.log('🌐 API Call - Endpoint:', endpoint);
+  console.log('🌐 API Call - Token present:', !!token);
+  console.log('🌐 API Call - Token value:', token ? `${token.substring(0, 20)}...` : 'None');
+  
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
@@ -89,14 +97,21 @@ export const apiCall = async (endpoint, options = {}) => {
     ...options
   };
 
+  console.log('🌐 API Call - Request headers:', defaultOptions.headers);
+  console.log('🌐 API Call - Full URL:', `${API}${endpoint}`);
+
   try {
     const response = await fetch(`${API}${endpoint}`, defaultOptions);
+    console.log('🌐 API Call - Response status:', response.status);
+    console.log('🌐 API Call - Response headers:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       if (response.status === 401) {
+        console.log('🌐 API Call - 401 Unauthorized, attempting token refresh...');
         // Token expired, try to refresh
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
+          console.log('🌐 API Call - Refresh token found, attempting refresh...');
           const refreshResponse = await fetch(`${API}${API_ENDPOINTS.AUTH.REFRESH}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -105,12 +120,15 @@ export const apiCall = async (endpoint, options = {}) => {
           
           if (refreshResponse.ok) {
             const { access_token } = await refreshResponse.json();
+            console.log('🌐 API Call - Token refresh successful, retrying request...');
             localStorage.setItem('authToken', access_token);
             
             // Retry original request with new token
             defaultOptions.headers.Authorization = `Bearer ${access_token}`;
             const retryResponse = await fetch(`${API}${endpoint}`, defaultOptions);
             return retryResponse;
+          } else {
+            console.log('🌐 API Call - Token refresh failed, removing tokens');
           }
         }
         // Redirect to login if refresh fails
@@ -124,7 +142,7 @@ export const apiCall = async (endpoint, options = {}) => {
     
     return response;
   } catch (error) {
-    console.error('API call failed:', error);
+    console.error('🌐 API Call - Request failed:', error);
     throw error;
   }
 };

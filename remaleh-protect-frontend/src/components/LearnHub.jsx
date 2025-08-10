@@ -1,12 +1,30 @@
-import React, { useState } from 'react'
-import { BookOpen, Lock, Mail, Shield, Users, Smartphone, ChevronRight, ChevronLeft } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { BookOpen, Play, CheckCircle, Lock, ArrowLeft, Target, Award, Clock } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
+import { MobileButton } from './ui/mobile-button'
+import { useAuth } from '../hooks/useAuth'
 
-export default function LearnHub() {
-  const [selected, setSelected] = useState(null)
+export default function LearnHub({ setActiveTab }) {
+  const { isAuthenticated } = useAuth()
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [showCompleted, setShowCompleted] = useState(false)
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="space-y-4 p-4">
+      {/* Header with Back Button */}
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => setActiveTab('learn')}
+          className="p-2 mr-3 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Learn Hub</h1>
+          <p className="text-gray-600 text-sm">Master digital security skills</p>
+        </div>
+      </div>
+
       <MobileCard className="mb-6">
         <MobileCardHeader>
           <div className="flex items-center mb-3">

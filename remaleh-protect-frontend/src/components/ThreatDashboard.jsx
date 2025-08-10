@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { TrendingUp, AlertTriangle, Users, Clock, BarChart3, Globe, Shield, Plus, RefreshCw, Lock } from 'lucide-react'
+import { Shield, AlertTriangle, TrendingUp, Globe, ArrowLeft, Activity, Target, Clock } from 'lucide-react'
 import { MobileCard } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
@@ -9,7 +9,7 @@ import { MobileList, MobileListItemWithBadge } from './ui/mobile-list'
 import { useThreatIntelligence } from '../hooks/useThreatIntelligence'
 import { useAuth } from '../hooks/useAuth'
 
-export default function ThreatDashboard() {
+export default function ThreatDashboard({ setActiveTab }) {
   const { isAuthenticated } = useAuth()
   const {
     dashboardData,
@@ -32,10 +32,29 @@ export default function ThreatDashboard() {
   })
 
   useEffect(() => {
+    console.log('🔐 ThreatDashboard - Component mounted, isAuthenticated:', isAuthenticated)
+    console.log('🔐 ThreatDashboard - Auth token in localStorage:', localStorage.getItem('authToken') ? 'Present' : 'Missing')
+    
     if (isAuthenticated) {
+      console.log('🔐 ThreatDashboard - User is authenticated, loading data...')
       loadAllData()
+    } else {
+      console.log('🔐 ThreatDashboard - User is NOT authenticated')
     }
   }, [loadAllData, isAuthenticated])
+
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log('📊 ThreatDashboard - State update:', {
+      isAuthenticated,
+      isLoading,
+      error,
+      dashboardData: dashboardData ? 'Present' : 'None',
+      threats: threats?.length || 0,
+      alerts: alerts?.length || 0,
+      trends: trends?.length || 0
+    })
+  }, [isAuthenticated, isLoading, error, dashboardData, threats, alerts, trends])
 
   const getSeverityColor = (severity) => {
     const colors = {
@@ -63,7 +82,7 @@ export default function ThreatDashboard() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+          <Shield className="w-8 h-8 mx-auto mb-2 text-gray-400" />
           <p className="text-gray-600 mb-2">Login required to access Threat Intelligence</p>
           <p className="text-gray-500 text-sm">Please log in to view threat data and analytics</p>
         </div>
@@ -75,7 +94,7 @@ export default function ThreatDashboard() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
+          <Activity className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
           <p className="text-gray-600">Loading threat intelligence...</p>
         </div>
       </div>
@@ -84,7 +103,7 @@ export default function ThreatDashboard() {
 
   if (error) {
     // Check if it's an authentication error
-    const isAuthError = error.includes('Token is missing') || error.includes('401') || error.includes('Unauthorized')
+    const isAuthError = error.includes('Token is missing') || error.includes('401') || error.includes('Unauthorized') || error.includes('authentication')
     
     return (
       <div className="p-4">
@@ -103,14 +122,24 @@ export default function ThreatDashboard() {
           </p>
           <div className="flex gap-2">
             {isAuthError ? (
-              <MobileButton 
-                onClick={() => window.location.reload()} 
-                variant="outline" 
-                size="sm" 
-                className="flex-1"
-              >
-                Go to Login
-              </MobileButton>
+              <>
+                <MobileButton 
+                  onClick={() => window.location.href = '/login'} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                >
+                  Go to Login
+                </MobileButton>
+                <MobileButton 
+                  onClick={() => window.location.reload()} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                >
+                  Refresh Page
+                </MobileButton>
+              </>
             ) : (
               <MobileButton onClick={clearError} variant="outline" size="sm" className="flex-1">
                 Try Again
@@ -135,24 +164,75 @@ export default function ThreatDashboard() {
 
   return (
     <div className="space-y-4 p-4">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Threat Intelligence</h1>
-        <p className="text-gray-600 text-sm">Real-time insights into emerging scams</p>
+      {/* Header with Back Button */}
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => setActiveTab('threats')}
+          className="p-2 mr-3 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Threat Intelligence</h1>
+          <p className="text-gray-600 text-sm">Real-time security threat monitoring</p>
+        </div>
       </div>
 
       {/* Action Buttons */}
       {isAuthenticated && (
         <div className="flex gap-2 mb-4">
           <MobileButton onClick={() => loadAllData()} variant="outline" size="sm" className="flex-1">
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <Activity className="w-4 h-4 mr-2" />
             Refresh
           </MobileButton>
           <MobileButton onClick={() => setShowNewThreatForm(true)} size="sm" className="flex-1">
-            <Plus className="w-4 h-4 mr-2" />
+            <Target className="w-4 h-4 mr-2" />
             New Threat
           </MobileButton>
         </div>
+      )}
+
+      {/* Debug Section - Only show in development */}
+      {import.meta.env.DEV && (
+        <MobileCard className="bg-blue-50 border-blue-200 mb-4">
+          <div className="p-3">
+            <h3 className="text-sm font-medium text-blue-800 mb-2">🔧 Debug Information</h3>
+            <div className="text-xs text-blue-700 space-y-1">
+              <p>Authentication: {isAuthenticated ? '✅ Authenticated' : '❌ Not Authenticated'}</p>
+              <p>Token: {localStorage.getItem('authToken') ? '✅ Present' : '❌ Missing'}</p>
+              <p>Loading: {isLoading ? '🔄 Yes' : '✅ No'}</p>
+              <p>Error: {error ? `❌ ${error}` : '✅ None'}</p>
+              <p>Data: {dashboardData ? '✅ Loaded' : '❌ Not Loaded'}</p>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <MobileButton 
+                onClick={() => {
+                  console.log('🔧 Debug - Current state:', {
+                    isAuthenticated,
+                    token: localStorage.getItem('authToken'),
+                    error,
+                    dashboardData
+                  });
+                }} 
+                variant="outline" 
+                size="sm"
+              >
+                Log State
+              </MobileButton>
+              <MobileButton 
+                onClick={() => {
+                  localStorage.removeItem('authToken');
+                  localStorage.removeItem('refreshToken');
+                  window.location.reload();
+                }} 
+                variant="outline" 
+                size="sm"
+              >
+                Clear Tokens
+              </MobileButton>
+            </div>
+          </div>
+        </MobileCard>
       )}
 
       {/* Stats Overview */}
@@ -175,7 +255,7 @@ export default function ThreatDashboard() {
           <MobileCard>
             <div className="flex items-center gap-3 p-3">
               <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="w-5 h-5 text-green-600" />
+                <Activity className="w-5 h-5 text-green-600" />
               </div>
               <div>
                 <p className="text-xs text-gray-600">Active Users</p>
@@ -189,7 +269,7 @@ export default function ThreatDashboard() {
           <MobileCard>
             <div className="flex items-center gap-3 p-3">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <BarChart3 className="w-5 h-5 text-purple-600" />
+                <Target className="w-5 h-5 text-purple-600" />
               </div>
               <div>
                 <p className="text-xs text-gray-600">Threats Blocked</p>

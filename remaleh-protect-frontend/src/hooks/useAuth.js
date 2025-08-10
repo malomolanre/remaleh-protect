@@ -11,9 +11,14 @@ export const useAuth = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('authToken');
+      console.log('🔐 useAuth - Checking authentication on mount, token:', token ? 'Present' : 'Missing');
+      
       if (token) {
         try {
+          console.log('🔐 useAuth - Token found, checking profile...');
           const response = await apiGet(API_ENDPOINTS.AUTH.PROFILE);
+          console.log('🔐 useAuth - Profile response status:', response.status);
+          
           if (response.ok) {
             const userData = await response.json();
             // Handle both response formats: {user: {...}} and direct user object
@@ -23,15 +28,20 @@ export const useAuth = () => {
             console.log('Is admin?', user.is_admin);
             setUser(user);
             setIsAuthenticated(true);
+            console.log('🔐 useAuth - Authentication successful, user set');
           } else {
+            console.log('🔐 useAuth - Profile check failed, removing tokens');
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
           }
         } catch (err) {
           console.error('Profile check error:', err);
+          console.log('🔐 useAuth - Profile check error, removing tokens');
           localStorage.removeItem('authToken');
           localStorage.removeItem('refreshToken');
         }
+      } else {
+        console.log('🔐 useAuth - No token found, user not authenticated');
       }
       setIsLoading(false);
     };

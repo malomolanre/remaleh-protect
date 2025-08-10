@@ -13,6 +13,8 @@ import Register from './components/Register'
 import MobileHeader from './components/MobileHeader'
 import MobileNavigation from './components/MobileNavigation'
 import FloatingActionButton from './components/FloatingActionButton'
+import SecurityHub from './components/SecurityHub'
+import CommunityHub from './components/CommunityHub'
 import { useAuth } from './hooks/useAuth'
 import './App.css'
 
@@ -46,19 +48,21 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'breach':
-        return <BreachChecker />
+        // Show SecurityHub for mobile navigation grouping
+        return <SecurityHub setActiveTab={setActiveTab} />
       case 'scam':
-        return <ScamAnalysis />
+        return <ScamAnalysis setActiveTab={setActiveTab} />
       case 'threats':
-        return <ThreatDashboard />
+        return <ThreatDashboard setActiveTab={setActiveTab} />
       case 'profile':
-        return <RiskProfile />
+        return <RiskProfile setActiveTab={setActiveTab} />
       case 'community':
-        return <CommunityReporting />
+        // Show CommunityHub for mobile navigation grouping
+        return <CommunityHub setActiveTab={setActiveTab} />
       case 'chat':
-        return <ChatAssistant />
+        return <ChatAssistant setActiveTab={setActiveTab} />
       case 'learn':
-        return <LearnHub />
+        return <LearnHub setActiveTab={setActiveTab} />
       case 'admin':
         return <AdminPanel />
       case 'login':
@@ -76,7 +80,7 @@ function App() {
           setActiveTab('login');
         }} />
       default:
-        return <BreachChecker />
+        return <SecurityHub setActiveTab={setActiveTab} />
     }
   }
 

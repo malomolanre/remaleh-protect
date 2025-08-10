@@ -15,12 +15,13 @@ import {
   CheckCircle,
   Clock,
   Star,
-  Lock
+  Lock,
+  ArrowLeft
 } from 'lucide-react';
 import { useCommunity } from '../hooks/useCommunity';
 import { useAuth } from '../hooks/useAuth';
 
-export default function CommunityReporting() {
+export default function CommunityReporting({ setActiveTab }) {
   const { isAuthenticated } = useAuth();
   const {
     reports,
@@ -167,22 +168,18 @@ export default function CommunityReporting() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Community Threat Reporting</h1>
-          <p className="text-gray-600">Report threats, share insights, and help protect the community</p>
-        </div>
-        <div className="flex space-x-3">
-          <Button onClick={() => setShowNewReport(true)}>
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            Report Threat
-          </Button>
-          <Button onClick={() => setShowNewAlert(true)} variant="outline">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Create Alert
-          </Button>
+    <div className="space-y-6 p-4">
+      {/* Header with Back Button */}
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => setActiveTab('community')}
+          className="p-2 mr-3 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Community Reports</h1>
+          <p className="text-gray-600 text-sm">Report and track security threats</p>
         </div>
       </div>
 

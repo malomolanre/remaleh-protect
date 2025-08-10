@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Authentication Debug - Remaleh Protect</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .btn-success { background-color: #28a745; }
+        .btn-success:hover { background-color: #218838; }
+        .btn-warning { background-color: #ffc107; color: #212529; }
+        .btn-warning:hover { background-color: #e0a800; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-danger:hover { background-color: #c82333; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group { margin: 15px 0; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .test-section {
+            border-left: 4px solid #007bff;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Enhanced Authentication Debug - Remaleh Protect</h1>
+    
+    <div class="container">
+        <h2>🚀 Quick Test Suite</h2>
+        <button onclick="runFullTestSuite()" class="btn-success">Run Full Test Suite</button>
+        <button onclick="testBackendConnectivity()" class="btn-warning">Test Backend Only</button>
+        <button onclick="testAuthenticationFlow()" class="btn-warning">Test Auth Flow</button>
+        <button onclick="testProtectedEndpoints()" class="btn-warning">Test Protected Endpoints</button>
+        <div id="quickTestResults"></div>
+    </div>
+
+    <div class="container">
+        <h2>Current Status</h2>
+        <div id="status"></div>
+    </div>
+
+    <div class="grid">
+        <div class="container">
+            <h2>🔑 Test Authentication</h2>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="admin@remaleh.com" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Enter password">
+            </div>
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="testLogout()">Test Logout</button>
+            <button onclick="clearTokens()">Clear Tokens</button>
+            <button onclick="testTokenRefresh()">Test Token Refresh</button>
+        </div>
+
+        <div class="container">
+            <h2>🌐 Test API Endpoints</h2>
+            <button onclick="testHealthCheck()">Health Check</button>
+            <button onclick="testThreatIntel()">Threat Intelligence</button>
+            <button onclick="testRiskProfile()">Risk Profile</button>
+            <button onclick="testCommunity()">Community</button>
+            <button onclick="testBreachCheck()">Breach Check</button>
+            <button onclick="testScamAnalysis()">Scam Analysis</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 Debug Information</h2>
+        <button onclick="refreshDebugInfo()">Refresh</button>
+        <button onclick="exportDebugInfo()">Export Debug Info</button>
+        <div id="debugInfo"></div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Test Results Summary</h2>
+        <div id="testSummary"></div>
+    </div>
+
+    <div class="container">
+        <h2>Console Log</h2>
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="exportLog()">Export Log</button>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://api.remalehprotect.remaleh.com.au';
+        let testResults = {};
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function updateTestResult(testName, success, message, details = '') {
+            testResults[testName] = { success, message, details, timestamp: new Date().toISOString() };
+            updateTestSummary();
+        }
+
+        function updateTestSummary() {
+            const summaryDiv = document.getElementById('testSummary');
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(r => r.success).length;
+            const failedTests = totalTests - passedTests;
+            
+            summaryDiv.innerHTML = `
+                <div class="status ${failedTests === 0 ? 'success' : failedTests < totalTests ? 'warning' : 'error'}">
+                    <strong>Test Summary:</strong> ${passedTests}/${totalTests} tests passed
+                    ${failedTests > 0 ? ` (${failedTests} failed)` : ''}
+                </div>
+                <div style="margin-top: 10px;">
+                    ${Object.entries(testResults).map(([name, result]) => `
+                        <div class="test-result ${result.success ? 'success' : 'error'}">
+                            <strong>${name}:</strong> ${result.success ? '✅' : '❌'} ${result.message}
+                            ${result.details ? `<br><small>${result.details}</small>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function updateDebugInfo() {
+            const debugDiv = document.getElementById('debugInfo');
+            const token = localStorage.getItem('authToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            // Check token validity
+            let tokenStatus = '❌ Missing';
+            let tokenDetails = '';
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const expiry = new Date(payload.exp * 1000);
+                    const now = new Date();
+                    if (expiry > now) {
+                        tokenStatus = `✅ Valid (expires ${expiry.toLocaleString()})`;
+                        tokenDetails = `Issued: ${new Date(payload.iat * 1000).toLocaleString()}`;
+                    } else {
+                        tokenStatus = `⚠️ Expired (expired ${expiry.toLocaleString()})`;
+                    }
+                } catch (e) {
+                    tokenStatus = '⚠️ Invalid format';
+                }
+            }
+            
+            debugDiv.innerHTML = `
+                <div class="status info">
+                    <strong>Local Storage:</strong><br>
+                    Auth Token: ${tokenStatus}<br>
+                    ${tokenDetails ? tokenDetails + '<br>' : ''}
+                    Refresh Token: ${refreshToken ? '✅ Present (' + refreshToken.substring(0, 20) + '...)' : '❌ Missing'}
+                </div>
+                <div class="status info">
+                    <strong>API Base URL:</strong> ${API_BASE}<br>
+                    <strong>Current Time:</strong> ${new Date().toLocaleString()}<br>
+                    <strong>User Agent:</strong> ${navigator.userAgent}
+                </div>
+                <div class="status info">
+                    <strong>Environment:</strong> ${window.location.protocol}//${window.location.host}<br>
+                    <strong>Protocol:</strong> ${window.location.protocol}<br>
+                    <strong>Host:</strong> ${window.location.host}
+                </div>
+            `;
+        }
+
+        async function runFullTestSuite() {
+            log('🚀 Starting full test suite...', 'info');
+            updateStatus('Running full test suite...', 'info');
+            
+            // Reset results
+            testResults = {};
+            
+            // Run tests in sequence
+            await testBackendConnectivity();
+            await testAuthenticationFlow();
+            await testProtectedEndpoints();
+            
+            log('✅ Full test suite completed!', 'success');
+            updateStatus('Full test suite completed!', 'success');
+        }
+
+        async function testBackendConnectivity() {
+            log('🌐 Testing backend connectivity...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Backend health check passed', 'success');
+                    updateTestResult('Backend Health Check', true, 'Backend is healthy', JSON.stringify(data, null, 2));
+                } else {
+                    log(`❌ Backend health check failed: ${response.status}`, 'error');
+                    updateTestResult('Backend Health Check', false, `HTTP ${response.status}`, data.message || 'Unknown error');
+                }
+            } catch (error) {
+                log(`❌ Backend connectivity error: ${error.message}`, 'error');
+                updateTestResult('Backend Health Check', false, 'Connection failed', error.message);
+            }
+        }
+
+        async function testAuthenticationFlow() {
+            log('🔐 Testing authentication flow...', 'info');
+            
+            // Test registration (if no existing user)
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'test@debug.com',
+                        password: 'TestPass123!',
+                        first_name: 'Debug',
+                        last_name: 'User'
+                    })
+                });
+                
+                if (response.ok) {
+                    log('✅ Test user registration successful', 'success');
+                    updateTestResult('User Registration', true, 'Test user created successfully');
+                } else if (response.status === 409) {
+                    log('ℹ️ Test user already exists', 'info');
+                    updateTestResult('User Registration', true, 'Test user already exists');
+                } else {
+                    const data = await response.json();
+                    log(`⚠️ Registration failed: ${response.status}`, 'warning');
+                    updateTestResult('User Registration', false, `HTTP ${response.status}`, data.message);
+                }
+            } catch (error) {
+                log(`❌ Registration error: ${error.message}`, 'error');
+                updateTestResult('User Registration', false, 'Request failed', error.message);
+            }
+        }
+
+        async function testProtectedEndpoints() {
+            log('🔒 Testing protected endpoints...', 'info');
+            const token = localStorage.getItem('authToken');
+            
+            if (!token) {
+                log('⚠️ No auth token - testing unauthenticated access', 'warning');
+                
+                // Test unauthenticated access to protected endpoints
+                const endpoints = [
+                    '/api/threat_intelligence/dashboard',
+                    '/api/risk_profile/current',
+                    '/api/community/reports'
+                ];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(`${API_BASE}${endpoint}`);
+                        if (response.status === 401) {
+                            log(`✅ ${endpoint} properly protected (401)`, 'success');
+                            updateTestResult(`${endpoint} Protection`, true, 'Properly rejects unauthenticated access');
+                        } else {
+                            log(`⚠️ ${endpoint} unexpected response: ${response.status}`, 'warning');
+                            updateTestResult(`${endpoint} Protection`, false, `Unexpected response: ${response.status}`);
+                        }
+                    } catch (error) {
+                        log(`❌ ${endpoint} error: ${error.message}`, 'error');
+                        updateTestResult(`${endpoint} Protection`, false, 'Request failed', error.message);
+                    }
+                }
+            } else {
+                log('🔑 Testing authenticated access to protected endpoints', 'info');
+                
+                // Test authenticated access
+                const endpoints = [
+                    { path: '/api/threat_intelligence/dashboard', name: 'Threat Intelligence' },
+                    { path: '/api/risk_profile/current', name: 'Risk Profile' },
+                    { path: '/api/community/reports', name: 'Community Reports' }
+                ];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(`${API_BASE}${endpoint.path}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        
+                        if (response.ok) {
+                            log(`✅ ${endpoint.name} accessible`, 'success');
+                            updateTestResult(`${endpoint.name} Access`, true, 'Successfully accessed');
+                        } else {
+                            const data = await response.text();
+                            log(`❌ ${endpoint.name} failed: ${response.status}`, 'error');
+                            updateTestResult(`${endpoint.name} Access`, false, `HTTP ${response.status}`, data);
+                        }
+                    } catch (error) {
+                        log(`❌ ${endpoint.name} error: ${error.message}`, 'error');
+                        updateTestResult(`${endpoint.name} Access`, false, 'Request failed', error.message);
+                    }
+                }
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                updateStatus('Please enter both email and password', 'error');
+                return;
+            }
+
+            log('🔐 Attempting login...', 'info');
+            updateStatus('Logging in...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('authToken', data.access_token);
+                    localStorage.setItem('refreshToken', data.refresh_token);
+                    log('✅ Login successful!', 'success');
+                    updateStatus('Login successful!', 'success');
+                    updateTestResult('User Login', true, 'Authentication successful');
+                    updateDebugInfo();
+                } else {
+                    log(`❌ Login failed: ${data.message}`, 'error');
+                    updateStatus(`Login failed: ${data.message}`, 'error');
+                    updateTestResult('User Login', false, data.message, `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`, 'error');
+                updateStatus(`Login error: ${error.message}`, 'error');
+                updateTestResult('User Login', false, 'Request failed', error.message);
+            }
+        }
+
+        async function testLogout() {
+            log('🔐 Attempting logout...', 'info');
+            
+            try {
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    const response = await fetch(`${API_BASE}/api/auth/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        log('✅ Logout successful!', 'success');
+                        updateTestResult('User Logout', true, 'Logout successful');
+                    } else {
+                        log('⚠️ Logout request failed, but clearing tokens anyway', 'warning');
+                        updateTestResult('User Logout', false, 'Logout request failed', 'HTTP ' + response.status);
+                    }
+                }
+                
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('refreshToken');
+                updateStatus('Logged out and tokens cleared', 'success');
+                updateDebugInfo();
+            } catch (error) {
+                log(`❌ Logout error: ${error.message}`, 'error');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('refreshToken');
+                updateStatus('Tokens cleared despite logout error', 'warning');
+                updateTestResult('User Logout', false, 'Request failed', error.message);
+                updateDebugInfo();
+            }
+        }
+
+        function clearTokens() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            log('🗑️ Tokens cleared from localStorage', 'info');
+            updateStatus('Tokens cleared', 'success');
+            updateDebugInfo();
+        }
+
+        async function testTokenRefresh() {
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            if (!refreshToken) {
+                log('❌ No refresh token found', 'error');
+                updateStatus('No refresh token found', 'error');
+                return;
+            }
+
+            log('🔄 Testing token refresh...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ refresh_token: refreshToken })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('authToken', data.access_token);
+                    log('✅ Token refresh successful!', 'success');
+                    updateStatus('Token refresh successful!', 'success');
+                    updateTestResult('Token Refresh', true, 'Token refreshed successfully');
+                    updateDebugInfo();
+                } else {
+                    log(`❌ Token refresh failed: ${data.message}`, 'error');
+                    updateStatus(`Token refresh failed: ${data.message}`, 'error');
+                    updateTestResult('Token Refresh', false, data.message, `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Token refresh error: ${error.message}`, 'error');
+                updateStatus(`Token refresh error: ${error.message}`, 'error');
+                updateTestResult('Token Refresh', false, 'Request failed', error.message);
+            }
+        }
+
+        async function testHealthCheck() {
+            log('🏥 Testing health check endpoint...', 'info');
+            await testBackendConnectivity();
+        }
+
+        async function testThreatIntel() {
+            const token = localStorage.getItem('authToken');
+            
+            if (!token) {
+                log('❌ No auth token found. Please login first.', 'error');
+                updateStatus('No auth token found. Please login first.', 'error');
+                return;
+            }
+
+            log('📡 Testing threat intelligence endpoint...', 'info');
+            updateStatus('Testing threat intelligence...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/threat_intelligence/dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    log('✅ Threat intelligence accessible!', 'success');
+                    log(`📊 Response: ${data.substring(0, 200)}...`, 'info');
+                    updateStatus('Threat intelligence accessible!', 'success');
+                    updateTestResult('Threat Intelligence', true, 'Successfully accessed');
+                } else {
+                    log(`❌ Threat intelligence failed: ${response.status} - ${data}`, 'error');
+                    updateStatus(`Threat intelligence failed: ${response.status}`, 'error');
+                    updateTestResult('Threat Intelligence', false, `HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                log(`❌ Threat intelligence error: ${error.message}`, 'error');
+                updateStatus(`Threat intelligence error: ${error.message}`, 'error');
+                updateTestResult('Threat Intelligence', false, 'Request failed', error.message);
+            }
+        }
+
+        async function testRiskProfile() {
+            const token = localStorage.getItem('authToken');
+            
+            if (!token) {
+                log('❌ No auth token found. Please login first.', 'error');
+                updateStatus('No auth token found. Please login first.', 'error');
+                return;
+            }
+
+            log('📊 Testing risk profile endpoint...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/risk_profile/current`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    log('✅ Risk profile accessible!', 'success');
+                    updateTestResult('Risk Profile', true, 'Successfully accessed');
+                } else {
+                    log(`❌ Risk profile failed: ${response.status} - ${data}`, 'error');
+                    updateTestResult('Risk Profile', false, `HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                log(`❌ Risk profile error: ${error.message}`, 'error');
+                updateTestResult('Risk Profile', false, 'Request failed', error.message);
+            }
+        }
+
+        async function testCommunity() {
+            const token = localStorage.getItem('authToken');
+            
+            if (!token) {
+                log('❌ No auth token found. Please login first.', 'error');
+                updateStatus('No auth token found. Please login first.', 'error');
+                return;
+            }
+
+            log('👥 Testing community endpoint...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/community/reports`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    log('✅ Community endpoint accessible!', 'success');
+                    updateTestResult('Community Reports', true, 'Successfully accessed');
+                } else {
+                    log(`❌ Community endpoint failed: ${response.status} - ${data}`, 'error');
+                    updateTestResult('Community Reports', false, `HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                log(`❌ Community endpoint error: ${error.message}`, 'error');
+                updateTestResult('Community Reports', false, 'Request failed', error.message);
+            }
+        }
+
+        async function testBreachCheck() {
+            log('🔍 Testing breach check endpoint...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/breach/check`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: 'test@example.com' })
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    log('✅ Breach check accessible!', 'success');
+                    updateTestResult('Breach Check', true, 'Successfully accessed');
+                } else {
+                    log(`❌ Breach check failed: ${response.status} - ${data}`, 'error');
+                    updateTestResult('Breach Check', false, `HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                log(`❌ Breach check error: ${error.message}`, 'error');
+                updateTestResult('Breach Check', false, 'Request failed', error.message);
+            }
+        }
+
+        async function testScamAnalysis() {
+            log('🎭 Testing scam analysis endpoint...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/scam/comprehensive`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        url: 'https://example.com', 
+                        description: 'Test scam analysis' 
+                    })
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    log('✅ Scam analysis accessible!', 'success');
+                    updateTestResult('Scam Analysis', true, 'Successfully accessed');
+                } else {
+                    log(`❌ Scam analysis failed: ${response.status} - ${data}`, 'error');
+                    updateTestResult('Scam Analysis', false, `HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                log(`❌ Scam analysis error: ${error.message}`, 'error');
+                updateTestResult('Scam Analysis', false, 'Request failed', error.message);
+            }
+        }
+
+        function refreshDebugInfo() {
+            updateDebugInfo();
+        }
+
+        function exportDebugInfo() {
+            const debugData = {
+                timestamp: new Date().toISOString(),
+                apiBase: API_BASE,
+                userAgent: navigator.userAgent,
+                location: window.location.href,
+                localStorage: {
+                    authToken: localStorage.getItem('authToken') ? 'Present' : 'Missing',
+                    refreshToken: localStorage.getItem('refreshToken') ? 'Present' : 'Missing'
+                },
+                testResults: testResults
+            };
+            
+            const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `remaleh-debug-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportLog() {
+            const logDiv = document.getElementById('log');
+            const logText = logDiv.innerText;
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `remaleh-log-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize
+        updateDebugInfo();
+        updateStatus('Enhanced debug page loaded - Ready for comprehensive testing', 'info');
+        log('🚀 Enhanced debug page loaded with comprehensive testing capabilities', 'info');
+        log(`🌐 API Base URL: ${API_BASE}`, 'info');
+        log(`🔍 Current URL: ${window.location.href}`, 'info');
+    </script>
+</body>
+</html>

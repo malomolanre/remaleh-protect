@@ -1,11 +1,11 @@
-import React from 'react'
-import { MessageSquare, Shield } from 'lucide-react'
-import { useChatAssistant } from '../hooks/useChatAssistant'
+import React, { useState, useRef, useEffect } from 'react'
+import { Send, Bot, User, ArrowLeft, MessageSquare, Shield } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 import { MobileInput } from './ui/mobile-input'
 import { Button } from './ui/button'
+import { useChatAssistant } from '../hooks/useChatAssistant'
 
-export default function ChatAssistant() {
+export default function ChatAssistant({ setActiveTab }) {
   const {
     chatMessages,
     inputMessage,
@@ -18,6 +18,20 @@ export default function ChatAssistant() {
 
   return (
     <div className="p-4 md:p-6">
+      {/* Header with Back Button */}
+      <div className="flex items-center mb-4">
+        <button
+          onClick={() => setActiveTab('community')}
+          className="p-2 mr-3 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1 text-center">
+          <h1 className="text-xl font-bold text-gray-900">AI Assistant</h1>
+          <p className="text-gray-600 text-sm">Get help from our security expert</p>
+        </div>
+      </div>
+
       <MobileCard className="mb-6">
         <MobileCardHeader>
           <div className="flex items-center mb-3">
