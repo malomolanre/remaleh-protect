@@ -34,6 +34,9 @@ def create_app():
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
+    # JWT Secret Key for authentication
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
+    
     # Initialize database
     db.init_app(app)
     
