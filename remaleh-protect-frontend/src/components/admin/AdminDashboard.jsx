@@ -16,12 +16,20 @@ const AdminDashboard = () => {
       const response = await api.get(API_ENDPOINTS.ADMIN.DASHBOARD);
       console.log('Dashboard response:', response);
       
-      if (response.data) {
-        setStats(response.data);
-        setError(null);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Dashboard data:', data);
+        
+        if (data) {
+          setStats(data);
+          setError(null);
+        } else {
+          console.error('Unexpected dashboard response format:', data);
+          setError('Invalid response format from server');
+        }
       } else {
-        console.error('Unexpected dashboard response format:', response);
-        setError('Invalid response format from server');
+        console.error('Response not ok:', response.status, response.statusText);
+        setError(`Server error: ${response.status} ${response.statusText}`);
       }
     } catch (err) {
       console.error('Dashboard error:', err);

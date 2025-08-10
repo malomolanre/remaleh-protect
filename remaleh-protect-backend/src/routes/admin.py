@@ -23,6 +23,23 @@ def admin_ping():
         'timestamp': datetime.utcnow().isoformat()
     }), 200
 
+@admin_bp.route('/test-users', methods=['GET'])
+@admin_required
+def test_users_endpoint(current_user):
+    """Test endpoint to return basic user data for debugging"""
+    try:
+        users = User.query.limit(5).all()
+        return jsonify({
+            'users': [user.to_dict() for user in users],
+            'total': len(users),
+            'test': True
+        }), 200
+    except Exception as e:
+        print(f"Error in test_users_endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @admin_bp.route('/test', methods=['GET'])
 @admin_required
 def test_admin_access(current_user):
@@ -73,15 +90,23 @@ def get_all_users(current_user):
         
         print(f"Found {users.total} users, returning {len(users.items)} for page {page}")
         
-        return jsonify({
-            'users': [user.to_dict() for user in users.items],
+        # Convert users to dict and print first one for debugging
+        users_dict = [user.to_dict() for user in users.items]
+        if users_dict:
+            print(f"First user data: {users_dict[0]}")
+        
+        response_data = {
+            'users': users_dict,
             'pagination': {
                 'page': page,
                 'per_page': per_page,
                 'total': users.total,
                 'pages': users.pages
             }
-        }), 200
+        }
+        
+        print(f"Response data structure: {response_data}")
+        return jsonify(response_data), 200
         
     except Exception as e:
         print(f"Error in get_all_users: {e}")
@@ -330,6 +355,198 @@ def bulk_user_action(current_user):
         
         return jsonify({
             'message': f'Bulk action "{action}" completed successfully for {len(users)} users'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================================
+# COMMUNITY REPORTS MANAGEMENT
+# ============================================================================
+
+@admin_bp.route('/community-reports', methods=['GET'])
+@admin_required
+def get_admin_community_reports(current_user):
+    """Get community reports for admin management with filtering and pagination"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        threat_type = request.args.get('threat_type')
+        urgency = request.args.get('urgency')
+        status = request.args.get('status')
+        verified = request.args.get('verified')
+        
+        query = CommunityReport.query
+        
+        if threat_type:
+            query = query.filter(CommunityReport.threat_type == threat_type)
+        if urgency:
+            query = query.filter(CommunityReport.urgency == urgency)
+        if status:
+            query = query.filter(CommunityReport.status == status)
+        if verified:
+            if verified.lower() == 'true':
+                query = query.filter(CommunityReport.verified == True)
+            elif verified.lower() == 'false':
+                query = query.filter(CommunityReport.verified == False)
+        
+        reports = query.order_by(CommunityReport.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        # Format reports with user information
+        formatted_reports = []
+        for report in reports.items:
+            report_data = report.to_dict()
+            if report.user:
+                report_data['creator'] = {
+                    'id': report.user.id,
+                    'name': f"{report.user.first_name} {report.user.last_name}".strip() or 'Anonymous',
+                    'email': report.user.email
+                }
+            else:
+                report_data['creator'] = {
+                    'id': None,
+                    'name': 'Unknown User',
+                    'email': 'N/A'
+                }
+            formatted_reports.append(report_data)
+        
+        return jsonify({
+            'reports': formatted_reports,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': reports.total,
+                'pages': reports.pages
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in get_admin_community_reports: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/community-reports/<int:report_id>/verify', methods=['POST'])
+@admin_required
+def admin_verify_report(current_user, report_id):
+    """Mark a community report as verified (admin only)"""
+    try:
+        report = CommunityReport.query.get_or_404(report_id)
+        report.verified = True
+        report.status = 'VERIFIED'
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Report verified successfully',
+            'report': report.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/community-reports/<int:report_id>/reject', methods=['POST'])
+@admin_required
+def admin_reject_report(current_user, report_id):
+    """Mark a community report as rejected (admin only)"""
+    try:
+        report = CommunityReport.query.get_or_404(report_id)
+        report.status = 'REJECTED'
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Report rejected successfully',
+            'report': report.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/community-reports/<int:report_id>/escalate', methods=['POST'])
+@admin_required
+def admin_escalate_report(current_user, report_id):
+    """Mark a community report as escalated (admin only)"""
+    try:
+        report = CommunityReport.query.get_or_404(report_id)
+        report.status = 'ESCALATED'
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Report escalated successfully',
+            'report': report.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/community-reports/<int:report_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_report(current_user, report_id):
+    """Delete a community report (admin only)"""
+    try:
+        report = CommunityReport.query.get_or_404(report_id)
+        
+        # Delete associated votes first
+        from ..models import ReportVote
+        ReportVote.query.filter_by(report_id=report_id).delete()
+        
+        db.session.delete(report)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Report deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/community-reports/bulk-action', methods=['POST'])
+@admin_required
+def admin_bulk_report_action(current_user):
+    """Perform bulk actions on community reports (admin only)"""
+    try:
+        data = request.get_json()
+        report_ids = data.get('report_ids', [])
+        action = data.get('action')
+        
+        if not report_ids or not action:
+            return jsonify({'error': 'Report IDs and action are required'}), 400
+        
+        reports = CommunityReport.query.filter(CommunityReport.id.in_(report_ids)).all()
+        
+        if action == 'verify':
+            for report in reports:
+                report.verified = True
+                report.status = 'VERIFIED'
+        elif action == 'reject':
+            for report in reports:
+                report.status = 'REJECTED'
+        elif action == 'escalate':
+            for report in reports:
+                report.status = 'ESCALATED'
+        elif action == 'delete':
+            # Delete associated votes first
+            from ..models import ReportVote
+            ReportVote.query.filter(ReportVote.report_id.in_(report_ids)).delete(synchronize_session=False)
+            
+            for report in reports:
+                db.session.delete(report)
+        else:
+            return jsonify({'error': 'Invalid action'}), 400
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'Bulk action "{action}" completed successfully for {len(reports)} reports'
         }), 200
         
     except Exception as e:

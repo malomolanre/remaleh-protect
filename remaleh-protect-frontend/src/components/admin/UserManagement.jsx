@@ -37,13 +37,21 @@ const UserManagement = () => {
       const response = await api.get(`${API_ENDPOINTS.ADMIN.USERS}?${params}`);
       console.log('Users response:', response);
       
-      if (response.data && response.data.users) {
-        setUsers(response.data.users);
-        setPagination(response.data.pagination || {});
-        setError(null);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Users data:', data);
+        
+        if (data && data.users) {
+          setUsers(data.users);
+          setPagination(data.pagination || {});
+          setError(null);
+        } else {
+          console.error('Unexpected response format:', data);
+          setError('Invalid response format from server');
+        }
       } else {
-        console.error('Unexpected response format:', response);
-        setError('Invalid response format from server');
+        console.error('Response not ok:', response.status, response.statusText);
+        setError(`Server error: ${response.status} ${response.statusText}`);
       }
     } catch (err) {
       console.error('Users error:', err);
@@ -60,30 +68,35 @@ const UserManagement = () => {
 
       switch (action) {
         case 'suspend':
-          endpoint = `/admin/users/${userId}/suspend`;
+          endpoint = `${API_ENDPOINTS.ADMIN.USER_SUSPEND}/${userId}/suspend`;
           break;
         case 'activate':
-          endpoint = `/admin/users/${userId}/activate`;
+          endpoint = `${API_ENDPOINTS.ADMIN.USER_ACTIVATE}/${userId}/activate`;
           break;
         case 'delete':
-          endpoint = `/admin/users/${userId}/delete`;
+          endpoint = `${API_ENDPOINTS.ADMIN.USER_DELETE}/${userId}`;
           method = 'DELETE';
           break;
         default:
           return;
       }
 
-      await api.request({
+      const response = await api.request({
         method,
         url: endpoint
       });
 
-      // Refresh users list
-      fetchUsers();
-      setSelectedUsers([]);
+      if (response.ok) {
+        // Refresh users list
+        fetchUsers();
+        setSelectedUsers([]);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to ${action} user: ${errorData.error || 'Unknown error'}`);
+      }
     } catch (err) {
       console.error('User action error:', err);
-      alert(`Failed to ${action} user: ${err.response?.data?.error || err.message}`);
+      alert(`Failed to ${action} user: ${err.message || 'Unknown error'}`);
     }
   };
 
@@ -91,19 +104,24 @@ const UserManagement = () => {
     if (!bulkAction || selectedUsers.length === 0) return;
 
     try {
-      await api.post('/admin/users/bulk-action', {
+      const response = await api.post(API_ENDPOINTS.ADMIN.BULK_ACTION, {
         user_ids: selectedUsers,
         action: bulkAction
       });
 
-      // Refresh users list
-      fetchUsers();
-      setSelectedUsers([]);
-      setShowBulkModal(false);
-      setBulkAction('');
+      if (response.ok) {
+        // Refresh users list
+        fetchUsers();
+        setSelectedUsers([]);
+        setShowBulkModal(false);
+        setBulkAction('');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to perform bulk action: ${errorData.error || 'Unknown error'}`);
+      }
     } catch (err) {
       console.error('Bulk action error:', err);
-      alert(`Failed to perform bulk action: ${err.response?.data?.error || err.message}`);
+      alert(`Failed to perform bulk action: ${err.message || 'Unknown error'}`);
     }
   };
 
