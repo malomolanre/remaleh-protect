@@ -2,12 +2,8 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt
-try:
-    from src.models import db, User
-    from src.auth import create_tokens, token_required, get_current_user_id, update_user_login
-except ImportError:
-    from models import db, User
-    from auth import create_tokens, token_required, get_current_user_id, update_user_login
+from models import db, User
+from auth import create_tokens, token_required, get_current_user_id, update_user_login
 
 auth_bp = Blueprint('auth', __name__)
 

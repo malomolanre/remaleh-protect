@@ -1,44 +1,39 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import logging
 import os
 from datetime import datetime
-try:
-    from src.models import db
-except ImportError:
-    from models import db
+import time
+
+# Import production modules
+from .config import get_config
+from .cache import cache
+from .database import db_manager
+from .monitoring import monitor, track_performance
+from .models import db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("remaleh")
 
-
 def create_app():
     """
-    Create and configure the Flask application.
+    Create and configure the Flask application with production features.
 
-    This function sets up CORS, rate limiting, and registers all blueprints.
+    This function sets up CORS, rate limiting, caching, monitoring, and registers all blueprints.
     """
     app = Flask(__name__)
     
-    # Database configuration
-    database_url = os.getenv('DATABASE_URL', 'sqlite:///remaleh_protect.db')
+    # Load production configuration
+    app.config.from_object(get_config())
     
-    # Handle Render's filesystem constraints
-    if database_url.startswith('sqlite:///'):
-        # For local development, use file-based SQLite
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    else:
-        # For production (Render), use the provided DATABASE_URL
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
-    # JWT Secret Key for authentication
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
+    # Initialize production modules
+    cache.init_app(app)
+    db_manager.init_app(app)
+    monitor.init_app(app)
     
     # Initialize database
     db.init_app(app)
@@ -47,20 +42,14 @@ def create_app():
     with app.app_context():
         try:
             db.create_all()
-            print("✓ Database tables created successfully")
+            logger.info("✓ Database tables created successfully")
             
             # Create admin user if it doesn't exist
-            try:
-                from src.auth import create_admin_user
-            except ImportError:
-                from auth import create_admin_user
+            from .auth import create_admin_user
             create_admin_user()
             
             # Create sample learning modules if they don't exist
-            try:
-                from src.models import LearningModule
-            except ImportError:
-                from models import LearningModule
+            from .models import LearningModule
             if LearningModule.query.count() == 0:
                 sample_modules = [
                     {
@@ -88,15 +77,14 @@ def create_app():
                     db.session.add(module)
                 
                 db.session.commit()
-                print("✓ Sample learning modules created successfully")
+                logger.info("✓ Sample learning modules created successfully")
             
-            print(f"✓ Database initialized successfully with {LearningModule.query.count()} learning modules")
+            logger.info(f"✓ Database initialized successfully with {LearningModule.query.count()} learning modules")
             
         except Exception as e:
-            print(f"❌ Database initialization error: {e}")
+            logger.error(f"❌ Database initialization error: {e}")
             import traceback
             traceback.print_exc()
-            # Continue anyway - the app might still work
 
     # Restrict CORS origins to the production front-end and local development
     allowed_origins = [
@@ -113,43 +101,28 @@ def create_app():
         "allow_headers": ["Content-Type", "Authorization"]
     }})
 
-    # Set up rate limiting: 60 requests per minute per IP by default
+    # Set up rate limiting with Redis storage
     limiter = Limiter(
         get_remote_address,
         app=app,
-        default_limits=["60 per minute"],
+        default_limits=[app.config.get('RATE_LIMIT_DEFAULT', '60 per minute')],
+        storage_uri=app.config.get('RATE_LIMIT_STORAGE_URL'),
+        strategy=app.config.get('RATE_LIMIT_STRATEGY', 'fixed-window')
     )
 
     # Import and register blueprints
-    try:
-        from src.routes.scam import scam_bp
-        from src.routes.enhanced_scam import enhanced_scam_bp
-        from src.routes.link_analysis import link_analysis_bp
-        from src.routes.breach_check import breach_bp
-        from src.routes.chat import chat_bp
-        from src.routes.auth import auth_bp
-        from src.routes.threat_intelligence import threat_intel_bp
-        from src.routes.risk_profile import risk_profile_bp
-        from src.routes.community import community_bp
-        from src.routes.admin import admin_bp
-    except ImportError:
-        from routes.scam import scam_bp
-        from routes.enhanced_scam import enhanced_scam_bp
-        from routes.link_analysis import link_analysis_bp
-        from routes.breach_check import breach_bp
-        from routes.chat import chat_bp
-        from routes.auth import auth_bp
-        from routes.threat_intelligence import threat_intel_bp
-        from routes.risk_profile import risk_profile_bp
-        from routes.community import community_bp
-        from routes.admin import admin_bp
+    from .routes.scam import scam_bp
+    from .routes.enhanced_scam import enhanced_scam_bp
+    from .routes.link_analysis import link_analysis_bp
+    from .routes.breach_check import breach_bp
+    from .routes.chat import chat_bp
+    from .routes.auth import auth_bp
+    from .routes.threat_intelligence import threat_intel_bp
+    from .routes.risk_profile import risk_profile_bp
+    from .routes.community import community_bp
+    from .routes.admin import admin_bp
 
-    # Example of applying a per-route limit on a heavy endpoint:
-    # @scam_bp.route('/comprehensive', methods=['POST'])
-    # @limiter.limit('10 per minute')
-    # def comprehensive_scan():
-    #     ...
-
+    # Register blueprints
     app.register_blueprint(scam_bp, url_prefix="/api/scam")
     app.register_blueprint(enhanced_scam_bp, url_prefix="/api/scam")
     app.register_blueprint(link_analysis_bp, url_prefix="/api/link")
@@ -166,23 +139,73 @@ def create_app():
         """Return JSON when rate limit is exceeded."""
         return jsonify(error="Too many requests", description=str(e)), 429
 
+    @app.errorhandler(500)
+    def internal_error(e):
+        """Handle internal server errors."""
+        logger.error(f"Internal server error: {e}")
+        return jsonify(error="Internal server error"), 500
+
+    @app.before_request
+    def before_request():
+        """Log request details and start timing."""
+        g.start_time = time.time()
+        logger.info(f"Request: {request.method} {request.path} from {request.remote_addr}")
+
+    @app.after_request
+    def after_request(response):
+        """Log response details and timing."""
+        duration = time.time() - g.start_time
+        logger.info(f"Response: {response.status_code} in {duration:.3f}s")
+        return response
+
     @app.get("/api/health")
+    @track_performance
     def health():
-        """Health check endpoint."""
+        """Health check endpoint with database and cache status."""
+        db_status = db_manager.health_check() if db_manager else False
+        cache_status = cache.redis_client.ping() if cache.redis_client else False
+        
         return jsonify({
             "ok": True,
             "service": "remaleh-protect-api",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "database": "healthy" if db_status else "unhealthy",
+            "cache": "healthy" if cache_status else "unhealthy",
+            "environment": app.config.get('FLASK_ENV', 'development')
         })
     
     @app.get("/api/test")
+    @track_performance
     def test():
         """Test endpoint for debugging deployment."""
         return jsonify({
             "message": "API is working!",
             "database_url": app.config['SQLALCHEMY_DATABASE_URI'].replace('://', '://***:***@') if '://' in app.config['SQLALCHEMY_DATABASE_URI'] else 'sqlite',
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "cache_enabled": cache.redis_client is not None,
+            "monitoring_enabled": monitor.redis_client is not None
         })
+
+    @app.get("/api/metrics")
+    def metrics():
+        """Prometheus metrics endpoint."""
+        if app.config.get('ENABLE_METRICS', True):
+            return monitor.get_metrics()
+        else:
+            return jsonify({"error": "Metrics disabled"}), 404
+
+    @app.get("/api/performance")
+    @track_performance
+    def performance():
+        """Performance summary endpoint."""
+        if app.config.get('ENABLE_METRICS', True):
+            return jsonify({
+                "database": db_manager.get_connection_info() if db_manager else {"status": "not_initialized"},
+                "performance_summary": monitor.get_performance_summary(),
+                "cache_status": "connected" if cache.redis_client else "disconnected"
+            })
+        else:
+            return jsonify({"error": "Performance monitoring disabled"}), 404
 
     return app
 

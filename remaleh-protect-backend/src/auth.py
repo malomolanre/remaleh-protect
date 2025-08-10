@@ -1,13 +1,15 @@
 from functools import wraps
 from flask import request, jsonify, current_app
-
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt
-try:
-    from src.models import db, User
-except ImportError:
-    from models import db, User
+import os
+import secrets
+import logging
+
+logger = logging.getLogger(__name__)
+
+from models import db, User
 
 def create_tokens(user_id):
     """Create access and refresh tokens for a user"""
@@ -141,6 +143,14 @@ def create_admin_user():
         # Check if admin user already exists
         admin_user = User.query.filter_by(email='admin@remaleh.com').first()
         if not admin_user:
+            # Generate secure admin password from environment or generate random one
+            admin_password = os.getenv('ADMIN_PASSWORD')
+            if not admin_password:
+                # Generate a secure random password for development
+                admin_password = secrets.token_urlsafe(16)
+                logger.warning(f"ADMIN_PASSWORD not set. Generated temporary password: {admin_password}")
+                logger.warning("Please set ADMIN_PASSWORD environment variable in production!")
+            
             admin_user = User(
                 email='admin@remaleh.com',
                 first_name='Admin',
@@ -151,19 +161,62 @@ def create_admin_user():
                 role='ADMIN',
                 account_status='ACTIVE'
             )
-            admin_user.set_password('admin123')  # Change this in production
+            admin_user.set_password(admin_password)
             db.session.add(admin_user)
             db.session.commit()
-            print("Admin user created successfully")
+            logger.info("Admin user created successfully")
+            
+            # Log admin creation for security audit
+            logger.info(f"Admin user created with email: {admin_user.email}")
+            
         else:
             # Ensure existing admin user has proper permissions
             if not admin_user.is_admin:
                 admin_user.is_admin = True
                 admin_user.role = 'ADMIN'
                 db.session.commit()
-                print("Existing user upgraded to admin")
+                logger.info("Existing user upgraded to admin")
             else:
-                print("Admin user already exists")
+                logger.info("Admin user already exists")
+                
     except Exception as e:
-        print(f"Error creating admin user: {e}")
+        logger.error(f"Error creating admin user: {e}")
         db.session.rollback()
+
+def validate_password_strength(password):
+    """Validate password strength for production security"""
+    if len(password) < 12:
+        return False, "Password must be at least 12 characters long"
+    
+    if not any(c.isupper() for c in password):
+        return False, "Password must contain at least one uppercase letter"
+    
+    if not any(c.islower() for c in password):
+        return False, "Password must contain at least one lowercase letter"
+    
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one digit"
+    
+    if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
+        return False, "Password must contain at least one special character"
+    
+    return True, "Password meets security requirements"
+
+def rate_limit_login_attempts(user_id):
+    """Rate limit login attempts for security"""
+    from cache import cache
+    from monitoring import record_login_attempt
+    
+    cache_key = f"login_attempts:{user_id}"
+    attempts = cache.get(cache_key) or 0
+    
+    if attempts >= 5:  # Max 5 attempts
+        return False, "Too many login attempts. Please try again later."
+    
+    # Increment attempts
+    cache.set(cache_key, attempts + 1, timeout=300)  # 5 minutes
+    
+    # Record login attempt for monitoring
+    record_login_attempt(user_id, attempts + 1)
+    
+    return True, "Login attempt recorded"

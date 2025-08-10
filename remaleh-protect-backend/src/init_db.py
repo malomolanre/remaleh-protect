@@ -11,14 +11,9 @@ from pathlib import Path
 # Add the src directory to the Python path
 sys.path.append(str(Path(__file__).parent))
 
-try:
-    from src.main import create_app
-    from src.models import db
-    from src.auth import create_admin_user
-except ImportError:
-    from main import create_app
-    from models import db
-    from auth import create_admin_user
+from main import create_app
+from models import db
+from auth import create_admin_user
 
 def init_database():
     """Initialize the database with all tables and sample data"""

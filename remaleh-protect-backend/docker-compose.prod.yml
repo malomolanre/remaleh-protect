@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: remaleh_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: remaleh_protect
+      POSTGRES_USER: remaleh_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your-secure-postgres-password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - remaleh_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U remaleh_user -d remaleh_protect"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache and Rate Limiting
+  redis:
+    image: redis:7-alpine
+    container_name: remaleh_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-your-secure-redis-password} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - remaleh_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Remaleh Protect Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: remaleh_backend
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://remaleh_user:${POSTGRES_PASSWORD:-your-secure-postgres-password}@postgres:5432/remaleh_protect
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-your-secure-redis-password}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-your-super-secret-key-change-this}
+      - HIBP_API_KEY=${HIBP_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-your-secure-admin-password}
+      - RATE_LIMIT_STORAGE_URL=redis://:${REDIS_PASSWORD:-your-secure-redis-password}@redis:6379/1
+      - ENABLE_METRICS=true
+      - LOG_LEVEL=INFO
+    ports:
+      - "10000:10000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - remaleh_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./logs:/app/logs
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: remaleh_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - backend
+    networks:
+      - remaleh_network
+
+  # Prometheus Monitoring (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: remaleh_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - remaleh_network
+
+  # Grafana Dashboard (Optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: remaleh_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - remaleh_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  remaleh_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

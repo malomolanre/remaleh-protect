@@ -1,10 +1,6 @@
 from flask import Blueprint, request, jsonify
-try:
-    from src.models import db, User, CommunityReport, ReportVote, CommunityAlert
-    from src.auth import token_required, get_current_user_id
-except ImportError:
-    from models import db, User, CommunityReport, ReportVote, CommunityAlert
-    from auth import token_required, get_current_user_id
+from models import db, User, CommunityReport, ReportVote, CommunityAlert
+from auth import token_required, get_current_user_id
 from datetime import datetime, timedelta
 from sqlalchemy import func, desc, case
 import json
