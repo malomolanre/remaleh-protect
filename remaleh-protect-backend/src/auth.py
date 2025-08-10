@@ -1,9 +1,6 @@
 from functools import wraps
 from flask import request, jsonify, current_app
-from flask_jwt_extended import (
-    create_access_token, create_refresh_token, 
-    jwt_required, get_jwt_identity, get_jwt
-)
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt
@@ -11,14 +8,32 @@ from models import db, User
 
 def create_tokens(user_id):
     """Create access and refresh tokens for a user"""
-    access_token = create_access_token(
-        identity=user_id,
-        expires_delta=timedelta(hours=1)
+    from flask import current_app
+    
+    # Create access token (1 hour expiry)
+    access_token = jwt.encode(
+        {
+            'user_id': user_id,
+            'exp': datetime.utcnow() + timedelta(hours=1),
+            'iat': datetime.utcnow(),
+            'type': 'access'
+        },
+        current_app.config['SECRET_KEY'],
+        algorithm='HS256'
     )
-    refresh_token = create_refresh_token(
-        identity=user_id,
-        expires_delta=timedelta(days=30)
+    
+    # Create refresh token (30 days expiry)
+    refresh_token = jwt.encode(
+        {
+            'user_id': user_id,
+            'exp': datetime.utcnow() + timedelta(days=30),
+            'iat': datetime.utcnow(),
+            'type': 'refresh'
+        },
+        current_app.config['SECRET_KEY'],
+        algorithm='HS256'
     )
+    
     return access_token, refresh_token
 
 def token_required(f):
