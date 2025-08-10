@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import BreachChecker from './components/BreachChecker'
 import ScamAnalysis from './components/ScamAnalysis'
@@ -19,6 +19,18 @@ import './App.css'
 function App() {
   const [activeTab, setActiveTab] = useState('breach')
   const { user, isAuthenticated } = useAuth()
+
+  // Debug logging for admin status
+  useEffect(() => {
+    if (user) {
+      console.log('=== APP COMPONENT DEBUG ===');
+      console.log('User object:', user);
+      console.log('User is_admin:', user.is_admin);
+      console.log('User role:', user.role);
+      console.log('Is authenticated:', isAuthenticated);
+      console.log('==========================');
+    }
+  }, [user, isAuthenticated]);
 
   const tabs = [
     { id: 'breach', label: 'Breach Checker', icon: '🔒' },
@@ -93,7 +105,8 @@ function App() {
                 {isAuthenticated ? (
                   <div className="flex items-center space-x-3">
                     <span className="text-sm text-gray-700">
-                      Welcome, {user?.first_name || 'User'}
+                      Welcome, {user?.is_admin ? 'Admin' : user?.first_name || 'User'}
+                      {user?.is_admin && <span className="ml-2 text-blue-600 font-semibold">(Admin)</span>}
                     </span>
                     <button
                       onClick={() => {

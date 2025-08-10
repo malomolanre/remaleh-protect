@@ -16,13 +16,19 @@ export const useAuth = () => {
           const response = await apiGet(API_ENDPOINTS.AUTH.PROFILE);
           if (response.ok) {
             const userData = await response.json();
-            setUser(userData);
+            // Handle both response formats: {user: {...}} and direct user object
+            const user = userData.user || userData;
+            console.log('Profile data received:', userData);
+            console.log('User object:', user);
+            console.log('Is admin?', user.is_admin);
+            setUser(user);
             setIsAuthenticated(true);
           } else {
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
           }
         } catch (err) {
+          console.error('Profile check error:', err);
           localStorage.removeItem('authToken');
           localStorage.removeItem('refreshToken');
         }
@@ -47,12 +53,21 @@ export const useAuth = () => {
       });
       
       if (response.ok) {
-        const { access_token, refresh_token, user: userData } = await response.json();
+        const responseData = await response.json();
+        console.log('Login response:', responseData);
+        
+        const { access_token, refresh_token, user: userData } = responseData;
         
         localStorage.setItem('authToken', access_token);
         localStorage.setItem('refreshToken', refresh_token);
         
-        setUser(userData);
+        // Ensure we have the user data with proper structure
+        const user = userData || responseData.user;
+        console.log('Setting user:', user);
+        console.log('User is_admin:', user?.is_admin);
+        console.log('User role:', user?.role);
+        
+        setUser(user);
         setIsAuthenticated(true);
         return { success: true };
       } else {
@@ -176,6 +191,19 @@ export const useAuth = () => {
     }
   }, []);
 
+  // Debug function to check user state
+  const debugUserState = useCallback(() => {
+    console.log('=== USER AUTH DEBUG ===');
+    console.log('User object:', user);
+    console.log('Is authenticated:', isAuthenticated);
+    console.log('Is loading:', isLoading);
+    console.log('User is_admin:', user?.is_admin);
+    console.log('User role:', user?.role);
+    console.log('User email:', user?.email);
+    console.log('Local storage token:', localStorage.getItem('authToken'));
+    console.log('========================');
+  }, [user, isAuthenticated, isLoading]);
+
   return {
     user,
     isAuthenticated,
@@ -186,6 +214,7 @@ export const useAuth = () => {
     logout,
     updateProfile,
     changePassword,
-    clearError: () => setError(null)
+    clearError: () => setError(null),
+    debugUserState
   };
 };
