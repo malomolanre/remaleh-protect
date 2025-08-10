@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { api, API_ENDPOINTS } from '../../lib/api';
 import MobileModal from '../MobileModal';
+import Modal from '../Modal';
+import { api } from '../../lib/api';
+import { API_ENDPOINTS } from '../../lib/api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -47,11 +49,9 @@ const UserManagement = () => {
       });
 
       const response = await api.get(`${API_ENDPOINTS.ADMIN.USERS}?${params}`);
-      console.log('Users response:', response);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Users data:', data);
         
         if (data && data.users) {
           setUsers(data.users);
@@ -265,7 +265,7 @@ const UserManagement = () => {
   );
 
   const UserDetailModal = () => (
-    <MobileModal
+    <Modal
       isOpen={showUserModal}
       onClose={() => setShowUserModal(false)}
       title="User Details"
@@ -339,11 +339,11 @@ const UserManagement = () => {
           </div>
         </div>
       )}
-    </MobileModal>
+    </Modal>
   );
 
   const BulkActionModal = () => (
-    <MobileModal
+    <Modal
       isOpen={showBulkModal}
       onClose={() => setShowBulkModal(false)}
       title="Bulk Actions"
@@ -383,7 +383,7 @@ const UserManagement = () => {
           </div>
         </div>
       </div>
-    </MobileModal>
+    </Modal>
   );
 
   return (
@@ -397,7 +397,9 @@ const UserManagement = () => {
           </div>
           <div className="mt-4 sm:mt-0 flex space-x-2">
             <button
-              onClick={() => setShowCreateUserModal(true)}
+              onClick={() => {
+                setShowCreateUserModal(true);
+              }}
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
             >
               Create User
@@ -561,9 +563,11 @@ const UserManagement = () => {
       <BulkActionModal />
       
       {/* Create User Modal */}
-      <MobileModal
+      <Modal
         isOpen={showCreateUserModal}
-        onClose={() => setShowCreateUserModal(false)}
+        onClose={() => {
+          setShowCreateUserModal(false);
+        }}
         title="Create New User"
       >
         <div className="space-y-4">
@@ -709,7 +713,7 @@ const UserManagement = () => {
             </div>
           </div>
         </div>
-      </MobileModal>
+      </Modal>
     </div>
   );
 };

@@ -14,11 +14,9 @@ const AdminDashboard = () => {
     try {
       setIsLoading(true);
       const response = await api.get(API_ENDPOINTS.ADMIN.DASHBOARD);
-      console.log('Dashboard response:', response);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Dashboard data:', data);
         
         if (data) {
           setStats(data);
