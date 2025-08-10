@@ -348,3 +348,68 @@ def reset_admin_password():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/deployment-check', methods=['GET'])
+def deployment_check():
+    """Check deployment status and environment variables"""
+    try:
+        # Check environment variables
+        env_vars = {
+            'ADMIN_PASSWORD_SET': bool(os.getenv('ADMIN_PASSWORD')),
+            'ADMIN_PASSWORD_LENGTH': len(os.getenv('ADMIN_PASSWORD', '')),
+            'SECRET_KEY_SET': bool(os.getenv('SECRET_KEY')),
+            'DATABASE_URL_SET': bool(os.getenv('DATABASE_URL')),
+            'FLASK_ENV': os.getenv('FLASK_ENV', 'not_set'),
+            'RENDER': bool(os.getenv('RENDER'))
+        }
+        
+        # Check admin user status
+        admin_user = User.query.filter_by(email='admin@remaleh.com').first()
+        
+        if admin_user:
+            # Test password verification with environment variable
+            admin_password = os.getenv('ADMIN_PASSWORD')
+            password_works = False
+            
+            if admin_password:
+                password_works = admin_user.check_password(admin_password)
+            
+            admin_status = {
+                'exists': True,
+                'is_admin': admin_user.is_admin,
+                'is_active': admin_user.is_active,
+                'password_from_env_works': password_works,
+                'can_login_with_env_password': password_works
+            }
+        else:
+            admin_status = {
+                'exists': False,
+                'is_admin': False,
+                'is_active': False,
+                'password_from_env_works': False,
+                'can_login_with_env_password': False
+            }
+        
+        return jsonify({
+            'status': 'success',
+            'deployment_info': {
+                'timestamp': datetime.utcnow().isoformat(),
+                'environment_variables': env_vars,
+                'admin_user': admin_status
+            },
+            'recommendations': [
+                'Set ADMIN_PASSWORD environment variable for secure admin access',
+                'Ensure SECRET_KEY is set for JWT token security',
+                'Verify DATABASE_URL is correctly configured'
+            ] if not env_vars['ADMIN_PASSWORD_SET'] else [
+                'Environment variables look good!',
+                'Admin password is properly configured'
+            ]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500

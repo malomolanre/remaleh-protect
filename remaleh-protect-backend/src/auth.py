@@ -145,9 +145,12 @@ def create_admin_user():
     try:
         # Check if admin user already exists
         admin_user = User.query.filter_by(email='admin@remaleh.com').first()
+        
+        # Get admin password from environment
+        admin_password = os.getenv('ADMIN_PASSWORD')
+        
         if not admin_user:
-            # Generate secure admin password from environment or generate random one
-            admin_password = os.getenv('ADMIN_PASSWORD')
+            # Create new admin user
             if not admin_password:
                 # Generate a secure random password for development
                 admin_password = secrets.token_urlsafe(16)
@@ -184,21 +187,31 @@ def create_admin_user():
                 logger.error("❌ Admin user creation verification failed")
                 
         else:
-            # Ensure existing admin user has proper permissions
+            # Admin user exists - ensure proper permissions
             if not admin_user.is_admin:
                 admin_user.is_admin = True
                 admin_user.role = 'ADMIN'
-                db.session.commit()
                 logger.info("Existing user upgraded to admin")
-            else:
-                logger.info("Admin user already exists")
+            
+            # ALWAYS update password if ADMIN_PASSWORD environment variable is set
+            if admin_password:
+                # Check if password needs updating
+                if not admin_user.check_password(admin_password):
+                    admin_user.set_password(admin_password)
+                    db.session.commit()
+                    logger.info("✓ Admin user password updated from environment variable")
+                else:
+                    logger.info("✓ Admin user password already matches environment variable")
                 
-            # Test password verification for existing admin
-            test_password = os.getenv('ADMIN_PASSWORD')
-            if test_password and admin_user.check_password(test_password):
-                logger.info("✓ Existing admin user password verified")
+                # Verify password works
+                if admin_user.check_password(admin_password):
+                    logger.info("✓ Admin user password verified successfully")
+                else:
+                    logger.error("❌ Admin user password verification failed after update")
             else:
-                logger.warning("⚠ Existing admin user password verification failed")
+                logger.warning("⚠ ADMIN_PASSWORD environment variable not set - using existing password")
+                
+        logger.info("Admin user setup completed")
                 
     except Exception as e:
         logger.error(f"Error creating admin user: {e}")
