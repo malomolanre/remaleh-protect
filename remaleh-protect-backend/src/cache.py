@@ -112,7 +112,8 @@ def cached(timeout=300, key_prefix=''):
                 return func(*args, **kwargs)
             
             # Generate cache key
-            cache_key = f"{key_prefix}:{func.__name__}:{hash(str(args) + str(sorted(kwargs.items()))}"
+            args_str = str(args) + str(sorted(kwargs.items()))
+            cache_key = f"{key_prefix}:{func.__name__}:{hash(args_str)}"
             
             # Try to get from cache
             result = cache.get(cache_key)

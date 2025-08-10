@@ -7,12 +7,19 @@ import os
 from datetime import datetime
 import time
 
-# Import production modules
-from .config import get_config
-from .cache import cache
-from .database import db_manager
-from .monitoring import monitor, track_performance
-from .models import db
+# Import production modules - try relative imports first, then absolute
+try:
+    from .config import get_config
+    from .cache import cache
+    from .database import db_manager
+    from .monitoring import monitor, track_performance
+    from .models import db
+except ImportError:
+    from config import get_config
+    from cache import cache
+    from database import db_manager
+    from monitoring import monitor, track_performance
+    from models import db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -45,11 +52,17 @@ def create_app():
             logger.info("✓ Database tables created successfully")
             
             # Create admin user if it doesn't exist
-            from .auth import create_admin_user
+            try:
+                from .auth import create_admin_user
+            except ImportError:
+                from auth import create_admin_user
             create_admin_user()
             
             # Create sample learning modules if they don't exist
-            from .models import LearningModule
+            try:
+                from .models import LearningModule
+            except ImportError:
+                from models import LearningModule
             if LearningModule.query.count() == 0:
                 sample_modules = [
                     {
@@ -111,16 +124,28 @@ def create_app():
     )
 
     # Import and register blueprints
-    from .routes.scam import scam_bp
-    from .routes.enhanced_scam import enhanced_scam_bp
-    from .routes.link_analysis import link_analysis_bp
-    from .routes.breach_check import breach_bp
-    from .routes.chat import chat_bp
-    from .routes.auth import auth_bp
-    from .routes.threat_intelligence import threat_intel_bp
-    from .routes.risk_profile import risk_profile_bp
-    from .routes.community import community_bp
-    from .routes.admin import admin_bp
+    try:
+        from .routes.scam import scam_bp
+        from .routes.enhanced_scam import enhanced_scam_bp
+        from .routes.link_analysis import link_analysis_bp
+        from .routes.breach_check import breach_bp
+        from .routes.chat import chat_bp
+        from .routes.auth import auth_bp
+        from .routes.threat_intelligence import threat_intel_bp
+        from .routes.risk_profile import risk_profile_bp
+        from .routes.community import community_bp
+        from .routes.admin import admin_bp
+    except ImportError:
+        from routes.scam import scam_bp
+        from routes.enhanced_scam import enhanced_scam_bp
+        from routes.link_analysis import link_analysis_bp
+        from routes.breach_check import breach_bp
+        from routes.chat import chat_bp
+        from routes.auth import auth_bp
+        from routes.threat_intelligence import threat_intel_bp
+        from routes.risk_profile import risk_profile_bp
+        from routes.community import community_bp
+        from routes.admin import admin_bp
 
     # Register blueprints
     app.register_blueprint(scam_bp, url_prefix="/api/scam")

@@ -9,7 +9,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from models import db, User
+try:
+    from .models import db, User
+except ImportError:
+    from models import db, User
 
 def create_tokens(user_id):
     """Create access and refresh tokens for a user"""
@@ -204,8 +207,12 @@ def validate_password_strength(password):
 
 def rate_limit_login_attempts(user_id):
     """Rate limit login attempts for security"""
-    from cache import cache
-    from monitoring import record_login_attempt
+    try:
+        from .cache import cache
+        from .monitoring import record_login_attempt
+    except ImportError:
+        from cache import cache
+        from monitoring import record_login_attempt
     
     cache_key = f"login_attempts:{user_id}"
     attempts = cache.get(cache_key) or 0

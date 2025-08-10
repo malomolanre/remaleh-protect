@@ -1,6 +1,10 @@
 from flask import Blueprint, request, jsonify
-from models import db, User, UserScan, CommunityReport, LearningProgress
-from auth import admin_required, token_required
+try:
+    from ..models import db, User, UserScan, CommunityReport, LearningProgress
+    from ..auth import admin_required, token_required
+except ImportError:
+    from models import db, User, UserScan, CommunityReport, LearningProgress
+    from auth import admin_required, token_required
 from datetime import datetime, timedelta
 from sqlalchemy import func, desc
 import json
