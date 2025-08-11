@@ -273,11 +273,12 @@ function App() {
       <header className="bg-[#21a1ce] text-white px-6 py-8">
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
-            <img 
-              src="/remaleh-logo-full.png" 
-              alt="Remaleh" 
-              className="h-12 mx-auto mb-2"
-            />
+            <div className="flex items-center justify-center mb-2">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3">
+                <div className="w-6 h-6 bg-[#21a1ce] rounded-sm"></div>
+              </div>
+              <span className="text-white text-2xl font-semibold">Remaleh</span>
+            </div>
             <p className="text-white text-base opacity-90">Your Security Companion</p>
           </div>
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
