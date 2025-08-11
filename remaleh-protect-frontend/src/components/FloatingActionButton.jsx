@@ -8,8 +8,8 @@ export default function FloatingActionButton({ onAction }) {
   const actions = [
     {
       icon: AlertTriangle,
-      label: 'Report Threat',
-      action: 'report-threat',
+      label: 'Report Scam',
+      action: 'report-scam',
       color: 'bg-red-500 hover:bg-red-600',
       delay: 'delay-100'
     },
@@ -22,8 +22,8 @@ export default function FloatingActionButton({ onAction }) {
     },
     {
       icon: Shield,
-      label: 'Quick Scan',
-      action: 'quick-scan',
+      label: 'Breach Check',
+      action: 'breach-check',
       color: 'bg-green-500 hover:bg-green-600',
       delay: 'delay-300'
     }

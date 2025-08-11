@@ -4,17 +4,13 @@ import BreachChecker from './components/BreachChecker'
 import ScamAnalysis from './components/ScamAnalysis'
 import ChatAssistant from './components/ChatAssistant'
 import LearnHub from './components/LearnHub'
-import ThreatDashboard from './components/ThreatDashboard'
-import RiskProfile from './components/RiskProfile'
-import CommunityReporting from './components/CommunityReporting'
+import CommunityHub from './components/CommunityHub'
 import AdminPanel from './components/AdminPanel'
 import Login from './components/Login'
 import Register from './components/Register'
 import MobileHeader from './components/MobileHeader'
 import MobileNavigation from './components/MobileNavigation'
 import FloatingActionButton from './components/FloatingActionButton'
-import SecurityHub from './components/SecurityHub'
-import CommunityHub from './components/CommunityHub'
 import { useAuth } from './hooks/useAuth'
 import './App.css'
 
@@ -22,7 +18,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('breach')
   const { user, isAuthenticated } = useAuth()
 
-  // Debug logging for admin status
+  // Debug logging for user status
   useEffect(() => {
     if (user) {
       console.log('=== APP COMPONENT DEBUG ===');
@@ -35,35 +31,73 @@ function App() {
   }, [user, isAuthenticated]);
 
   const tabs = [
-    { id: 'breach', label: 'Breach Checker', icon: '🔒' },
+    { id: 'breach', label: 'Breach Check', icon: '🔒' },
     { id: 'scam', label: 'Scam Analysis', icon: '🚨' },
-    { id: 'threats', label: 'Threat Intel', icon: '📊' },
-    { id: 'profile', label: 'Risk Profile', icon: '👤' },
-    { id: 'community', label: 'Community', icon: '👥' },
     { id: 'chat', label: 'AI Assistant', icon: '🤖' },
     { id: 'learn', label: 'Learn Hub', icon: '📚' },
+    { id: 'community', label: 'Community', icon: '👥' },
     ...(user?.is_admin ? [{ id: 'admin', label: 'Admin', icon: '⚙️' }] : [])
   ]
 
   const renderContent = () => {
     switch (activeTab) {
       case 'breach':
-        // Show SecurityHub for mobile navigation grouping
-        return <SecurityHub setActiveTab={setActiveTab} />
+        return <BreachChecker setActiveTab={setActiveTab} />
       case 'scam':
         return <ScamAnalysis setActiveTab={setActiveTab} />
-      case 'threats':
-        return <ThreatDashboard setActiveTab={setActiveTab} />
-      case 'profile':
-        return <RiskProfile setActiveTab={setActiveTab} />
-      case 'community':
-        // Show CommunityHub for mobile navigation grouping
-        return <CommunityHub setActiveTab={setActiveTab} />
       case 'chat':
         return <ChatAssistant setActiveTab={setActiveTab} />
       case 'learn':
         return <LearnHub setActiveTab={setActiveTab} />
+      case 'community':
+        // Check if user is authenticated for community access
+        if (!isAuthenticated) {
+          return (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="text-yellow-800 text-lg font-semibold mb-2">
+                    🔒 Login Required
+                  </div>
+                  <p className="text-yellow-700 mb-4">
+                    You need to be logged in to access the Community Hub.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('login')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Login to Continue
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        }
+        return <CommunityHub setActiveTab={setActiveTab} />
       case 'admin':
+        // Check if user is admin
+        if (!user?.is_admin) {
+          return (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                  <div className="text-red-800 text-lg font-semibold mb-2">
+                    🚫 Access Denied
+                  </div>
+                  <p className="text-red-700 mb-4">
+                    You need admin privileges to access this section.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('breach')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Go to Breach Check
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        }
         return <AdminPanel />
       case 'login':
         return <Login onLoginSuccess={() => {
@@ -80,7 +114,7 @@ function App() {
           setActiveTab('login');
         }} />
       default:
-        return <SecurityHub setActiveTab={setActiveTab} />
+        return <BreachChecker setActiveTab={setActiveTab} />
     }
   }
 
@@ -189,13 +223,17 @@ function App() {
         {/* Floating Action Button */}
         <FloatingActionButton onAction={(action) => {
           switch (action) {
-            case 'report-threat':
-              setActiveTab('community');
+            case 'report-scam':
+              if (isAuthenticated) {
+                setActiveTab('community');
+              } else {
+                setActiveTab('login');
+              }
               break;
             case 'ask-ai':
               setActiveTab('chat');
               break;
-            case 'quick-scan':
+            case 'breach-check':
               setActiveTab('breach');
               break;
             default:

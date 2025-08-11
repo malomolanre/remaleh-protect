@@ -1,24 +1,25 @@
 import React from 'react';
-import { Home, Shield, Users, User, MessageSquare, BookOpen, Settings, Menu } from 'lucide-react';
+import { Shield, AlertTriangle, MessageSquare, BookOpen, Users, Settings } from 'lucide-react';
 
 export default function MobileNavigation({ activeTab, setActiveTab, user }) {
-  // Simplified tabs for mobile - grouped by functionality
-  const tabs = [
-    { id: 'breach', label: 'Security', icon: Shield, color: 'text-blue-600', description: 'Breach & Scam' },
-    { id: 'threats', label: 'Intel', icon: Home, color: 'text-green-600', description: 'Threats' },
-    { id: 'community', label: 'Community', icon: Users, color: 'text-orange-600', description: 'Reports & Chat' },
+  // Core tabs for mobile - focused on the 5 main features + admin for admin users
+  const baseTabs = [
+    { id: 'breach', label: 'Breach', icon: Shield, color: 'text-blue-600', description: 'Check' },
+    { id: 'scam', label: 'Scam', icon: AlertTriangle, color: 'text-red-600', description: 'Analysis' },
+    { id: 'chat', label: 'AI Chat', icon: MessageSquare, color: 'text-green-600', description: 'Assistant' },
     { id: 'learn', label: 'Learn', icon: BookOpen, color: 'text-teal-600', description: 'Hub' },
-    { id: 'profile', label: 'Profile', icon: User, color: 'text-purple-600', description: 'Account' },
-    ...(user?.is_admin ? [{ id: 'admin', label: 'Admin', icon: Settings, color: 'text-gray-600', description: 'Panel' }] : [])
+    { id: 'community', label: 'Community', icon: Users, color: 'text-orange-600', description: 'Hub' }
   ];
 
+  // Add admin tab for admin users
+  const tabs = user?.is_admin 
+    ? [...baseTabs, { id: 'admin', label: 'Admin', icon: Settings, color: 'text-purple-600', description: 'Panel' }]
+    : baseTabs;
+
   const handleTabClick = (tabId) => {
-    // Handle special cases for grouped functionality
-    if (tabId === 'breach') {
-      // Default to breach checker, but could show a quick choice modal
-      setActiveTab('breach');
-    } else if (tabId === 'community') {
-      // Default to community, but could show a quick choice modal
+    // Check if user is authenticated for community access
+    if (tabId === 'community' && !user) {
+      // Could show a login prompt here
       setActiveTab('community');
     } else {
       setActiveTab(tabId);
