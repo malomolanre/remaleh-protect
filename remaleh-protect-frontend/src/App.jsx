@@ -33,7 +33,19 @@ function App() {
             {/* Welcome Message */}
             <div className="text-center">
               <h1 className="text-3xl font-bold text-black mb-2">{greeting}</h1>
-              <p className="text-gray-700">Welcome to Remaleh Protect</p>
+              <p className="text-gray-600">Welcome to Remaleh Protect</p>
+            </div>
+
+            {/* For You Today Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-black mb-4">For You Today</h2>
+              <div className="text-center">
+                <div className="w-24 h-24 bg-[#21a1ce] bg-opacity-10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">✅</span>
+                </div>
+                <p className="text-black font-medium">You are up to date!</p>
+                <p className="text-gray-600 text-sm mt-1">No security threats detected</p>
+              </div>
             </div>
 
             {/* Quick Action Icons */}
@@ -121,18 +133,6 @@ function App() {
                     </svg>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* For You Today Section */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-black mb-4">For You Today</h2>
-              <div className="text-center">
-                <div className="w-24 h-24 bg-[#21a1ce] bg-opacity-10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl">✅</span>
-                </div>
-                <p className="text-black font-medium">You are up to date!</p>
-                <p className="text-gray-600 text-sm mt-1">No security threats detected</p>
               </div>
             </div>
           </div>
@@ -272,15 +272,12 @@ function App() {
       {/* Header with Profile Icon */}
       <header className="bg-[#21a1ce] text-white px-6 py-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <img 
-              src="/remaleh-logo.png" 
-              alt="Remaleh" 
-              className="w-10 h-10 mr-3"
-            />
-          </div>
           <div className="flex-1 text-center">
-            <h1 className="text-3xl font-bold">Remaleh Protect</h1>
+            <img 
+              src="/remaleh-logo-full.png" 
+              alt="Remaleh" 
+              className="h-12 mx-auto mb-2"
+            />
             <p className="text-white text-base opacity-90">Your Security Companion</p>
           </div>
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
