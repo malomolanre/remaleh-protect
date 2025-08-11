@@ -5,10 +5,10 @@ import logging
 
 # Import production modules - try relative imports first, then absolute
 try:
-    from ..models import db, User, ScamReport, CommunityReport
+    from ..models import db, User, CommunityReport
     from ..auth import token_required
 except ImportError:
-    from models import db, User, ScamReport, CommunityReport
+    from models import db, User, CommunityReport
     from auth import token_required
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def get_users():
         query = User.query
         
         if status:
-            query = query.filter(User.status == status)
+            query = query.filter(User.account_status == status)
         if role:
             query = query.filter(User.role == role)
             
@@ -51,12 +51,12 @@ def get_users():
         for user in users.items:
             user_data = {
                 'id': user.id,
-                'username': user.username,
+                'username': user.email.split('@')[0] if user.email else 'Unknown',
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'role': user.role,
-                'status': user.status,
+                'status': user.account_status,
                 'is_admin': user.is_admin,
                 'created_at': user.created_at.isoformat() if user.created_at else None,
                 'last_login': user.last_login.isoformat() if user.last_login else None,
@@ -92,12 +92,12 @@ def get_user(user_id):
             
         user_data = {
             'id': user.id,
-            'username': user.username,
+            'username': user.email.split('@')[0] if user.email else 'Unknown',
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'role': user.role,
-            'status': user.status,
+            'status': user.account_status,
             'is_admin': user.is_admin,
             'created_at': user.created_at.isoformat() if user.created_at else None,
             'last_login': user.last_login.isoformat() if user.last_login else None,
@@ -110,7 +110,7 @@ def get_user(user_id):
         for report in reports:
             user_data['reports'].append({
                 'id': report.id,
-                'title': report.title,
+                'threat_type': report.threat_type,
                 'status': report.status,
                 'created_at': report.created_at.isoformat() if report.created_at else None
             })
@@ -125,7 +125,7 @@ def get_user(user_id):
 @token_required
 @admin_required
 def update_user_status(user_id):
-    """Update user status (active, suspended, banned)"""
+    """Update user status (ACTIVE, SUSPENDED, BANNED)"""
     try:
         user = User.query.get(user_id)
         if not user:
@@ -134,13 +134,13 @@ def update_user_status(user_id):
         data = request.get_json()
         new_status = data.get('status')
         
-        if new_status not in ['active', 'suspended', 'banned']:
+        if new_status not in ['ACTIVE', 'SUSPENDED', 'BANNED']:
             return jsonify({'error': 'Invalid status'}), 400
             
-        user.status = new_status
+        user.account_status = new_status
         db.session.commit()
         
-        logger.info(f"Admin {g.current_user.username} updated user {user.username} status to {new_status}")
+        logger.info(f"Admin {g.current_user.email} updated user {user.email} status to {new_status}")
         
         return jsonify({
             'message': f'User status updated to {new_status}',
@@ -157,7 +157,7 @@ def update_user_status(user_id):
 @token_required
 @admin_required
 def update_user_role(user_id):
-    """Update user role (user, moderator, admin)"""
+    """Update user role (USER, MODERATOR, ADMIN)"""
     try:
         user = User.query.get(user_id)
         if not user:
@@ -166,20 +166,20 @@ def update_user_role(user_id):
         data = request.get_json()
         new_role = data.get('role')
         
-        if new_role not in ['user', 'moderator', 'admin']:
+        if new_role not in ['USER', 'MODERATOR', 'ADMIN']:
             return jsonify({'error': 'Invalid role'}), 400
             
         # Prevent removing the last admin
-        if user.role == 'admin' and new_role != 'admin':
-            admin_count = User.query.filter_by(role='admin').count()
+        if user.role == 'ADMIN' and new_role != 'ADMIN':
+            admin_count = User.query.filter_by(role='ADMIN').count()
             if admin_count <= 1:
                 return jsonify({'error': 'Cannot remove the last admin user'}), 400
         
         user.role = new_role
-        user.is_admin = (new_role == 'admin')
+        user.is_admin = (new_role == 'ADMIN')
         db.session.commit()
         
-        logger.info(f"Admin {g.current_user.username} updated user {user.username} role to {new_role}")
+        logger.info(f"Admin {g.current_user.email} updated user {user.email} role to {new_role}")
         
         return jsonify({
             'message': f'User role updated to {new_role}',
@@ -203,18 +203,17 @@ def delete_user(user_id):
             return jsonify({'error': 'User not found'}), 404
             
         # Prevent deleting the last admin
-        if user.role == 'admin':
-            admin_count = User.query.filter_by(role='admin').count()
+        if user.role == 'ADMIN':
+            admin_count = User.query.filter_by(role='ADMIN').count()
             if admin_count <= 1:
                 return jsonify({'error': 'Cannot delete the last admin user'}), 400
         
         # Soft delete by setting status to deleted
-        user.status = 'deleted'
+        user.account_status = 'BANNED'  # Use BANNED as closest to deleted
         user.email = f"deleted_{user.id}_{int(datetime.now().timestamp())}@deleted.com"
-        user.username = f"deleted_{user.id}_{int(datetime.now().timestamp())}"
         db.session.commit()
         
-        logger.info(f"Admin {g.current_user.username} deleted user {user.username}")
+        logger.info(f"Admin {g.current_user.email} deleted user {user.email}")
         
         return jsonify({
             'message': 'User deleted successfully',
@@ -235,14 +234,14 @@ def get_reports():
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         status = request.args.get('status')
-        severity = request.args.get('severity')
+        urgency = request.args.get('urgency')
         
         query = CommunityReport.query
         
         if status:
             query = query.filter(CommunityReport.status == status)
-        if severity:
-            query = query.filter(CommunityReport.severity == severity)
+        if urgency:
+            query = query.filter(CommunityReport.urgency == urgency)
             
         reports = query.paginate(
             page=page, 
@@ -255,20 +254,20 @@ def get_reports():
             user = User.query.get(report.user_id)
             report_data = {
                 'id': report.id,
-                'title': report.title,
+                'threat_type': report.threat_type,
                 'description': report.description,
-                'severity': report.severity,
+                'urgency': report.urgency,
                 'status': report.status,
                 'created_at': report.created_at.isoformat() if report.created_at else None,
-                'updated_at': report.updated_at.isoformat() if report.updated_at else None,
                 'reporter': {
                     'id': user.id if user else None,
-                    'username': user.username if user else 'Unknown',
+                    'username': user.email.split('@')[0] if user and user.email else 'Unknown',
                     'email': user.email if user else None
                 } if user else None,
-                'evidence': report.evidence,
                 'location': report.location,
-                'tags': report.tags
+                'votes_up': report.votes_up,
+                'votes_down': report.votes_down,
+                'verified': report.verified
             }
             report_list.append(report_data)
         
@@ -300,21 +299,17 @@ def moderate_report(report_id):
             
         data = request.get_json()
         action = data.get('action')
-        admin_notes = data.get('admin_notes', '')
         
-        if action not in ['approve', 'reject', 'flag']:
+        if action not in ['APPROVED', 'REJECTED', 'FLAGGED']:
             return jsonify({'error': 'Invalid action'}), 400
             
         report.status = action
-        report.admin_notes = admin_notes
-        report.moderated_by = g.current_user.id
-        report.moderated_at = datetime.utcnow()
         db.session.commit()
         
-        logger.info(f"Admin {g.current_user.username} {action}ed report {report_id}")
+        logger.info(f"Admin {g.current_user.email} {action.lower()}ed report {report_id}")
         
         return jsonify({
-            'message': f'Report {action}ed successfully',
+            'message': f'Report {action.lower()}ed successfully',
             'report_id': report_id,
             'action': action
         }), 200
@@ -332,15 +327,15 @@ def get_admin_stats():
     try:
         # User statistics
         total_users = User.query.count()
-        active_users = User.query.filter_by(status='active').count()
-        suspended_users = User.query.filter_by(status='suspended').count()
-        admin_users = User.query.filter_by(role='admin').count()
+        active_users = User.query.filter_by(account_status='ACTIVE').count()
+        suspended_users = User.query.filter_by(account_status='SUSPENDED').count()
+        admin_users = User.query.filter_by(role='ADMIN').count()
         
         # Report statistics
         total_reports = CommunityReport.query.count()
-        pending_reports = CommunityReport.query.filter_by(status='pending').count()
-        approved_reports = CommunityReport.query.filter_by(status='approve').count()
-        rejected_reports = CommunityReport.query.filter_by(status='reject').count()
+        pending_reports = CommunityReport.query.filter_by(status='PENDING').count()
+        approved_reports = CommunityReport.query.filter_by(status='APPROVED').count()
+        rejected_reports = CommunityReport.query.filter_by(status='REJECTED').count()
         
         # Recent activity
         recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
@@ -363,14 +358,14 @@ def get_admin_stats():
                 'new_users': [
                     {
                         'id': user.id,
-                        'username': user.username,
+                        'username': user.email.split('@')[0] if user.email else 'Unknown',
                         'created_at': user.created_at.isoformat() if user.created_at else None
                     } for user in recent_users
                 ],
                 'new_reports': [
                     {
                         'id': report.id,
-                        'title': report.title,
+                        'threat_type': report.threat_type,
                         'status': report.status,
                         'created_at': report.created_at.isoformat() if report.created_at else None
                     } for report in recent_reports
@@ -398,12 +393,19 @@ def system_health():
             db_status = 'unhealthy'
         
         # Basic system info
-        import psutil
-        system_info = {
-            'cpu_percent': psutil.cpu_percent(interval=1),
-            'memory_percent': psutil.virtual_memory().percent,
-            'disk_percent': psutil.disk_usage('/').percent
-        }
+        try:
+            import psutil
+            system_info = {
+                'cpu_percent': psutil.cpu_percent(interval=1),
+                'memory_percent': psutil.virtual_memory().percent,
+                'disk_percent': psutil.disk_usage('/').percent
+            }
+        except ImportError:
+            system_info = {
+                'cpu_percent': 'N/A',
+                'memory_percent': 'N/A',
+                'disk_percent': 'N/A'
+            }
         
         health_data = {
             'status': 'healthy',
