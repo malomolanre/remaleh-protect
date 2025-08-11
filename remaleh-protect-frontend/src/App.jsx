@@ -37,36 +37,90 @@ function App() {
             </div>
 
             {/* Quick Action Icons */}
-            <div className="grid grid-cols-5 gap-4">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#21a1ce] rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-                  <span className="text-white text-2xl">🔒</span>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
+                    <span className="text-white text-xl">🔒</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-black mb-1">Breach Check</h3>
+                    <p className="text-gray-600 text-sm">Check if your email has been compromised in data breaches</p>
+                  </div>
+                  <div className="text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-xs text-black font-medium">Breach Check</p>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#21a1ce] rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-                  <span className="text-white text-2xl">🚨</span>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
+                    <span className="text-white text-xl">🚨</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-black mb-1">Scam Analysis</h3>
+                    <p className="text-gray-600 text-sm">Analyze suspicious messages and links for potential scams</p>
+                  </div>
+                  <div className="text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-xs text-black font-medium">Scam Analysis</p>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#21a1ce] rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-                  <span className="text-white text-2xl">🤖</span>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
+                    <span className="text-white text-xl">📚</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-black mb-1">Learn Hub</h3>
+                    <p className="text-gray-600 text-sm">Educational content to improve your digital security</p>
+                  </div>
+                  <div className="text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-xs text-black font-medium">AI Assistant</p>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#21a1ce] rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-                  <span className="text-white text-2xl">📚</span>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
+                    <span className="text-white text-xl">👥</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-black mb-1">Community</h3>
+                    <p className="text-gray-600 text-sm">Report scams and stay updated on latest threats</p>
+                  </div>
+                  <div className="text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-xs text-black font-medium">Learn Hub</p>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#21a1ce] rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-                  <span className="text-white text-2xl">👥</span>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
+                    <span className="text-white text-xl">💬</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-black mb-1">Chat</h3>
+                    <p className="text-gray-600 text-sm">Get instant help and answers to security questions</p>
+                  </div>
+                  <div className="text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-xs text-black font-medium">Community</p>
               </div>
             </div>
 
