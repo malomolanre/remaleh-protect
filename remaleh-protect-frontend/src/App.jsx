@@ -1,4 +1,9 @@
 import React, { useState } from 'react'
+import BreachChecker from './components/BreachChecker'
+import ScamAnalysis from './components/ScamAnalysis'
+import ChatAssistant from './components/ChatAssistant'
+import LearnHub from './components/LearnHub'
+import CommunityHub from './components/CommunityHub'
 import './App.css'
 
 function App() {
@@ -15,46 +20,15 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'breach':
-        return (
-          <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Breach Checker</h1>
-            <p>This is a test version to identify the issue.</p>
-            <button 
-              onClick={() => alert('Button clicked!')}
-              className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
-            >
-              Test Button
-            </button>
-          </div>
-        )
+        return <BreachChecker setActiveTab={setActiveTab} />
       case 'scam':
-        return (
-          <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Scam Analysis</h1>
-            <p>This is a test version to identify the issue.</p>
-          </div>
-        )
+        return <ScamAnalysis setActiveTab={setActiveTab} />
       case 'chat':
-        return (
-          <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">AI Assistant</h1>
-            <p>This is a test version to identify the issue.</p>
-          </div>
-        )
+        return <ChatAssistant setActiveTab={setActiveTab} />
       case 'learn':
-        return (
-          <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Learn Hub</h1>
-            <p>This is a test version to identify the issue.</p>
-          </div>
-        )
+        return <LearnHub setActiveTab={setActiveTab} />
       case 'community':
-        return (
-          <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Community Hub</h1>
-            <p>This is a test version to identify the issue.</p>
-          </div>
-        )
+        return <CommunityHub setActiveTab={setActiveTab} />
       default:
         return (
           <div className="p-4">
