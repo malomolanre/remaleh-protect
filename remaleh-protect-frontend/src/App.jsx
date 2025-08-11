@@ -20,9 +20,9 @@ function App() {
     { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'breach', label: 'Breach', icon: '🔒' },
     { id: 'scam', label: 'Scam', icon: '🚨' },
-    { id: 'chat', label: 'AI Chat', icon: '🤖' },
     { id: 'learn', label: 'Learn', icon: '📚' },
-    { id: 'community', label: 'Community', icon: '👥' }
+    { id: 'community', label: 'Community', icon: '👥' },
+    { id: 'chat', label: 'Chat', icon: '💬' }
   ]
 
   const renderContent = () => {
@@ -135,7 +135,7 @@ function App() {
         return (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h1 className="text-2xl font-bold text-black mb-4">🤖 AI Assistant</h1>
+              <h1 className="text-2xl font-bold text-black mb-4">💬 Chat</h1>
               <p className="text-gray-700 mb-6">Get instant help and answers to your security questions.</p>
               
               <div className="space-y-4">
@@ -149,7 +149,7 @@ function App() {
                 </div>
                 
                 <button className="w-full bg-[#21a1ce] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-colors shadow-sm">
-                  Chat with AI
+                  Start Chat
                 </button>
               </div>
             </div>
