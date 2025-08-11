@@ -40,81 +40,105 @@ function App() {
   ]
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'breach':
-        return <BreachChecker setActiveTab={setActiveTab} />
-      case 'scam':
-        return <ScamAnalysis setActiveTab={setActiveTab} />
-      case 'chat':
-        return <ChatAssistant setActiveTab={setActiveTab} />
-      case 'learn':
-        return <LearnHub setActiveTab={setActiveTab} />
-      case 'community':
-        // Check if user is authenticated for community access
-        if (!isAuthenticated) {
-          return (
-            <div className="text-center py-12">
-              <div className="max-w-md mx-auto">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                  <div className="text-yellow-800 text-lg font-semibold mb-2">
-                    🔒 Login Required
+    try {
+      switch (activeTab) {
+        case 'breach':
+          return <BreachChecker setActiveTab={setActiveTab} />
+        case 'scam':
+          return <ScamAnalysis setActiveTab={setActiveTab} />
+        case 'chat':
+          return <ChatAssistant setActiveTab={setActiveTab} />
+        case 'learn':
+          return <LearnHub setActiveTab={setActiveTab} />
+        case 'community':
+          // Check if user is authenticated for community access
+          if (!isAuthenticated) {
+            return (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                    <div className="text-yellow-800 text-lg font-semibold mb-2">
+                      🔒 Login Required
+                    </div>
+                    <p className="text-yellow-700 mb-4">
+                      You need to be logged in to access the Community Hub.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('login')}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Login to Continue
+                    </button>
                   </div>
-                  <p className="text-yellow-700 mb-4">
-                    You need to be logged in to access the Community Hub.
-                  </p>
-                  <button
-                    onClick={() => setActiveTab('login')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Login to Continue
-                  </button>
                 </div>
               </div>
-            </div>
-          )
-        }
-        return <CommunityHub setActiveTab={setActiveTab} />
-      case 'admin':
-        // Check if user is admin
-        if (!user?.is_admin) {
-          return (
-            <div className="text-center py-12">
-              <div className="max-w-md mx-auto">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                  <div className="text-red-800 text-lg font-semibold mb-2">
-                    🚫 Access Denied
-                  </div>
-                  <p className="text-red-700 mb-4">
-                    You need admin privileges to access this section.
-                  </p>
-                  <button
-                    onClick={() => setActiveTab('breach')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Go to Breach Check
-                  </button>
-                </div>
-              </div>
-            </div>
-          )
-        }
-        return <AdminPanel />
-      case 'login':
-        return <Login onLoginSuccess={() => {
-          // After successful login, redirect to appropriate tab based on user role
-          if (user?.is_admin) {
-            setActiveTab('admin');
-          } else {
-            setActiveTab('breach'); // Default to breach checker for regular users
+            )
           }
-        }} onSwitchToRegister={() => setActiveTab('register')} />
-      case 'register':
-        return <Register onRegisterSuccess={() => {
-          // After successful registration, redirect to login tab
-          setActiveTab('login');
-        }} />
-      default:
-        return <BreachChecker setActiveTab={setActiveTab} />
+          return <CommunityHub setActiveTab={setActiveTab} />
+        case 'admin':
+          // Check if user is admin
+          if (!user?.is_admin) {
+            return (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div className="text-red-800 text-lg font-semibold mb-2">
+                      🚫 Access Denied
+                    </div>
+                    <p className="text-red-700 mb-4">
+                      You need admin privileges to access this section.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('breach')}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Go to Breach Check
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          }
+          return <AdminPanel />
+        case 'login':
+          return <Login onLoginSuccess={() => {
+            // After successful login, redirect to appropriate tab based on user role
+            if (user?.is_admin) {
+              setActiveTab('admin');
+            } else {
+              setActiveTab('breach'); // Default to breach checker for regular users
+            }
+          }} onSwitchToRegister={() => setActiveTab('register')} />
+        case 'register':
+          return <Register onRegisterSuccess={() => {
+            // After successful registration, redirect to login tab
+            setActiveTab('login');
+          }} />
+        default:
+          return <BreachChecker setActiveTab={setActiveTab} />
+      }
+    } catch (error) {
+      console.error('Error rendering content:', error);
+      return (
+        <div className="text-center py-12">
+          <div className="max-w-md mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <div className="text-red-800 text-lg font-semibold mb-2">
+                🚫 Component Error
+              </div>
+              <p className="text-red-700 mb-4">
+                Error loading component: {error.message}
+              </p>
+              <button
+                onClick={() => setActiveTab('breach')}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Go to Breach Check
+              </button>
+            </div>
+          </div>
+        </div>
+      )
     }
   }
 
