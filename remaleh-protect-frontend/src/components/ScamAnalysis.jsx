@@ -2,19 +2,18 @@ import React, { useState } from 'react'
 import { AlertTriangle, CheckCircle, X, ArrowLeft, Shield, MessageSquare, Link, Mail } from 'lucide-react'
 import { MobileCard } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
-import { MobileInput } from './ui/mobile-input'
-import { MobileTextarea } from './ui/mobile-input'
+import { MobileInput, MobileTextarea } from './ui/mobile-input'
 import { useScamAnalysis } from '../hooks/useScamAnalysis'
 
 export default function ScamAnalysis({ setActiveTab }) {
   const [inputType, setInputType] = useState('message')
   const [input, setInput] = useState('')
-  const { analyzeScam, result, isLoading, error } = useScamAnalysis()
+  const { analyze, result, isAnalyzing } = useScamAnalysis()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (input.trim()) {
-      await analyzeScam(input.trim(), inputType)
+      await analyze(input.trim())
     }
   }
 
@@ -101,10 +100,10 @@ export default function ScamAnalysis({ setActiveTab }) {
           </div>
           <MobileButton
             type="submit"
-            disabled={isLoading || !input.trim()}
+            disabled={isAnalyzing || !input.trim()}
             className="w-full"
           >
-            {isLoading ? (
+            {isAnalyzing ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Analyzing...
@@ -184,7 +183,7 @@ export default function ScamAnalysis({ setActiveTab }) {
       )}
 
       {/* Error Display */}
-      {error && (
+      {/* Error Display */}
         <MobileCard className="bg-red-50 border-red-200">
           <div className="p-4">
             <div className="flex items-center gap-2 text-red-800 mb-2">
@@ -194,7 +193,6 @@ export default function ScamAnalysis({ setActiveTab }) {
             <p className="text-red-700 text-sm">{error}</p>
           </div>
         </MobileCard>
-      )}
     </div>
   )
 }

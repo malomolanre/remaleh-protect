@@ -7,12 +7,12 @@ import { useBreachCheck } from '../hooks/useBreachCheck'
 
 export default function BreachChecker({ setActiveTab }) {
   const [email, setEmail] = useState('')
-  const { checkBreach, result, isLoading, error } = useBreachCheck()
+  const { check, result, isChecking } = useBreachCheck()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (email.trim()) {
-      await checkBreach(email.trim())
+      await check(email.trim())
     }
   }
 
@@ -51,10 +51,10 @@ export default function BreachChecker({ setActiveTab }) {
           </div>
           <MobileButton
             type="submit"
-            disabled={isLoading || !email.trim()}
+            disabled={isChecking || !email.trim()}
             className="w-full"
           >
-            {isLoading ? (
+            {isChecking ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Checking...
