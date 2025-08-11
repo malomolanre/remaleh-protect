@@ -38,13 +38,84 @@ function App() {
 
             {/* For You Today Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-black mb-4">For You Today</h2>
-              <div className="text-center">
-                <div className="w-24 h-24 bg-[#21a1ce] bg-opacity-10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl">✅</span>
-                </div>
-                <p className="text-black font-medium">You are up to date!</p>
-                <p className="text-gray-600 text-sm mt-1">No security threats detected</p>
+              <h2 className="text-xl font-bold text-black mb-4">Latest Community Scam Reports</h2>
+              <div className="space-y-3">
+                {/* Sample scam reports - in real app, these would come from your backend */}
+                {[
+                  {
+                    id: 1,
+                    type: "Phishing",
+                    description: "Fake bank email asking for login details",
+                    time: "2 hours ago",
+                    severity: "high",
+                    reporter: "Sarah M."
+                  },
+                  {
+                    id: 2,
+                    type: "Investment Scam",
+                    description: "Promises of 500% returns in crypto trading",
+                    time: "4 hours ago",
+                    severity: "high",
+                    reporter: "Mike R."
+                  },
+                  {
+                    id: 3,
+                    type: "Tech Support",
+                    description: "Call claiming computer has virus",
+                    time: "6 hours ago",
+                    severity: "medium",
+                    reporter: "Lisa K."
+                  },
+                  {
+                    id: 4,
+                    type: "Romance Scam",
+                    description: "Online dating profile asking for money",
+                    time: "8 hours ago",
+                    severity: "medium",
+                    reporter: "David L."
+                  },
+                  {
+                    id: 5,
+                    type: "Lottery Scam",
+                    description: "Email claiming you won $1M prize",
+                    time: "12 hours ago",
+                    severity: "low",
+                    reporter: "Emma T."
+                  }
+                ].map((scam, index) => (
+                  <div 
+                    key={scam.id}
+                    className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-400 p-4 rounded-xl hover:shadow-md transition-all duration-200 cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            scam.severity === 'high' ? 'bg-red-100 text-red-700' :
+                            scam.severity === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-green-100 text-green-700'
+                          }`}>
+                            {scam.severity.toUpperCase()}
+                          </span>
+                          <span className="text-gray-500 text-xs">{scam.time}</span>
+                        </div>
+                        <h3 className="font-semibold text-gray-800 mb-1">{scam.type}</h3>
+                        <p className="text-gray-600 text-sm mb-2">{scam.description}</p>
+                        <p className="text-gray-500 text-xs">Reported by {scam.reporter}</p>
+                      </div>
+                      <div className="text-red-400 ml-3">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-center">
+                <button className="text-[#21a1ce] text-sm font-medium hover:underline">
+                  View All Reports →
+                </button>
               </div>
             </div>
 
