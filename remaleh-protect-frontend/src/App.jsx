@@ -7,6 +7,7 @@ import LearnHub from './components/LearnHub'
 import ContentAdmin from './components/ContentAdmin'
 import Login from './components/Login'
 import Register from './components/Register'
+import { useAuth } from './hooks/useAuth'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
@@ -20,6 +21,12 @@ function App() {
   
   // Password generator modal state
   const [showPasswordGenerator, setShowPasswordGenerator] = useState(false)
+  
+  // Profile dropdown state
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false)
+  
+  // Get authentication state
+  const { user, isAuthenticated, logout } = useAuth()
 
   // Global logout function
   const handleGlobalLogout = async () => {
@@ -60,6 +67,60 @@ function App() {
     }
     setGreeting(getGreeting())
   }, [])
+  
+  // Get user initials for profile icon
+  const getUserInitials = () => {
+    if (user?.name) {
+      const names = user.name.split(' ')
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
+      }
+      return names[0][0].toUpperCase()
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase()
+    }
+    return 'U' // Default user icon
+  }
+  
+  // Handle profile icon click
+  const handleProfileClick = () => {
+    if (isAuthenticated) {
+      setShowProfileDropdown(!showProfileDropdown)
+    } else {
+      setActiveTab('login')
+    }
+  }
+  
+  // Handle logout
+  const handleLogout = () => {
+    logout()
+    setShowProfileDropdown(false)
+    setActiveTab('home')
+  }
+  
+  // Close dropdown when clicking outside or pressing escape
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showProfileDropdown && !event.target.closest('.profile-dropdown')) {
+        setShowProfileDropdown(false)
+      }
+    }
+    
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape' && showProfileDropdown) {
+        setShowProfileDropdown(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscapeKey)
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [showProfileDropdown])
 
   const tabs = [
     { 
@@ -1671,8 +1732,41 @@ function App() {
               className="h-8 w-auto mx-auto"
             />
           </div>
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
-            <span className="text-[#21a1ce] font-semibold text-sm">LP</span>
+          
+          {/* Profile Icon - Clickable */}
+          <div className="relative">
+            <button
+              onClick={handleProfileClick}
+              className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+            >
+              <span className="text-[#21a1ce] font-semibold text-sm">
+                {getUserInitials()}
+              </span>
+            </button>
+            
+            {/* Profile Dropdown */}
+            {showProfileDropdown && isAuthenticated && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 profile-dropdown">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
+                  <p className="text-xs text-gray-500">{user?.email}</p>
+                </div>
+                
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Profile Settings
+                </button>
+                
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
