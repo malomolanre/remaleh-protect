@@ -3,7 +3,7 @@ import { Edit3, Save, X, Plus, Trash2, Eye, Search } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
-import { MobileTextarea } from './ui/textarea'
+import { Textarea } from './ui/textarea'
 import learningContent from '../data/learning-content.json'
 
 export default function ContentAdmin() {
@@ -359,7 +359,7 @@ export default function ContentAdmin() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                <MobileTextarea
+                <Textarea
                   value={editingLesson.content}
                   onChange={(e) => setEditingLesson({ ...editingLesson, content: e.target.value })}
                   rows={4}
