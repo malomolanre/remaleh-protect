@@ -278,23 +278,112 @@ function App() {
       case 'breach':
         return (
           <div className="space-y-6">
+            {/* Header Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h1 className="text-2xl font-bold text-black mb-4">🔒 Breach Checker</h1>
-              <p className="text-gray-700 mb-6">Check if your email has been compromised in data breaches.</p>
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-black">Breach Checker</h1>
+                  <p className="text-gray-600">Secure email verification</p>
+                </div>
+              </div>
+              
+              <p className="text-gray-700 mb-6">Check if your email has been compromised in data breaches and get personalized security recommendations.</p>
+            </div>
+
+            {/* Email Input Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-black mb-4">Check Your Email</h2>
               
               <div className="space-y-4">
-                <div className="bg-[#21a1ce] bg-opacity-10 p-4 rounded-xl border border-[#21a1ce] border-opacity-20">
-                  <h3 className="font-semibold text-black mb-2">How it works:</h3>
-                  <ul className="text-gray-700 space-y-1">
-                    <li>• Enter your email address</li>
-                    <li>• We check against known data breaches</li>
-                    <li>• Get instant results and recommendations</li>
-                  </ul>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                      </svg>
+                    </div>
+                    <input
+                      type="email"
+                      id="email"
+                      placeholder="Enter your email address"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent transition-all duration-200"
+                    />
+                  </div>
                 </div>
                 
-                <button className="w-full bg-[#21a1ce] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-colors shadow-sm">
-                  Start Breach Check
+                <button className="w-full bg-[#21a1ce] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Check for Breaches
                 </button>
+              </div>
+            </div>
+
+            {/* How It Works Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-black mb-4">How It Works</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-[#21a1ce] bg-opacity-10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-[#21a1ce] font-bold text-lg">1</span>
+                  </div>
+                  <h3 className="font-medium text-gray-800 mb-2">Enter Email</h3>
+                  <p className="text-gray-600 text-sm">Provide your email address securely</p>
+                </div>
+                
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-[#21a1ce] bg-opacity-10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-[#21a1ce] font-bold text-lg">2</span>
+                  </div>
+                  <h3 className="font-medium text-gray-800 mb-2">Scan Database</h3>
+                  <p className="text-gray-600 text-sm">We check against known breaches</p>
+                </div>
+                
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-[#21a1ce] bg-opacity-10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-[#21a1ce] font-bold text-lg">3</span>
+                  </div>
+                  <h3 className="font-medium text-gray-800 mb-2">Get Results</h3>
+                  <p className="text-gray-600 text-sm">Instant results and recommendations</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Features */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-black mb-4">Security Features</h2>
+              
+              <div className="space-y-3">
+                <div className="flex items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                  <svg className="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-green-800 text-sm">Your data is never stored or shared</span>
+                </div>
+                
+                <div className="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-blue-800 text-sm">Real-time breach database updates</span>
+                </div>
+                
+                <div className="flex items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <svg className="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span className="text-purple-800 text-sm">Instant results and notifications</span>
+                </div>
               </div>
             </div>
           </div>
