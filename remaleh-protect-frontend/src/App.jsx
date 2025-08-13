@@ -1409,19 +1409,15 @@ function App() {
                 )}
 
                 {/* Threats Detected section removed - now handled in consolidated indicators above */}
-                {/* 
-                {scamResult.indicators && Array.isArray(scamResult.indicators) && scamResult.indicators.length > 0 && (
+
+                {/* Link Analysis Details */}
+                {scamResult.linkDetails && (
                   <div className="mb-4">
-                    <h3 className="font-semibold text-gray-800 mb-2">Threats Detected:</h3>
+                    <h3 className="font-semibold text-gray-800 mb-2">Link Analysis Details:</h3>
                     <div className="space-y-2">
-                      {/* {scamResult.indicators.map((threat, index) => ( */}
-                        <div key={index} className="p-3 bg-red-50 rounded-lg border border-red-200">
-                          <div className="flex items-center">
-                            <svg className="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                            </svg>
-                            <span className="text-red-800 text-sm">{threat}</span>
-                          </div>
+                      {scamResult.linkDetails.indicators && scamResult.linkDetails.indicators.map((indicator, index) => (
+                        <div key={index} className="p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <span className="text-yellow-800 text-sm">{indicator}</span>
                         </div>
                       ))}
                     </div>
