@@ -26,6 +26,7 @@ export default function ContentAdmin() {
   const [selectedModuleId, setSelectedModuleId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   // Load modules from backend API
   useEffect(() => {
@@ -86,6 +87,7 @@ export default function ContentAdmin() {
 
   const addModule = async () => {
     try {
+      setActionLoading(true)
       const newModuleData = {
         title: 'New Module',
         description: 'Module description',
@@ -101,6 +103,8 @@ export default function ContentAdmin() {
     } catch (err) {
       console.error('❌ Error creating module:', err)
       alert('Failed to create module: ' + (err.message || 'Unknown error'))
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -110,6 +114,7 @@ export default function ContentAdmin() {
         throw new Error('Module ID is required')
       }
       
+      setActionLoading(true)
       const newLessonData = {
         title: 'New Lesson',
         type: 'info',
@@ -126,6 +131,8 @@ export default function ContentAdmin() {
     } catch (err) {
       console.error('❌ Error adding lesson:', err)
       alert('Failed to add lesson: ' + (err.message || 'Unknown error'))
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -137,12 +144,15 @@ export default function ContentAdmin() {
     
     if (confirm('Are you sure you want to delete this module? This will also delete all lessons within it.')) {
       try {
+        setActionLoading(true)
         await deleteModule(moduleId)
         await loadModules() // Refresh the modules list
         alert('Module deleted successfully!')
       } catch (err) {
         console.error('❌ Error deleting module:', err)
         alert('Failed to delete module: ' + (err.message || 'Unknown error'))
+      } finally {
+        setActionLoading(false)
       }
     }
   }
@@ -155,12 +165,15 @@ export default function ContentAdmin() {
     
     if (confirm('Are you sure you want to delete this lesson?')) {
       try {
+        setActionLoading(true)
         await deleteLesson(moduleId, lessonId)
         await loadModules() // Refresh the modules list
         alert('Lesson deleted successfully!')
       } catch (err) {
         console.error('❌ Error deleting lesson:', err)
         alert('Failed to delete lesson: ' + (err.message || 'Unknown error'))
+      } finally {
+        setActionLoading(false)
       }
     }
   }
@@ -174,6 +187,7 @@ export default function ContentAdmin() {
           return
         }
         
+        setActionLoading(true)
         const updateData = {
           title: editingModule.title.trim(),
           description: editingModule.description?.trim() || 'No description',
@@ -189,6 +203,8 @@ export default function ContentAdmin() {
       } catch (err) {
         console.error('❌ Error updating module:', err)
         alert('Failed to update module: ' + (err.message || 'Unknown error'))
+      } finally {
+        setActionLoading(false)
       }
     }
   }
@@ -207,6 +223,7 @@ export default function ContentAdmin() {
           return
         }
         
+        setActionLoading(true)
         const updateData = {
           title: editingLesson.title.trim(),
           type: editingLesson.type || 'info',
@@ -224,6 +241,8 @@ export default function ContentAdmin() {
       } catch (err) {
         console.error('❌ Error updating lesson:', err)
         alert('Failed to update lesson: ' + (err.message || 'Unknown error'))
+      } finally {
+        setActionLoading(false)
       }
     }
   }
@@ -237,9 +256,22 @@ export default function ContentAdmin() {
             <Plus className="w-4 h-4 mr-2" />
             Add Module
           </MobileButton>
-          <MobileButton onClick={loadModules} variant="primary">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+          <MobileButton 
+            onClick={loadModules} 
+            variant="primary"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Loading...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </>
+            )}
           </MobileButton>
         </div>
       </div>
@@ -422,9 +454,22 @@ export default function ContentAdmin() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-4">Add New Module</h3>
-            <MobileButton onClick={addModule} className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Module
+            <MobileButton 
+              onClick={addModule} 
+              className="w-full"
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Module
+                </>
+              )}
             </MobileButton>
             <button
               onClick={() => {
@@ -444,9 +489,22 @@ export default function ContentAdmin() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-4">Add New Lesson</h3>
-            <MobileButton onClick={() => handleAddLesson(showAddLesson)} className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Lesson
+            <MobileButton 
+              onClick={() => handleAddLesson(showAddLesson)} 
+              className="w-full"
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Lesson
+                </>
+              )}
             </MobileButton>
             <button
               onClick={() => {
@@ -473,6 +531,11 @@ export default function ContentAdmin() {
                   value={editingModule.title || ''}
                   onChange={(e) => setEditingModule({ ...editingModule, title: e.target.value })}
                   placeholder="Enter module title"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !actionLoading) {
+                      saveModule()
+                    }
+                  }}
                 />
               </div>
               <div>
@@ -510,8 +573,16 @@ export default function ContentAdmin() {
               <MobileButton
                 onClick={saveModule}
                 className="flex-1"
+                disabled={actionLoading}
               >
-                Save Changes
+                {actionLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </MobileButton>
               <button
                 onClick={() => {
@@ -539,6 +610,11 @@ export default function ContentAdmin() {
                   value={editingLesson.title || ''}
                   onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
                   placeholder="Enter lesson title"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !actionLoading) {
+                      saveLesson()
+                    }
+                  }}
                 />
               </div>
               <div>
@@ -580,8 +656,16 @@ export default function ContentAdmin() {
               <MobileButton
                 onClick={saveLesson}
                 className="flex-1"
+                disabled={actionLoading}
               >
-                Save Changes
+                {actionLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </MobileButton>
               <button
                 onClick={() => {
