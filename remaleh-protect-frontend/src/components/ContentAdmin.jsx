@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Edit3, Save, X, Plus, Trash2, Eye, Search, RefreshCw } from 'lucide-react'
+import { Edit3, Save, X, Plus, Trash2, Eye, Search, RefreshCw, BookOpen } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
@@ -29,26 +29,60 @@ export default function ContentAdmin() {
 
   // Load modules from backend API
   useEffect(() => {
-    loadModules()
+    let isMounted = true
+    
+    const loadData = async () => {
+      if (isMounted) {
+        await loadModules()
+      }
+    }
+    
+    loadData()
+    
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const loadModules = async () => {
     try {
+      console.log('🔄 Loading modules...')
       setLoading(true)
       setError(null)
       const modulesData = await getAllModules()
-      setModules(modulesData)
+      console.log('📦 Modules loaded:', modulesData)
+      
+      // Ensure modulesData is an array and has valid structure
+      if (Array.isArray(modulesData)) {
+        setModules(modulesData)
+      } else if (modulesData && Array.isArray(modulesData.modules)) {
+        setModules(modulesData.modules)
+      } else {
+        console.warn('⚠️ Unexpected modules data format:', modulesData)
+        setModules([])
+      }
     } catch (err) {
-      setError('Failed to load modules: ' + err.message)
+      console.error('❌ Error loading modules:', err)
+      setError('Failed to load modules: ' + (err.message || 'Unknown error'))
+      setModules([]) // Set empty array on error
     } finally {
       setLoading(false)
+      console.log('✅ Loading complete')
     }
   }
 
-  const filteredModules = modules.filter(module =>
-    module.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (module.description && module.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  const filteredModules = React.useMemo(() => {
+    try {
+      return modules.filter(module =>
+        (module.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ((module.description || '').toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    } catch (error) {
+      console.error('❌ Error filtering modules:', error)
+      return []
+    }
+  }, [modules, searchTerm])
 
   const addModule = async () => {
     try {
@@ -65,12 +99,17 @@ export default function ContentAdmin() {
       setShowAddModule(false)
       alert('Module created successfully!')
     } catch (err) {
-      alert('Failed to create module: ' + err.message)
+      console.error('❌ Error creating module:', err)
+      alert('Failed to create module: ' + (err.message || 'Unknown error'))
     }
   }
 
-  const addLesson = async (moduleId) => {
+  const handleAddLesson = async (moduleId) => {
     try {
+      if (!moduleId) {
+        throw new Error('Module ID is required')
+      }
+      
       const newLessonData = {
         title: 'New Lesson',
         type: 'info',
@@ -85,7 +124,8 @@ export default function ContentAdmin() {
       setShowAddLesson(false)
       alert('Lesson added successfully!')
     } catch (err) {
-      alert('Failed to add lesson: ' + err.message)
+      console.error('❌ Error adding lesson:', err)
+      alert('Failed to add lesson: ' + (err.message || 'Unknown error'))
     }
   }
 
@@ -114,40 +154,47 @@ export default function ContentAdmin() {
   }
 
   const saveModule = async () => {
-    if (editingModule) {
+    if (editingModule && editingModule.id) {
       try {
-        await updateModule(editingModule.id, {
-          title: editingModule.title,
-          description: editingModule.description,
-          difficulty: editingModule.difficulty,
-          estimated_time: editingModule.estimated_time,
-          content: editingModule.content
-        })
+        const updateData = {
+          title: editingModule.title || 'Untitled Module',
+          description: editingModule.description || 'No description',
+          difficulty: editingModule.difficulty || 'BEGINNER',
+          estimated_time: editingModule.estimated_time || 10,
+          content: editingModule.content || { lessons: [] }
+        }
+        
+        await updateModule(editingModule.id, updateData)
         await loadModules() // Refresh the modules list
         setEditingModule(null)
         alert('Module updated successfully!')
       } catch (err) {
-        alert('Failed to update module: ' + err.message)
+        console.error('❌ Error updating module:', err)
+        alert('Failed to update module: ' + (err.message || 'Unknown error'))
       }
     }
   }
 
   const saveLesson = async () => {
-    if (editingLesson && selectedModuleId) {
+    if (editingLesson && editingLesson.id && selectedModuleId) {
       try {
-        await updateLesson(selectedModuleId, editingLesson.id, {
-          title: editingLesson.title,
-          type: editingLesson.type,
-          content: editingLesson.content,
-          contentType: editingLesson.contentType,
-          contentStyle: editingLesson.contentStyle,
-          duration: editingLesson.duration
-        })
+        const updateData = {
+          title: editingLesson.title || 'Untitled Lesson',
+          type: editingLesson.type || 'info',
+          content: editingLesson.content || 'No content',
+          contentType: editingLesson.contentType || 'info',
+          contentStyle: editingLesson.contentStyle || 'default',
+          duration: editingLesson.duration || 5
+        }
+        
+        await updateLesson(selectedModuleId, editingLesson.id, updateData)
         await loadModules() // Refresh the modules list
         setEditingLesson(null)
+        setSelectedModuleId(null)
         alert('Lesson updated successfully!')
       } catch (err) {
-        alert('Failed to update lesson: ' + err.message)
+        console.error('❌ Error updating lesson:', err)
+        alert('Failed to update lesson: ' + (err.message || 'Unknown error'))
       }
     }
   }
@@ -172,6 +219,20 @@ export default function ContentAdmin() {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error}</p>
+          <div className="mt-3">
+            <p className="text-sm text-red-700 mb-2">This might be because:</p>
+            <ul className="text-sm text-red-600 list-disc list-inside space-y-1">
+              <li>Backend server is not running</li>
+              <li>Database connection issue</li>
+              <li>API endpoint not available</li>
+            </ul>
+            <button 
+              onClick={loadModules}
+              className="mt-3 px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       )}
 
@@ -231,7 +292,11 @@ export default function ContentAdmin() {
           <div className="text-center py-8">
             <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">No modules found</p>
-            <p className="text-sm text-gray-500">Create your first module to get started</p>
+            <p className="text-sm text-gray-500 mb-4">Create your first module to get started</p>
+            <MobileButton onClick={() => setShowAddModule(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create First Module
+            </MobileButton>
           </div>
         ) : (
           filteredModules.map(module => (
@@ -241,15 +306,15 @@ export default function ContentAdmin() {
                   <div className="flex items-center space-x-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white`} 
                          style={{ backgroundColor: module.color || '#21a1ce' }}>
-                      <span className="text-lg font-bold">{module.title.charAt(0)}</span>
+                      <span className="text-lg font-bold">{(module.title || 'M').charAt(0)}</span>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold">{module.title}</h3>
-                      <p className="text-sm text-gray-600">{module.description}</p>
+                      <h3 className="text-lg font-semibold">{module.title || 'Untitled Module'}</h3>
+                      <p className="text-sm text-gray-600">{module.description || 'No description'}</p>
                       <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
                         <span>{module.content?.lessons?.length || 0} lessons</span>
-                        <span>{module.estimated_time} min</span>
-                        <span className="capitalize">{module.difficulty}</span>
+                        <span>{module.estimated_time || 10} min</span>
+                        <span className="capitalize">{module.difficulty || 'BEGINNER'}</span>
                       </div>
                     </div>
                   </div>
@@ -283,13 +348,16 @@ export default function ContentAdmin() {
                       <div className="flex items-center space-x-3">
                         <div className="w-2 h-2 rounded-full bg-[#21a1ce]"></div>
                         <div>
-                          <h4 className="font-medium text-sm">{lesson.title}</h4>
-                          <p className="text-xs text-gray-600">{lesson.duration} min • {lesson.contentType}</p>
+                          <h4 className="font-medium text-sm">{lesson.title || 'Untitled Lesson'}</h4>
+                          <p className="text-xs text-gray-600">{lesson.duration || 5} min • {lesson.contentType || 'info'}</p>
                         </div>
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => setEditingLesson({ ...lesson, moduleId: module.id })}
+                          onClick={() => {
+                            setEditingLesson({ ...lesson, moduleId: module.id })
+                            setSelectedModuleId(module.id)
+                          }}
                           className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
                         >
                           <Edit3 className="w-3 h-3" />
@@ -344,7 +412,7 @@ export default function ContentAdmin() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-4">Add New Lesson</h3>
-            <MobileButton onClick={() => addLesson(showAddLesson)} className="w-full">
+            <MobileButton onClick={() => handleAddLesson(showAddLesson)} className="w-full">
               <Plus className="w-4 h-4 mr-2" />
               Create Lesson
             </MobileButton>
