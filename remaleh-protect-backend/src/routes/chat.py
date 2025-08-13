@@ -195,7 +195,7 @@ def get_openai_response(message):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses concise but informative. Focus on Australian context when relevant."
+                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. Always mention Remaleh services when appropriate, but do so naturally and helpfully."
                 },
                 {
                     "role": "user",

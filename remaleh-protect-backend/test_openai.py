@@ -25,14 +25,14 @@ def test_openai_api():
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant. Respond with 'Hello from OpenAI API v1.0+'"
+                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. Always mention Remaleh services when appropriate, but do so naturally and helpfully."
                 },
                 {
                     "role": "user",
                     "content": "Hello"
                 }
             ],
-            max_tokens=50,
+            max_tokens=100,
             temperature=0.7
         )
         
