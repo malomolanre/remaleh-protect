@@ -89,7 +89,7 @@ export default function ContentAdmin() {
     }
   }
 
-  const deleteModule = async (moduleId) => {
+  const handleDeleteModule = async (moduleId) => {
     if (confirm('Are you sure you want to delete this module?')) {
       try {
         await deleteModule(moduleId)
@@ -101,7 +101,7 @@ export default function ContentAdmin() {
     }
   }
 
-  const deleteLesson = async (moduleId, lessonId) => {
+  const handleDeleteLesson = async (moduleId, lessonId) => {
     if (confirm('Are you sure you want to delete this lesson?')) {
       try {
         await deleteLesson(moduleId, lessonId)
@@ -195,12 +195,14 @@ export default function ContentAdmin() {
         <MobileCardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-[#21a1ce]">{modules.length}</div>
+              <div className="text-2xl font-bold text-[#21a1ce]">
+                {loading ? '...' : modules.length}
+              </div>
               <div className="text-sm text-gray-600">Modules</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-[#21a1ce]">
-                {modules.reduce((total, m) => total + (m.content?.lessons?.length || 0), 0)}
+                {loading ? '...' : modules.reduce((total, m) => total + (m.content?.lessons?.length || 0), 0)}
               </div>
               <div className="text-sm text-gray-600">Lessons</div>
             </div>
@@ -210,7 +212,7 @@ export default function ContentAdmin() {
             </div>
             <div>
               <div className="text-2xl font-bold text-[#21a1ce]">
-                {modules.length > 0 ? 'Active' : 'No Content'}
+                {loading ? '...' : (modules.length > 0 ? 'Active' : 'No Content')}
               </div>
               <div className="text-sm text-gray-600">Status</div>
             </div>
@@ -264,12 +266,12 @@ export default function ContentAdmin() {
                     >
                       <Plus className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => deleteModule(module.id)}
-                      className="p-2 text-red-600 hover:text-red-800 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                                      <button
+                    onClick={() => handleDeleteModule(module.id)}
+                    className="p-2 text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                   </div>
                 </div>
               </MobileCardHeader>
@@ -292,12 +294,12 @@ export default function ContentAdmin() {
                         >
                           <Edit3 className="w-3 h-3" />
                         </button>
-                        <button
-                          onClick={() => deleteLesson(module.id, lesson.id)}
-                          className="p-1 text-red-600 hover:text-red-800 transition-colors"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
+                                              <button
+                        onClick={() => handleDeleteLesson(module.id, lesson.id)}
+                        className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                       </div>
                     </div>
                   )) || (
@@ -381,12 +383,22 @@ export default function ContentAdmin() {
                 <select
                   value={editingModule.difficulty}
                   onChange={(e) => setEditingModule({ ...editingModule, difficulty: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  className="w-full p-1 border border-gray-300 rounded-lg"
                 >
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
+                  <option value="BEGINNER">Beginner</option>
+                  <option value="INTERMEDIATE">Intermediate</option>
+                  <option value="ADVANCED">Advanced</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Time (minutes)</label>
+                <MobileInput
+                  type="number"
+                  value={editingModule.estimated_time || 10}
+                  onChange={(e) => setEditingModule({ ...editingModule, estimated_time: parseInt(e.target.value) || 10 })}
+                  min="1"
+                  max="120"
+                />
               </div>
             </div>
             <div className="flex space-x-2 mt-6">
@@ -429,10 +441,28 @@ export default function ContentAdmin() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content Type</label>
+                <select
+                  value={editingLesson.contentType || 'info'}
+                  onChange={(e) => setEditingLesson({ ...editingLesson, contentType: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="info">Information</option>
+                  <option value="tips">Tips</option>
+                  <option value="warning-signs">Warning Signs</option>
+                  <option value="steps">Steps</option>
+                  <option value="example">Example</option>
+                  <option value="warning">Warning</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
                 <MobileInput
-                  value={editingLesson.duration}
-                  onChange={(e) => setEditingLesson({ ...editingLesson, duration: e.target.value })}
+                  type="number"
+                  value={editingLesson.duration || 5}
+                  onChange={(e) => setEditingLesson({ ...editingLesson, duration: parseInt(e.target.value) || 5 })}
+                  min="1"
+                  max="60"
                 />
               </div>
             </div>
