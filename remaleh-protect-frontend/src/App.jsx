@@ -11,6 +11,14 @@ function App() {
   const [breachResult, setBreachResult] = useState(null)
   const [isChecking, setIsChecking] = useState(false)
   const [breachError, setBreachError] = useState('')
+  
+  // Password generator state
+  const [passwordLength, setPasswordLength] = useState(16)
+  const [includeUppercase, setIncludeUppercase] = useState(true)
+  const [includeLowercase, setIncludeLowercase] = useState(true)
+  const [includeNumbers, setIncludeNumbers] = useState(true)
+  const [includeSymbols, setIncludeSymbols] = useState(true)
+  const [generatedPassword, setGeneratedPassword] = useState('')
 
   // Dynamic greeting based on time of day
   useEffect(() => {
@@ -99,6 +107,42 @@ function App() {
       setBreachError('Network error. Please try again.')
     } finally {
       setIsChecking(false)
+    }
+  }
+
+  // Password generation function
+  const generatePassword = () => {
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+    const numbers = '0123456789'
+    const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?'
+    
+    let chars = ''
+    if (includeUppercase) chars += uppercase
+    if (includeLowercase) chars += lowercase
+    if (includeNumbers) chars += numbers
+    if (includeSymbols) chars += symbols
+    
+    if (chars === '') {
+      setGeneratedPassword('')
+      return
+    }
+    
+    let password = ''
+    for (let i = 0; i < passwordLength; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    
+    setGeneratedPassword(password)
+  }
+
+  // Copy password to clipboard
+  const copyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPassword)
+      // You could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy password:', err)
     }
   }
 
@@ -471,6 +515,99 @@ function App() {
                     </div>
                   </div>
                 )}
+
+                {/* Security Recommendations */}
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <h3 className="text-lg font-semibold text-black mb-4">Security Recommendations</h3>
+                  
+                  <div className="space-y-4">
+                    {/* MFA Recommendation */}
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-blue-800 mb-1">Enable Multi-Factor Authentication (MFA)</h4>
+                          <p className="text-blue-700 text-sm mb-3">Add an extra layer of security to your accounts with MFA apps like Google Authenticator, Authy, or Microsoft Authenticator.</p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Google Authenticator</span>
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Authy</span>
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Microsoft Authenticator</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Password Security */}
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-start">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-green-800 mb-1">Use Strong, Unique Passwords</h4>
+                          <p className="text-green-700 text-sm mb-3">Generate secure passwords for each account to prevent credential stuffing attacks.</p>
+                          <button 
+                            onClick={() => setActiveTab('password')}
+                            className="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            Generate Secure Password
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Regular Monitoring */}
+                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                      <div className="flex items-start">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-purple-800 mb-1">Monitor Your Accounts Regularly</h4>
+                          <p className="text-purple-700 text-sm mb-3">Use Remaleh Protect regularly to check for new breaches and stay updated on security threats.</p>
+                          <div className="flex items-center text-purple-600 text-sm">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Check back monthly for new breaches
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Password Manager */}
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex items-start">
+                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                          <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-orange-800 mb-1">Use a Password Manager</h4>
+                          <p className="text-orange-700 text-sm mb-3">Store and manage your passwords securely with trusted password managers.</p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">Bitwarden</span>
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">1Password</span>
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">LastPass</span>
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">Dashlane</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <button 
