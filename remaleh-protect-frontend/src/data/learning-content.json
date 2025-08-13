@@ -1,0 +1,437 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-13",
+    "totalModules": 5,
+    "totalLessons": 25
+  },
+  "modules": [
+    {
+      "id": "passwords",
+      "title": "Password Protection",
+      "subtitle": "Learn to create and manage strong passwords",
+      "icon": "Lock",
+      "color": "#21a1ce",
+      "estimatedTime": "15 minutes",
+      "difficulty": "beginner",
+      "lessons": [
+        {
+          "id": "why-passwords-matter",
+          "title": "Why Strong Passwords Matter",
+          "type": "content",
+          "content": "Passwords are your first line of defense against cybercriminals. A strong password can be the difference between keeping your accounts safe and having your identity stolen.",
+          "contentType": "info",
+          "contentStyle": "blue",
+          "duration": "3 min"
+        },
+        {
+          "id": "creating-strong-passwords",
+          "title": "Creating Strong Passwords",
+          "type": "content",
+          "content": "Learn the essential rules for creating passwords that are both secure and memorable.",
+          "contentType": "tips",
+          "tips": [
+            {
+              "title": "Use at least 12-16 characters",
+              "description": "Longer passwords are exponentially harder to crack"
+            },
+            {
+              "title": "Mix character types",
+              "description": "Combine uppercase, lowercase, numbers, and symbols"
+            },
+            {
+              "title": "Use unique passwords",
+              "description": "Never reuse passwords across different accounts"
+            }
+          ],
+          "duration": "5 min"
+        },
+        {
+          "id": "australian-example",
+          "title": "Australian Example",
+          "type": "content",
+          "content": "Instead of \"password123\", try \"KangarooJumping2025!Sydney\" - it's long, memorable, and includes Australian references that are meaningful to you.",
+          "contentType": "example",
+          "contentStyle": "yellow",
+          "duration": "2 min"
+        },
+        {
+          "id": "password-managers",
+          "title": "Password Managers",
+          "type": "content",
+          "content": "Password managers generate and store unique passwords for all your accounts.",
+          "contentType": "list",
+          "items": [
+            "LastPass",
+            "1Password", 
+            "Bitwarden (free option)",
+            "Dashlane"
+          ],
+          "duration": "3 min"
+        },
+        {
+          "id": "what-not-to-do",
+          "title": "What NOT to Do",
+          "type": "content",
+          "content": "Common password mistakes that put you at risk.",
+          "contentType": "warning",
+          "contentStyle": "red",
+          "items": [
+            "Don't use personal information (birthdays, names, addresses)",
+            "Don't use common words or patterns",
+            "Don't share passwords with others",
+            "Don't write passwords on sticky notes"
+          ],
+          "duration": "2 min"
+        }
+      ]
+    },
+    {
+      "id": "phishing",
+      "title": "Email & Text Scams",
+      "subtitle": "Identify and avoid phishing attempts",
+      "icon": "Mail",
+      "color": "#21a1ce",
+      "estimatedTime": "20 minutes",
+      "difficulty": "beginner",
+      "lessons": [
+        {
+          "id": "what-is-phishing",
+          "title": "What is Phishing?",
+          "type": "content",
+          "content": "Phishing is when criminals send fake emails or texts pretending to be from legitimate companies to steal your personal information, passwords, or money.",
+          "contentType": "warning",
+          "contentStyle": "red",
+          "duration": "3 min"
+        },
+        {
+          "id": "warning-signs",
+          "title": "Warning Signs to Look For",
+          "type": "content",
+          "content": "Learn to spot the red flags that indicate a message is a scam.",
+          "contentType": "warning-signs",
+          "signs": [
+            {
+              "title": "Urgent language",
+              "description": "'Act now!' 'Your account will be closed!' 'Immediate action required!'",
+              "danger": true
+            },
+            {
+              "title": "Generic greetings",
+              "description": "'Dear Customer' instead of your actual name",
+              "danger": true
+            },
+            {
+              "title": "Suspicious links",
+              "description": "Hover over links to see where they really go",
+              "danger": true
+            },
+            {
+              "title": "Poor grammar and spelling",
+              "description": "Legitimate companies proofread their communications",
+              "danger": true
+            }
+          ],
+          "duration": "5 min"
+        },
+        {
+          "id": "australian-phishing-example",
+          "title": "Australian Example",
+          "type": "content",
+          "content": "\"Your ATO tax refund is ready! Click here to claim $1,247.50 immediately or it will expire in 24 hours.\" Red flags: The ATO doesn't send refund notifications via email, uses urgent language, and asks you to click links.",
+          "contentType": "example",
+          "contentStyle": "yellow",
+          "duration": "3 min"
+        },
+        {
+          "id": "how-to-verify",
+          "title": "How to Verify Suspicious Messages",
+          "type": "content",
+          "content": "Steps to take when you receive a suspicious message.",
+          "contentType": "steps",
+          "steps": [
+            "Contact the company directly using official phone numbers",
+            "Log into your account through the official website (not email links)",
+            "Check the sender's email address carefully for misspellings",
+            "Ask yourself: \"Was I expecting this message?\""
+          ],
+          "duration": "4 min"
+        },
+        {
+          "id": "what-to-do-if-targeted",
+          "title": "What to Do if You've Been Targeted",
+          "type": "content",
+          "content": "Immediate actions to take if you suspect you've been targeted by a scam.",
+          "contentType": "action-list",
+          "contentStyle": "green",
+          "actions": [
+            "Don't click any links or download attachments",
+            "Report the message to the company being impersonated",
+            "Forward phishing emails to the ACCC's Scamwatch",
+            "If you clicked a link, change your passwords immediately"
+          ],
+          "duration": "3 min"
+        }
+      ]
+    },
+    {
+      "id": "devices",
+      "title": "Device & Home Security",
+      "subtitle": "Secure your devices and home network",
+      "icon": "Shield",
+      "color": "#21a1ce",
+      "estimatedTime": "18 minutes",
+      "difficulty": "intermediate",
+      "lessons": [
+        {
+          "id": "why-device-security-matters",
+          "title": "Why Device Security Matters",
+          "type": "content",
+          "content": "Your devices contain personal photos, banking apps, emails, and more. Securing them protects your entire digital life.",
+          "contentType": "info",
+          "contentStyle": "blue",
+          "duration": "3 min"
+        },
+        {
+          "id": "computer-security",
+          "title": "Computer Security",
+          "type": "content",
+          "content": "Essential steps to keep your computer secure.",
+          "contentType": "tips",
+          "tips": [
+            {
+              "title": "Keep software updated",
+              "description": "Enable automatic updates for your operating system and apps"
+            },
+            {
+              "title": "Use antivirus software",
+              "description": "Windows Defender is built-in and effective for most users"
+            },
+            {
+              "title": "Enable firewall",
+              "description": "Your computer's firewall blocks unauthorized access"
+            }
+          ],
+          "duration": "4 min"
+        },
+        {
+          "id": "home-wifi-security",
+          "title": "Home Wi-Fi Security",
+          "type": "content",
+          "content": "Protect your home network from unauthorized access.",
+          "contentType": "steps",
+          "steps": [
+            "Change default router passwords",
+            "Use WPA3 encryption (or at least WPA2)",
+            "Create a strong Wi-Fi password",
+            "Set up a guest network for visitors",
+            "Keep router firmware updated"
+          ],
+          "duration": "4 min"
+        },
+        {
+          "id": "backup-your-data",
+          "title": "Backup Your Data",
+          "type": "content",
+          "content": "Follow the 3-2-1 rule: 3 copies of important data, on 2 different types of media, with 1 copy stored offsite (like cloud storage).",
+          "contentType": "info",
+          "contentStyle": "yellow",
+          "duration": "2 min"
+        },
+        {
+          "id": "public-wifi-safety",
+          "title": "Public Wi-Fi Safety",
+          "type": "content",
+          "content": "How to stay safe when using public Wi-Fi networks.",
+          "contentType": "warning",
+          "contentStyle": "red",
+          "items": [
+            "Avoid accessing sensitive accounts on public Wi-Fi",
+            "Use a VPN when possible",
+            "Turn off auto-connect to Wi-Fi networks",
+            "Use your phone's hotspot instead when possible"
+          ],
+          "duration": "3 min"
+        }
+      ]
+    },
+    {
+      "id": "social",
+      "title": "Social Media & Privacy",
+      "subtitle": "Protect your privacy on social platforms",
+      "icon": "Users",
+      "color": "#21a1ce",
+      "estimatedTime": "16 minutes",
+      "difficulty": "beginner",
+      "lessons": [
+        {
+          "id": "digital-footprint",
+          "title": "Your Digital Footprint",
+          "type": "content",
+          "content": "Everything you post online creates a permanent digital footprint. Even \"private\" posts can become public through data breaches or account compromises.",
+          "contentType": "info",
+          "contentStyle": "blue",
+          "duration": "3 min"
+        },
+        {
+          "id": "privacy-settings",
+          "title": "Privacy Settings",
+          "type": "content",
+          "content": "How to control who can see your social media content.",
+          "contentType": "tips",
+          "tips": [
+            {
+              "title": "Review privacy settings regularly",
+              "description": "Social media platforms often change their privacy policies"
+            },
+            {
+              "title": "Limit who can see your posts",
+              "description": "Set posts to 'Friends only' rather than 'Public'"
+            },
+            {
+              "title": "Control who can find you",
+              "description": "Limit search visibility and friend requests"
+            }
+          ],
+          "duration": "4 min"
+        },
+        {
+          "id": "what-not-to-share",
+          "title": "What Not to Share",
+          "type": "content",
+          "content": "Information that should never be shared on social media.",
+          "contentType": "warning-list",
+          "items": [
+            "Full birth dates (use just day/month)",
+            "Home addresses or specific locations",
+            "Travel plans while you're away",
+            "Photos of important documents",
+            "Financial information",
+            "Children's full names and schools"
+          ],
+          "duration": "3 min"
+        },
+        {
+          "id": "think-before-you-post",
+          "title": "Think Before You Post",
+          "type": "content",
+          "content": "Ask yourself: \"Would I be comfortable if my employer, family, or a stranger saw this?\" If not, don't post it.",
+          "contentType": "info",
+          "contentStyle": "yellow",
+          "duration": "2 min"
+        },
+        {
+          "id": "social-media-scams",
+          "title": "Recognizing Social Media Scams",
+          "type": "content",
+          "content": "Common scams that target social media users.",
+          "contentType": "warning",
+          "contentStyle": "red",
+          "items": [
+            "\"You've won a prize!\" messages",
+            "Fake friend requests from people you already know",
+            "\"This video is going viral!\" links",
+            "Requests for money from \"friends\" in trouble"
+          ],
+          "duration": "4 min"
+        }
+      ]
+    },
+    {
+      "id": "phone",
+      "title": "Phone & App Safety",
+      "subtitle": "Keep your mobile devices secure",
+      "icon": "Smartphone",
+      "color": "#21a1ce",
+      "estimatedTime": "17 minutes",
+      "difficulty": "intermediate",
+      "lessons": [
+        {
+          "id": "your-phone-is-a-computer",
+          "title": "Your Phone is a Computer",
+          "type": "content",
+          "content": "Modern smartphones contain more personal information than most computers. They need the same level of security protection.",
+          "contentType": "info",
+          "contentStyle": "blue",
+          "duration": "2 min"
+        },
+        {
+          "id": "basic-phone-security",
+          "title": "Basic Phone Security",
+          "type": "content",
+          "content": "Fundamental security measures for your mobile device.",
+          "contentType": "tips",
+          "tips": [
+            {
+              "title": "Use a strong lock screen",
+              "description": "PIN, password, fingerprint, or face recognition"
+            },
+            {
+              "title": "Keep your OS updated",
+              "description": "Enable automatic updates for security patches"
+            },
+            {
+              "title": "Enable remote wipe",
+              "description": "So you can erase your phone if it's lost or stolen"
+            }
+          ],
+          "duration": "4 min"
+        },
+        {
+          "id": "app-safety-tips",
+          "title": "App Safety Tips",
+          "type": "content",
+          "content": "How to safely download and use mobile apps.",
+          "contentType": "steps",
+          "steps": [
+            "Only download apps from official stores (Google Play, Apple App Store)",
+            "Read app permissions before installing",
+            "Regularly review and uninstall unused apps",
+            "Be cautious with apps requesting excessive permissions",
+            "Keep apps updated"
+          ],
+          "duration": "4 min"
+        },
+        {
+          "id": "sim-swapping-example",
+          "title": "Real-world Example: SIM Swapping",
+          "type": "content",
+          "content": "Sarah received a text saying her Telstra service would be suspended. She called Telstra directly and discovered it was a scam. The criminals were trying to get her to provide information that could be used for SIM swapping - taking control of her phone number.",
+          "contentType": "example",
+          "contentStyle": "yellow",
+          "duration": "3 min"
+        },
+        {
+          "id": "phone-scam-warning-signs",
+          "title": "Warning Signs of Phone Scams",
+          "type": "content",
+          "content": "Red flags that indicate a phone scam.",
+          "contentType": "warning",
+          "contentStyle": "red",
+          "items": [
+            "Unexpected texts about account problems",
+            "Calls claiming to be from tech support",
+            "Apps asking for unnecessary permissions",
+            "Sudden loss of phone service (possible SIM swap)"
+          ],
+          "duration": "2 min"
+        },
+        {
+          "id": "mobile-device-security",
+          "title": "Mobile Device Security",
+          "type": "content",
+          "content": "Advanced security measures for mobile devices.",
+          "contentType": "steps",
+          "steps": [
+            "Use two-factor authentication on important accounts",
+            "Be cautious on public Wi-Fi",
+            "Don't leave your phone unattended in public",
+            "Consider using a VPN for sensitive activities",
+            "Backup your phone data regularly"
+          ],
+          "duration": "2 min"
+        }
+      ]
+    }
+  ]
+}

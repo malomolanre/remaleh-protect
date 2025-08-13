@@ -3,6 +3,7 @@ import './App.css'
 import { apiPost, API_ENDPOINTS, API } from './lib/api'
 import PasswordGenerator from './components/PasswordGenerator'
 import ChatAssistant from './components/ChatAssistant'
+import LearnHub from './components/LearnHub'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
@@ -1556,29 +1557,7 @@ function App() {
           </div>
         )
       case 'learn':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h1 className="text-2xl font-bold text-black mb-4">📚 Learn Hub</h1>
-              <p className="text-gray-700 mb-6">Educational content to improve your digital security knowledge.</p>
-              
-              <div className="space-y-4">
-                <div className="bg-[#21a1ce] bg-opacity-10 p-4 rounded-xl border border-[#21a1ce] border-opacity-20">
-                  <h3 className="font-semibold text-black mb-2">Topics covered:</h3>
-                  <ul className="text-gray-700 space-y-1">
-                    <li>• Password best practices</li>
-                    <li>• Social engineering</li>
-                    <li>• Safe browsing habits</li>
-                  </ul>
-                </div>
-                
-                <button className="w-full bg-[#21a1ce] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-colors shadow-sm">
-                  Start Learning
-                </button>
-              </div>
-            </div>
-          </div>
-        )
+        return <LearnHub setActiveTab={setActiveTab} />
       case 'community':
         return (
           <div className="space-y-6">
