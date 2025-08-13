@@ -18,7 +18,7 @@ def admin_required(f):
     """Decorator to check if user is admin"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not g.current_user or not g.current_user.is_admin:
+        if not current_user or not current_user.is_admin:
             return jsonify({'error': 'Admin access required'}), 403
         return f(*args, **kwargs)
     return decorated_function
@@ -140,7 +140,7 @@ def update_user_status(current_user, user_id):
         user.account_status = new_status
         db.session.commit()
         
-        logger.info(f"Admin {g.current_user.email} updated user {user.email} status to {new_status}")
+        logger.info(f"Admin {current_user.email} updated user {user.email} status to {new_status}")
         
         return jsonify({
             'message': f'User status updated to {new_status}',
@@ -179,7 +179,7 @@ def update_user_role(current_user, user_id):
         user.is_admin = (new_role == 'ADMIN')
         db.session.commit()
         
-        logger.info(f"Admin {g.current_user.email} updated user {user.email} role to {new_role}")
+        logger.info(f"Admin {current_user.email} updated user {user.email} role to {new_role}")
         
         return jsonify({
             'message': f'User role updated to {new_role}',
@@ -213,7 +213,7 @@ def delete_user(current_user, user_id):
         user.email = f"deleted_{user.id}_{int(datetime.now().timestamp())}@deleted.com"
         db.session.commit()
         
-        logger.info(f"Admin {g.current_user.email} deleted user {user.email}")
+        logger.info(f"Admin {current_user.email} deleted user {user.email}")
         
         return jsonify({
             'message': 'User deleted successfully',

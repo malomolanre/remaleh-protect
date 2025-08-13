@@ -26,7 +26,7 @@ def admin_required(f):
 
 @learning_content_bp.route('/modules', methods=['GET'])
 @token_required
-def get_modules():
+def get_modules(current_user):
     """Get all learning modules"""
     try:
         modules = LearningModule.query.filter_by(is_active=True).all()
@@ -39,7 +39,7 @@ def get_modules():
 
 @learning_content_bp.route('/modules/<int:module_id>', methods=['GET'])
 @token_required
-def get_module(module_id):
+def get_module(current_user, module_id):
     """Get specific learning module with full content"""
     try:
         module = LearningModule.query.get(module_id)
@@ -57,7 +57,7 @@ def get_module(module_id):
 @learning_content_bp.route('/modules', methods=['POST'])
 @token_required
 @admin_required
-def create_module():
+def create_module(current_user):
     """Create a new learning module"""
     try:
         data = request.get_json()
@@ -95,7 +95,7 @@ def create_module():
 @learning_content_bp.route('/modules/<int:module_id>', methods=['PUT'])
 @token_required
 @admin_required
-def update_module(module_id):
+def update_module(current_user, module_id):
     """Update an existing learning module"""
     try:
         module = LearningModule.query.get(module_id)
@@ -134,7 +134,7 @@ def update_module(module_id):
 @learning_content_bp.route('/modules/<int:module_id>', methods=['DELETE'])
 @token_required
 @admin_required
-def delete_module(module_id):
+def delete_module(current_user, module_id):
     """Delete a learning module (soft delete)"""
     try:
         module = LearningModule.query.get(module_id)
@@ -156,7 +156,7 @@ def delete_module(module_id):
 @learning_content_bp.route('/modules/<int:module_id>/lessons', methods=['POST'])
 @token_required
 @admin_required
-def add_lesson(module_id):
+def add_lesson(current_user, module_id):
     """Add a lesson to a module"""
     try:
         module = LearningModule.query.get(module_id)
@@ -205,7 +205,7 @@ def add_lesson(module_id):
 @learning_content_bp.route('/modules/<int:module_id>/lessons/<int:lesson_id>', methods=['PUT'])
 @token_required
 @admin_required
-def update_lesson(module_id, lesson_id):
+def update_lesson(current_user, module_id, lesson_id):
     """Update a lesson in a module"""
     try:
         module = LearningModule.query.get(module_id)
@@ -243,7 +243,7 @@ def update_lesson(module_id, lesson_id):
 @learning_content_bp.route('/modules/<int:module_id>/lessons/<int:lesson_id>', methods=['DELETE'])
 @token_required
 @admin_required
-def delete_lesson(module_id, lesson_id):
+def delete_lesson(current_user, module_id, lesson_id):
     """Delete a lesson from a module"""
     try:
         module = LearningModule.query.get(module_id)
@@ -275,10 +275,10 @@ def delete_lesson(module_id, lesson_id):
 
 @learning_content_bp.route('/modules/<int:module_id>/progress', methods=['GET'])
 @token_required
-def get_module_progress(module_id):
+def get_module_progress(current_user, module_id):
     """Get user's progress for a specific module"""
     try:
-        user_id = g.current_user.id
+        user_id = current_user.id
         
         progress = LearningProgress.query.filter_by(
             user_id=user_id,
@@ -302,10 +302,10 @@ def get_module_progress(module_id):
 
 @learning_content_bp.route('/modules/<int:module_id>/progress', methods=['POST'])
 @token_required
-def update_module_progress(module_id):
+def update_module_progress(current_user, module_id):
     """Update user's progress for a module"""
     try:
-        user_id = g.current_user.id
+        user_id = current_user.id
         data = request.get_json()
         
         progress = LearningProgress.query.filter_by(
@@ -343,10 +343,10 @@ def update_module_progress(module_id):
 
 @learning_content_bp.route('/progress/overview', methods=['GET'])
 @token_required
-def get_progress_overview():
+def get_progress_overview(current_user):
     """Get user's overall learning progress"""
     try:
-        user_id = g.current_user.id
+        user_id = current_user.id
         
         # Get all progress records for the user
         progress_records = LearningProgress.query.filter_by(user_id=user_id).all()
@@ -373,7 +373,7 @@ def get_progress_overview():
 @learning_content_bp.route('/content/export', methods=['GET'])
 @token_required
 @admin_required
-def export_content():
+def export_content(current_user):
     """Export all learning content as JSON"""
     try:
         modules = LearningModule.query.filter_by(is_active=True).all()
@@ -402,7 +402,7 @@ def export_content():
 @learning_content_bp.route('/content/import', methods=['POST'])
 @token_required
 @admin_required
-def import_content():
+def import_content(current_user):
     """Import learning content from JSON"""
     try:
         data = request.get_json()
