@@ -350,6 +350,11 @@ function App() {
                       id="email"
                       value={breachEmail}
                       onChange={(e) => setBreachEmail(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !isChecking && breachEmail && breachEmail.includes('@')) {
+                          handleBreachCheck()
+                        }
+                      }}
                       placeholder="Enter your email address"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent transition-all duration-200"
                       disabled={isChecking}
