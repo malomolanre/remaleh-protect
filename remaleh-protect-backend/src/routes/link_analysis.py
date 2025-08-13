@@ -59,9 +59,32 @@ class LocalLinkAnalyzer:
     
     def extract_urls(self, text):
         """Extract all URLs from text"""
-        url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+        # Primary pattern for http:// and https:// URLs
+        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
         urls = re.findall(url_pattern, text, re.IGNORECASE)
-        return list(set(urls))  # Remove duplicates
+        
+        # If no URLs found, try alternative patterns
+        if not urls:
+            alt_patterns = [
+                r'http://[^\s<>"{}|\\^`\[\]]+',  # http:// URLs
+                r'https://[^\s<>"{}|\\^`\[\]]+', # https:// URLs
+                r'www\.[^\s<>"{}|\\^`\[\]]+',   # www. URLs
+            ]
+            
+            for pattern in alt_patterns:
+                alt_urls = re.findall(pattern, text, re.IGNORECASE)
+                if alt_urls:
+                    urls = alt_urls
+                    break
+        
+        # Clean up URLs (remove trailing punctuation)
+        cleaned_urls = []
+        for url in urls:
+            # Remove trailing punctuation that might have been captured
+            cleaned_url = url.rstrip('.,;:!?')
+            cleaned_urls.append(cleaned_url)
+        
+        return list(set(cleaned_urls))  # Remove duplicates
     
     def analyze_url_structure(self, url):
         """Analyze URL structure for suspicious patterns"""
@@ -477,11 +500,34 @@ def analyze_single_url():
         analyzer = LocalLinkAnalyzer()
         
         # Check if content is a single URL or contains URLs
-        url_pattern = r'https?://[^\s]+'
+        # More robust URL pattern that captures http:// and https:// URLs
+        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
         urls_found = re.findall(url_pattern, content, re.IGNORECASE)
+        
+        logger.info(f"URL extraction - Content: {content[:100]}...")
+        logger.info(f"URL extraction - Pattern: {url_pattern}")
+        logger.info(f"URL extraction - Found URLs: {urls_found}")
+        
+        if not urls_found:
+            # Try alternative URL patterns
+            alt_patterns = [
+                r'http://[^\s<>"{}|\\^`\[\]]+',  # http:// URLs
+                r'https://[^\s<>"{}|\\^`\[\]]+', # https:// URLs
+                r'www\.[^\s<>"{}|\\^`\[\]]+',   # www. URLs
+            ]
+            
+            logger.info("Primary pattern failed, trying alternative patterns...")
+            for i, pattern in enumerate(alt_patterns):
+                alt_urls = re.findall(pattern, content, re.IGNORECASE)
+                logger.info(f"Alternative pattern {i+1}: {pattern} -> Found: {alt_urls}")
+                if alt_urls:
+                    logger.info(f"Alternative pattern {i+1} found URLs: {alt_urls}")
+                    urls_found = alt_urls
+                    break
         
         if not urls_found:
             # No URLs found - return informative response
+            logger.warning(f"No URLs detected in content: {content[:100]}...")
             return jsonify({
                 'success': True,
                 'result': {
@@ -624,9 +670,59 @@ def debug_info():
         },
         'endpoints': [
             '/analyze - POST - Analyze links in text',
+            '/analyze-url - POST - Analyze single URL',
             '/health - GET - Service health check',
-            '/debug - GET - Debug information'
+            '/debug - GET - Debug information',
+            '/test-url-extraction - POST - Test URL extraction'
         ],
         'timestamp': datetime.now().isoformat()
     })
+
+@link_analysis_bp.route('/test-url-extraction', methods=['POST'])
+def test_url_extraction():
+    """Test endpoint for debugging URL extraction"""
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        text = data['text']
+        logger.info(f"🧪 TEST URL EXTRACTION: {text[:100]}...")
+        
+        # Test the URL extraction
+        analyzer = LocalLinkAnalyzer()
+        urls_found = analyzer.extract_urls(text)
+        
+        # Test the regex patterns directly
+        patterns = [
+            r'https?://[^\s<>"{}|\\^`\[\]]+',
+            r'http://[^\s<>"{}|\\^`\[\]]+',
+            r'https://[^\s<>"{}|\\^`\[\]]+',
+            r'www\.[^\s<>"{}|\\^`\[\]]+'
+        ]
+        
+        pattern_results = {}
+        for i, pattern in enumerate(patterns):
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            pattern_results[f'pattern_{i}'] = {
+                'regex': pattern,
+                'matches': matches
+            }
+        
+        logger.info(f"🧪 TEST URL EXTRACTION RESULT: {urls_found}")
+        
+        return jsonify({
+            'success': True,
+            'test_result': {
+                'input_text': text,
+                'urls_found': urls_found,
+                'pattern_tests': pattern_results,
+                'extraction_method': 'LocalLinkAnalyzer.extract_urls'
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"🧪 TEST URL EXTRACTION ERROR: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
