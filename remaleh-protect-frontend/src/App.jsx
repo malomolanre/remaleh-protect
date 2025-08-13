@@ -147,15 +147,15 @@ function App() {
           analysis = await analyzeLink(scamInput)
           contentTypeNote = 'Analyzed as single URL'
         } else if (containsUrls) {
-          // Message containing URLs - use comprehensive analysis
+          // Message containing URLs - use enhanced scam analysis for better detection
           analysis = await analyzeMessage(scamInput)
           detectedContentType = 'message'
-          contentTypeNote = 'Detected message with URLs - used comprehensive analysis'
+          contentTypeNote = 'Detected message with URLs - used Enhanced Scam Detection Engine'
         } else {
-          // No URLs found - suggest using message analysis
+          // No URLs found - use enhanced scam analysis
           analysis = await analyzeMessage(scamInput)
           detectedContentType = 'message'
-          contentTypeNote = 'No URLs detected - analyzed as message content'
+          contentTypeNote = 'No URLs detected - analyzed with Enhanced Scam Detection Engine'
         }
       } else if (scamType === 'email') {
         // Check if content looks like an email
@@ -167,15 +167,15 @@ function App() {
           analysis = await analyzeEmail(scamInput)
           contentTypeNote = 'Analyzed as email content'
         } else {
-          // Doesn't look like email - use comprehensive analysis
+          // Doesn't look like email - use enhanced scam analysis
           analysis = await analyzeMessage(scamInput)
           detectedContentType = 'message'
-          contentTypeNote = 'Content doesn\'t appear to be email - used comprehensive analysis'
+          contentTypeNote = 'Content doesn\'t appear to be email - used Enhanced Scam Detection Engine'
         }
       } else {
-        // General message analysis
+        // General message analysis - use enhanced scam detection
         analysis = await analyzeMessage(scamInput)
-        contentTypeNote = 'Analyzed as general message'
+        contentTypeNote = 'Analyzed with Enhanced Scam Detection Engine'
       }
       
       // Add content type detection note to results
@@ -313,17 +313,16 @@ function App() {
     return recommendations
   }
 
-  // Message analysis using scam.py
+  // Message analysis using enhanced_scam.py for better detection
   const analyzeMessage = async (messageContent) => {
     try {
-      const response = await fetch(`${API}/api/scam/comprehensive`, {
+      const response = await fetch(`${API}/api/enhanced-scam/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          text: messageContent,
-          check_links: true 
+          text: messageContent
         })
       })
       
@@ -333,20 +332,69 @@ function App() {
       
       const data = await response.json()
       
-      // Transform comprehensive scam response to match our format
+      if (!data.success) {
+        throw new Error(data.error || 'Enhanced scam analysis failed')
+      }
+      
+      const result = data.result
+      
+      // Transform enhanced scam response to match our format
       return {
-        riskLevel: data.overall_assessment?.risk_level?.toLowerCase() || 'medium',
-        riskScore: data.overall_assessment?.risk_score || 50,
-        indicators: data.threats_detected || [],
-        recommendations: generateRecommendationsFromThreats(data.threats_detected),
+        riskLevel: result.risk_level?.toLowerCase() || 'medium',
+        riskScore: Math.round(result.risk_score * 100) || 50,
+        indicators: result.indicators || [],
+        recommendations: generateEnhancedRecommendations(result.risk_level, result.indicators, result.patterns),
         analysis: messageContent.substring(0, 100) + (messageContent.length > 100 ? '...' : ''),
-        messageDetails: data
+        messageDetails: result
       }
     } catch (error) {
-      console.error('Message analysis error:', error)
+      console.error('Enhanced message analysis error:', error)
       // Fallback to local analysis
       return analyzeScamContent(messageContent, 'message')
     }
+  }
+
+  // Generate enhanced recommendations based on enhanced scam detection
+  const generateEnhancedRecommendations = (riskLevel, indicators, patterns) => {
+    const recommendations = []
+    
+    if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
+      recommendations.push('Do not respond to this message')
+      recommendations.push('Delete immediately and contact Remaleh Guardians')
+      recommendations.push('Do not click any links or attachments')
+      recommendations.push('If you clicked any links, reach out to Remaleh Guardians via chat immediately')
+    } else if (riskLevel === 'MEDIUM') {
+      recommendations.push('Exercise extreme caution with this message')
+      recommendations.push('Verify authenticity before responding')
+      recommendations.push('Do not share personal information')
+      recommendations.push('Contact Remaleh Guardians if you need assistance')
+    } else if (riskLevel === 'SAFE') {
+      recommendations.push('Content appears safe - no obvious threats detected')
+      recommendations.push('Continue to exercise normal caution')
+      recommendations.push('If you have concerns, contact Remaleh Guardians via chat')
+    } else {
+      recommendations.push('Review this message carefully')
+      recommendations.push('Check sender authenticity')
+      recommendations.push('Avoid clicking suspicious links')
+    }
+    
+    // Add specific recommendations based on patterns
+    if (patterns && patterns.includes('suspicious_domain')) {
+      recommendations.push('Contains suspicious domain (.buzz, .tk, etc.) - high risk')
+      recommendations.push('Contact Remaleh Guardians immediately')
+    }
+    if (patterns && patterns.includes('url')) {
+      recommendations.push('Contains URLs - verify before clicking')
+      recommendations.push('If you clicked any links, contact Remaleh Guardians via chat')
+    }
+    if (patterns && patterns.includes('phone_number')) {
+      recommendations.push('Contains phone numbers - do not call unknown numbers')
+    }
+    
+    // Always add Remaleh Guardians contact info
+    recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
+    
+    return recommendations
   }
 
   // Generate recommendations from detected threats
@@ -1188,11 +1236,13 @@ function App() {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 ${
                     scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? 'bg-red-100' :
                     scamResult.riskLevel === 'medium' ? 'bg-yellow-100' :
+                    scamResult.riskLevel === 'safe' ? 'bg-green-100' :
                     'bg-green-100'
                   }`}>
                     <svg className={`w-6 h-6 ${
                       scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? 'text-red-600' :
                       scamResult.riskLevel === 'medium' ? 'text-yellow-600' :
+                      scamResult.riskLevel === 'safe' ? 'text-green-600' :
                       'text-green-600'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -1200,12 +1250,14 @@ function App() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-black">
-                      Risk Level: {scamResult.riskLevel.charAt(0).toUpperCase() + scamResult.riskLevel.slice(1)}
+                      Risk Level: {scamResult.riskLevel === 'safe' ? 'Safe ✅' : scamResult.riskLevel.charAt(0).toUpperCase() + scamResult.riskLevel.slice(1)}
                       {scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? ' ⚠️ URGENT' : ''}
+                      {scamResult.riskLevel === 'safe' ? ' - No threats detected' : ''}
                     </h2>
                     <p className="text-gray-600">
                       Risk Score: {scamResult.riskScore}/100
                       {scamResult.riskScore >= 70 ? ' - IMMEDIATE ACTION REQUIRED' : ''}
+                      {scamResult.riskLevel === 'safe' ? ' - Content appears safe' : ''}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Analyzed with {scamType === 'link' ? 'Link Analysis Engine' : scamType === 'email' ? 'Enhanced Scam Detection Engine' : 'Comprehensive Scam Analysis Engine'}
@@ -1242,6 +1294,27 @@ function App() {
                         {scamResult.indicators && scamResult.indicators.length > 0 && <li>Multiple suspicious indicators detected</li>}
                         <li>Do NOT click any links or respond to this message</li>
                         <li>Contact Remaleh Guardians via chat immediately</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {/* Safe Content Message */}
+                {scamResult.riskLevel === 'safe' && (
+                  <div className="mb-4 p-4 bg-green-50 border-2 border-green-300 rounded-xl">
+                    <div className="flex items-center mb-3">
+                      <svg className="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <h3 className="text-lg font-bold text-green-800">✅ CONTENT APPEARS SAFE</h3>
+                    </div>
+                    <div className="space-y-2 text-green-700">
+                      <p className="font-medium">This content shows no obvious signs of being a scam:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        <li>Low risk score ({scamResult.riskScore}/100)</li>
+                        <li>No suspicious patterns detected</li>
+                        <li>Continue to exercise normal caution</li>
+                        <li>If you have concerns, contact Remaleh Guardians via chat</li>
                       </ul>
                     </div>
                   </div>

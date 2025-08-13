@@ -317,7 +317,7 @@ class LocalLinkAnalyzer:
             risk_level = 'LOW'
             is_malicious = False
         else:
-            risk_level = 'VERY_LOW'
+            risk_level = 'SAFE'
             is_malicious = False
         
         analysis_time = (datetime.now() - analysis_start).total_seconds()
@@ -367,7 +367,7 @@ def analyze_links_in_text(text):
     elif avg_risk_score >= 10:
         overall_risk = 'LOW'
     else:
-        overall_risk = 'VERY_LOW'
+        overall_risk = 'SAFE'
     
     malicious_count = sum(1 for analysis in url_analyses if analysis['is_malicious'])
     

@@ -179,6 +179,9 @@ def analyze_enhanced_scam(text):
     text_lower = text.lower()
     total_score = 0
     indicators = []
+    scam_categories = {}
+    
+    print(f"🔍 Analyzing text: {text[:100]}...")
     
     # Check scam indicators
     for category, data in SCAM_INDICATORS.items():
@@ -189,10 +192,18 @@ def analyze_enhanced_scam(text):
             if keyword in text_lower:
                 category_score += data['weight']
                 found_keywords.append(keyword)
+                print(f"✅ Found keyword '{keyword}' in category '{category}' (+{data['weight']} points)")
         
         if found_keywords:
             total_score += category_score
             indicators.append(f"{category.replace('_', ' ').title()}: {', '.join(found_keywords[:3])}")
+            scam_categories[category] = {
+                'score': category_score,
+                'keywords_found': found_keywords
+            }
+            print(f"📊 Category '{category}' total: +{category_score} points")
+    
+    print(f"💰 Total scam category score: {total_score}")
     
     # Analyze text quality
     entropy = calculate_text_entropy(text)
@@ -210,24 +221,32 @@ def analyze_enhanced_scam(text):
     
     # Suspicious patterns
     patterns = extract_suspicious_patterns(text)
+    print(f"🔍 Patterns detected: {patterns}")
+    
     if 'url' in patterns:
         total_score += 25
         indicators.append("Contains URLs")
+        print(f"🔗 URLs detected: +25 points")
     if 'suspicious_domain' in patterns:
         total_score += 35
         indicators.append("Contains suspicious domain (.buzz, .tk, etc.)")
+        print(f"🚨 Suspicious domain: +35 points")
     if 'very_long_url' in patterns:
         total_score += 20
         indicators.append("Contains very long URL")
+        print(f"📏 Long URL: +20 points")
     if 'excessive_subdomains' in patterns:
         total_score += 25
         indicators.append("Contains excessive subdomains")
+        print(f"🌐 Excessive subdomains: +25 points")
     if 'phone_number' in patterns:
         total_score += 15
         indicators.append("Contains phone numbers")
+        print(f"📞 Phone number: +15 points")
     if 'money_amount' in patterns:
         total_score += 25
         indicators.append("Contains money amounts")
+        print(f"💵 Money amount: +25 points")
     
     # Determine risk level
     if total_score >= 80:
@@ -237,12 +256,24 @@ def analyze_enhanced_scam(text):
     elif total_score >= 30:
         risk_level = 'MEDIUM'
     elif total_score >= 10:
-        risk_level = 'LOW-MEDIUM'
-    else:
         risk_level = 'LOW'
+    else:
+        risk_level = 'SAFE'
+    
+    print(f"🎯 Final total score: {total_score}")
+    print(f"🚨 Risk level determined: {risk_level}")
     
     # Normalize score to 0-1 range
     normalized_score = min(total_score / 100.0, 1.0)
+    
+    # Add debugging information
+    debug_info = {
+        'total_score': total_score,
+        'risk_level': risk_level,
+        'normalized_score': normalized_score,
+        'scam_categories_found': list(scam_categories.keys()),
+        'patterns_found': patterns
+    }
     
     return {
         'risk_score': normalized_score,
@@ -251,7 +282,8 @@ def analyze_enhanced_scam(text):
         'patterns': patterns,
         'entropy': entropy,
         'grammar_issues': grammar_issues,
-        'analysis': 'Enhanced ML-based scam detection'
+        'analysis': 'Enhanced ML-based scam detection',
+        'debug_info': debug_info
     }
 
 @enhanced_scam_bp.route('/analyze', methods=['POST'])
@@ -292,4 +324,30 @@ def enhanced_scam_health():
         'service': 'enhanced_scam_detection',
         'version': '2.0'
     })
+
+@enhanced_scam_bp.route('/test', methods=['POST'])
+def test_analysis():
+    """Test endpoint for debugging analysis"""
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        text = data['text']
+        print(f"🧪 TEST ANALYSIS REQUEST: {text[:100]}...")
+        
+        # Test the analysis function
+        result = analyze_enhanced_scam(text)
+        
+        print(f"🧪 TEST ANALYSIS RESULT: {result}")
+        
+        return jsonify({
+            'success': True,
+            'test_result': result,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"🧪 TEST ANALYSIS ERROR: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 

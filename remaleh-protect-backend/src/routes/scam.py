@@ -51,7 +51,7 @@ def get_risk_level(score):
     elif score >= 20:
         return 'LOW'
     else:
-        return 'VERY_LOW'
+        return 'SAFE'
 
 @scam_bp.route('/comprehensive', methods=['POST'])
 def comprehensive_analysis():
