@@ -54,12 +54,24 @@ export default function MobileHeader({ setActiveTab }) {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
+      // Close menu first
+      setIsMenuOpen(false);
+      
+      // Try to call logout API if available
+      if (window.logoutUser) {
+        try {
+          await window.logoutUser();
+        } catch (apiError) {
+          console.warn('Logout API call failed, proceeding with local logout:', apiError);
+        }
+      }
+      
+      // Clear local storage
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
-      // Close menu before reloading
-      setIsMenuOpen(false);
+      
       // Small delay to ensure menu closes before reload
       setTimeout(() => {
         window.location.reload();

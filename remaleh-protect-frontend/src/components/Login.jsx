@@ -18,11 +18,26 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.email.trim() || !formData.password.trim()) {
+      return;
+    }
+    
     setIsLoading(true);
     
-    const result = await login(formData.email, formData.password);
-    // The useEffect will handle the redirect when authentication state changes
-    setIsLoading(false);
+    try {
+      const result = await login(formData.email, formData.password);
+      
+      if (!result.success) {
+        // Error is already set in useAuth hook
+        console.error('Login failed:', result.error);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {

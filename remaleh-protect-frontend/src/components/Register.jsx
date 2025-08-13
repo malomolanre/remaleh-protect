@@ -60,16 +60,25 @@ const Register = ({ onRegisterSuccess }) => {
     
     setIsLoading(true);
     
-    const userData = {
-      first_name: formData.first_name.trim(),
-      last_name: formData.last_name.trim(),
-      email: formData.email.trim().toLowerCase(),
-      password: formData.password
-    };
-    
-    const result = await register(userData);
-    // The useEffect will handle the redirect when authentication state changes
-    setIsLoading(false);
+    try {
+      const userData = {
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password
+      };
+      
+      const result = await register(userData);
+      
+      if (!result.success) {
+        // Error is already set in useAuth hook
+        console.error('Registration failed:', result.error);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {

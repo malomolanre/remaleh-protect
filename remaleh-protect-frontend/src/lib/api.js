@@ -1,5 +1,5 @@
 // Central API base for all fetch calls.
-export const API = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || "https://api.remalehprotect.remaleh.com.au";
+export const API = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || "http://localhost:10000";
 
 // Log the API base URL for debugging (remove in production)
 if (import.meta.env.DEV) {
@@ -62,6 +62,13 @@ export const API_ENDPOINTS = {
     SCANS: '/api/risk_profile/scans',
     LEARNING: '/api/risk_profile/learning/modules',
     RECOMMENDATIONS: '/api/risk_profile/recommendations'
+  },
+  
+  // Learning Content
+  LEARNING: {
+    MODULES: '/api/learning/modules',
+    PROGRESS: '/api/learning/progress',
+    NEXT_LESSON: '/api/learning/next-lesson'
   },
   
 

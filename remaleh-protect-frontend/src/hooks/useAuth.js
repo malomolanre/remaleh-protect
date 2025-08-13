@@ -29,6 +29,15 @@ export const useAuth = () => {
             setUser(user);
             setIsAuthenticated(true);
             console.log('🔐 useAuth - Authentication successful, user set');
+          } else if (response.status === 401) {
+            // Token expired, try to refresh
+            console.log('🔐 useAuth - Token expired, attempting refresh...');
+            const refreshResult = await refreshAuthToken();
+            if (!refreshResult.success) {
+              console.log('🔐 useAuth - Token refresh failed, removing tokens');
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('refreshToken');
+            }
           } else {
             console.log('🔐 useAuth - Profile check failed, removing tokens');
             localStorage.removeItem('authToken');
@@ -175,6 +184,37 @@ export const useAuth = () => {
     }
   }, []);
 
+  // Refresh auth token function
+  const refreshAuthToken = useCallback(async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        return { success: false, error: 'No refresh token available' };
+      }
+
+      const response = await apiPost(API_ENDPOINTS.AUTH.REFRESH, {
+        refresh_token: refreshToken
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        const { access_token, refresh_token: newRefreshToken } = responseData;
+        
+        localStorage.setItem('authToken', access_token);
+        if (newRefreshToken) {
+          localStorage.setItem('refreshToken', newRefreshToken);
+        }
+        
+        return { success: true };
+      } else {
+        return { success: false, error: 'Token refresh failed' };
+      }
+    } catch (err) {
+      console.error('Token refresh error:', err);
+      return { success: false, error: 'Token refresh failed' };
+    }
+  }, []);
+
   // Change password function
   const changePassword = useCallback(async (currentPassword, newPassword) => {
     try {
@@ -224,6 +264,7 @@ export const useAuth = () => {
     logout,
     updateProfile,
     changePassword,
+    refreshAuthToken,
     clearError: () => setError(null),
     debugUserState
   };

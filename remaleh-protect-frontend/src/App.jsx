@@ -19,6 +19,35 @@ function App() {
   // Password generator modal state
   const [showPasswordGenerator, setShowPasswordGenerator] = useState(false)
 
+  // Global logout function
+  const handleGlobalLogout = async () => {
+    try {
+      // Clear local storage
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      
+      // Reset to home tab
+      setActiveTab('home');
+      
+      // Reload the page to clear all state
+      window.location.reload();
+    } catch (error) {
+      console.error('Global logout error:', error);
+      // Force reload even if there's an error
+      window.location.reload();
+    }
+  };
+
+  // Make logout function globally available
+  useEffect(() => {
+    window.logoutUser = handleGlobalLogout;
+    
+    // Cleanup on unmount
+    return () => {
+      delete window.logoutUser;
+    };
+  }, []);
+
   // Dynamic greeting based on time of day
   useEffect(() => {
     const getGreeting = () => {

@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   }
 
   // If admin is required but user is not admin
-  if (requireAdmin && !user?.is_admin) {
+  if (requireAdmin && !user?.is_admin && user?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

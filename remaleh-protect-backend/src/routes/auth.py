@@ -164,9 +164,40 @@ def refresh_token():
             return jsonify({'error': 'Refresh token is required'}), 400
         
         # Verify refresh token and create new access token
-        # This is a simplified version - you might want to use flask-jwt-extended for better token management
-        
-        return jsonify({'message': 'Token refreshed successfully'}), 200
+        try:
+            import jwt
+            from flask import current_app
+            
+            # Decode the refresh token
+            payload = jwt.decode(data['refresh_token'], current_app.config['SECRET_KEY'], algorithms=["HS256"])
+            
+            # Check if it's a refresh token
+            if payload.get('type') != 'refresh':
+                return jsonify({'error': 'Invalid token type'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token payload'}), 401
+            
+            # Get user to ensure they still exist and are active
+            user = User.query.get(user_id)
+            if not user or not user.is_active:
+                return jsonify({'error': 'User not found or inactive'}), 401
+            
+            # Create new tokens
+            from ..auth import create_tokens
+            new_access_token, new_refresh_token = create_tokens(user.id)
+            
+            return jsonify({
+                'message': 'Token refreshed successfully',
+                'access_token': new_access_token,
+                'refresh_token': new_refresh_token
+            }), 200
+            
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Refresh token has expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid refresh token'}), 401
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
