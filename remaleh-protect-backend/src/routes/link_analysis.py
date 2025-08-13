@@ -47,7 +47,11 @@ SUSPICIOUS_URL_KEYWORDS = [
     'suspended', 'limited', 'urgent', 'immediate', 'click',
     'free', 'prize', 'winner', 'lottery', 'inheritance',
     'track', 'parcel', 'delivery', 'postal', 'held', 'customs',
-    'warehouse', 'courier', 'activate', 'reopen', 'exit'
+    'warehouse', 'courier', 'activate', 'reopen', 'exit',
+    'bitcoin', 'crypto', 'cryptocurrency', 'giveaway', 'event',
+    'musk', 'elon', 'celeb', 'celebrity', 'impersonation',
+    'double', 'multiply', 'investment', 'return', 'profit',
+    'urgent', 'limited', 'time', 'expires', 'last chance'
 ]
 
 class LocalLinkAnalyzer:
@@ -120,8 +124,13 @@ class LocalLinkAnalyzer:
             full_url = url.lower()
             for keyword in SUSPICIOUS_URL_KEYWORDS:
                 if keyword in full_url:
-                    risk_score += 8
-                    indicators.append(f"Contains suspicious keyword: {keyword}")
+                    # Higher risk for cryptocurrency and celebrity impersonation keywords
+                    if keyword in ['bitcoin', 'crypto', 'cryptocurrency', 'giveaway', 'musk', 'elon', 'celeb', 'celebrity']:
+                        risk_score += 15
+                        indicators.append(f"Contains high-risk keyword: {keyword}")
+                    else:
+                        risk_score += 8
+                        indicators.append(f"Contains suspicious keyword: {keyword}")
             
             # Check for excessive subdomains
             subdomain_count = domain.count('.')
@@ -566,14 +575,35 @@ def analyze_single_url():
             else:
                 risk_level = 'SUSPICIOUS'
             
+            # Add URL-specific indicators
+            url_indicators = url_analysis['indicators'].copy()
+            url_indicators.append("Contains URLs")
+            
+            # Check for suspicious patterns in the URL content
+            if any(keyword in url.lower() for keyword in ['bitcoin', 'crypto', 'giveaway', 'free', 'prize', 'winner']):
+                url_indicators.append("Contains suspicious cryptocurrency/giveaway keywords")
+                risk_score += 15  # Increase risk for suspicious keywords
+            
+            if 'musk' in url.lower() and 'crypto' in url.lower():
+                url_indicators.append("Potential celebrity impersonation scam")
+                risk_score += 25  # High risk for celebrity impersonation
+            
+            # Recalculate risk level based on updated score
+            if risk_score >= 70:
+                risk_level = 'SCAM'
+            elif risk_score >= 40:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
             result = {
                 'url': url,
                 'risk_level': risk_level,
                 'risk_score': risk_score,
-                'indicators': url_analysis['indicators'],
+                'indicators': url_indicators,
                 'domain_info': domain_info,
                 'ssl_info': ssl_info,
-                'recommendations': generate_url_recommendations(risk_score, url_analysis['indicators']),
+                'recommendations': generate_url_recommendations(risk_score, url_indicators),
                 'content_type': 'single_url',
                 'urls_found': 1
             }
@@ -592,14 +622,36 @@ def analyze_single_url():
             else:
                 risk_level = 'SUSPICIOUS'
             
+            # Add URL-specific indicators
+            url_indicators = url_analysis['indicators'].copy()
+            url_indicators.append("Contains URLs")
+            url_indicators.append(f'Found {len(urls_found)} total URLs in content')
+            
+            # Check for suspicious patterns in the URL content
+            if any(keyword in primary_url.lower() for keyword in ['bitcoin', 'crypto', 'giveaway', 'free', 'prize', 'winner']):
+                url_indicators.append("Contains suspicious cryptocurrency/giveaway keywords")
+                risk_score += 15  # Increase risk for suspicious keywords
+            
+            if 'musk' in primary_url.lower() and 'crypto' in primary_url.lower():
+                url_indicators.append("Potential celebrity impersonation scam")
+                risk_score += 25  # High risk for celebrity impersonation
+            
+            # Recalculate risk level based on updated score
+            if risk_score >= 70:
+                risk_level = 'SCAM'
+            elif risk_score >= 40:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
             result = {
                 'url': primary_url,
                 'risk_level': risk_level,
                 'risk_score': risk_score,
-                'indicators': url_analysis['indicators'] + [f'Found {len(urls_found)} total URLs in content'],
+                'indicators': url_indicators,
                 'domain_info': domain_info,
                 'ssl_info': ssl_info,
-                'recommendations': generate_url_recommendations(risk_score, url_analysis['indicators']) + [
+                'recommendations': generate_url_recommendations(risk_score, url_indicators) + [
                     f'Content contains {len(urls_found)} URLs total',
                     'Consider using Message analysis for comprehensive content review',
                     'Contact Remaleh Guardians via chat for assistance with multiple URLs'
