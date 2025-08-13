@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
+import { apiPost, API_ENDPOINTS } from './lib/api'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
   const [greeting, setGreeting] = useState('')
+  
+  // Breach checker state
+  const [breachEmail, setBreachEmail] = useState('')
+  const [breachResult, setBreachResult] = useState(null)
+  const [isChecking, setIsChecking] = useState(false)
+  const [breachError, setBreachError] = useState('')
 
   // Dynamic greeting based on time of day
   useEffect(() => {
@@ -66,6 +73,34 @@ function App() {
       )
     }
   ]
+
+  // Breach checking function
+  const handleBreachCheck = async () => {
+    if (!breachEmail || !breachEmail.includes('@')) {
+      setBreachError('Please enter a valid email address')
+      return
+    }
+    
+    setIsChecking(true)
+    setBreachError('')
+    setBreachResult(null)
+    
+    try {
+      const response = await apiPost(API_ENDPOINTS.BREACH, { email: breachEmail })
+      const data = await response.json()
+      
+      if (response.ok) {
+        setBreachResult(data)
+      } else {
+        setBreachError(data.error || 'Failed to check for breaches')
+      }
+    } catch (error) {
+      console.error('Breach check error:', error)
+      setBreachError('Network error. Please try again.')
+    } finally {
+      setIsChecking(false)
+    }
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -313,20 +348,139 @@ function App() {
                     <input
                       type="email"
                       id="email"
+                      value={breachEmail}
+                      onChange={(e) => setBreachEmail(e.target.value)}
                       placeholder="Enter your email address"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent transition-all duration-200"
+                      disabled={isChecking}
                     />
                   </div>
                 </div>
                 
-                <button className="w-full bg-[#21a1ce] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Check for Breaches
+                {/* Error Display */}
+                {breachError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <span className="text-red-800 text-sm">{breachError}</span>
+                    </div>
+                  </div>
+                )}
+                
+                <button 
+                  onClick={handleBreachCheck}
+                  disabled={isChecking || !breachEmail}
+                  className="w-full bg-[#21a1ce] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isChecking ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Checking...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      Check for Breaches
+                    </>
+                  )}
                 </button>
               </div>
             </div>
+
+            {/* Results Display */}
+            {breachResult && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center mb-4">
+                  {breachResult.breached ? (
+                    <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mr-4">
+                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mr-4">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-black">
+                      {breachResult.breached ? 'Breaches Found' : 'No Breaches Detected'}
+                    </h2>
+                    <p className="text-gray-600">
+                      {breachResult.breached ? `${breachResult.breach_count} breach(es) found` : 'Your email is secure'}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Checked: {breachEmail}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <p className={`text-lg ${breachResult.breached ? 'text-red-700' : 'text-green-700'}`}>
+                    {breachResult.message}
+                  </p>
+                </div>
+
+                {breachResult.breached && breachResult.breaches && breachResult.breaches.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-800">Affected Services:</h3>
+                    {breachResult.breaches.map((breach, index) => (
+                      <div key={index} className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-red-800 mb-1">{breach.name}</h4>
+                            <p className="text-red-700 text-sm mb-2">{breach.domain}</p>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-red-600 text-xs">Breached: {breach.date}</span>
+                              <span className="text-red-600 text-xs">•</span>
+                              <span className="text-red-600 text-xs">{breach.data.join(', ')}</span>
+                            </div>
+                          </div>
+                          <div className="text-red-400 ml-3">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {breachResult.demo_mode && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-blue-800 text-sm">Demo mode - Results are simulated for testing purposes</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <button 
+                    onClick={() => {
+                      setBreachEmail('')
+                      setBreachResult(null)
+                      setBreachError('')
+                    }}
+                    className="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200"
+                  >
+                    Check Another Email
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* How It Works Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
