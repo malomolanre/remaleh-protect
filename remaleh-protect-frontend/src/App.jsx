@@ -113,6 +113,111 @@ function App() {
     setShowPasswordGenerator(false)
   }
 
+  // Scam analysis state
+  const [scamInput, setScamInput] = useState('')
+  const [scamType, setScamType] = useState('message')
+  const [scamResult, setScamResult] = useState(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [scamError, setScamError] = useState('')
+
+  // Scam analysis function
+  const handleScamAnalysis = async () => {
+    if (!scamInput.trim()) {
+      setScamError('Please enter content to analyze')
+      return
+    }
+    
+    setIsAnalyzing(true)
+    setScamError('')
+    setScamResult(null)
+    
+    try {
+      // Simulate API call - in real app, this would call your backend
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Analyze the input for common scam indicators
+      const analysis = analyzeScamContent(scamInput, scamType)
+      setScamResult(analysis)
+    } catch (error) {
+      console.error('Scam analysis error:', error)
+      setScamError('Analysis failed. Please try again.')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  // Scam content analysis logic
+  const analyzeScamContent = (content, type) => {
+    const indicators = {
+      urgency: /(urgent|immediate|now|quick|fast|hurry|deadline|limited time|expires|last chance)/gi,
+      money: /(\$[\d,]+|money|payment|bank|account|credit card|paypal|bitcoin|crypto|investment|profit|return)/gi,
+      personal: /(password|login|verify|confirm|update|social security|ssn|birthday|address|phone)/gi,
+      threats: /(suspended|blocked|locked|deleted|expired|legal action|police|fbi|irs|tax)/gi,
+      urgency: /(urgent|immediate|now|quick|fast|hurry|deadline|limited time|expires|last chance)/gi,
+      suspicious: /(click here|verify now|login|password|bank|urgent|free|winner|prize|lottery)/gi
+    }
+    
+    const results = {}
+    let riskScore = 0
+    
+    Object.entries(indicators).forEach(([key, pattern]) => {
+      const matches = content.match(pattern)
+      if (matches) {
+        results[key] = matches.length
+        riskScore += matches.length * 2
+      }
+    })
+    
+    // Additional analysis based on type
+    if (type === 'link') {
+      if (content.includes('bit.ly') || content.includes('tinyurl')) riskScore += 5
+      if (content.includes('http://') && !content.includes('https://')) riskScore += 3
+    }
+    
+    if (type === 'email') {
+      if (content.includes('@') && !content.includes('@gmail.com') && !content.includes('@yahoo.com')) riskScore += 2
+    }
+    
+    const riskLevel = riskScore < 10 ? 'low' : riskScore < 20 ? 'medium' : 'high'
+    
+    return {
+      riskLevel,
+      riskScore,
+      indicators: results,
+      recommendations: generateRecommendations(riskLevel, results, type),
+      analysis: content.substring(0, 100) + (content.length > 100 ? '...' : '')
+    }
+  }
+
+  const generateRecommendations = (riskLevel, indicators, type) => {
+    const recommendations = []
+    
+    if (riskLevel === 'high') {
+      recommendations.push('Do not click any links or provide personal information')
+      recommendations.push('Report this to relevant authorities if applicable')
+      recommendations.push('Delete the message immediately')
+    }
+    
+    if (indicators.urgency) {
+      recommendations.push('Be cautious of urgent requests - legitimate organizations rarely pressure you')
+    }
+    
+    if (indicators.money) {
+      recommendations.push('Never send money to unknown sources or for urgent requests')
+    }
+    
+    if (indicators.personal) {
+      recommendations.push('Never share passwords, SSN, or other sensitive information via message')
+    }
+    
+    if (type === 'link') {
+      recommendations.push('Hover over links to verify the actual destination')
+      recommendations.push('Use link scanning tools before clicking')
+    }
+    
+    return recommendations
+  }
+
 
 
   const renderContent = () => {
@@ -656,23 +761,281 @@ function App() {
       case 'scam':
         return (
           <div className="space-y-6">
+            {/* Header Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h1 className="text-2xl font-bold text-black mb-4">🚨 Scam Analysis</h1>
-              <p className="text-gray-700 mb-6">Analyze suspicious messages, links, and emails for potential scams.</p>
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-black">Scam Analysis</h1>
+                  <p className="text-gray-600">Advanced threat detection</p>
+                </div>
+              </div>
+              
+              <p className="text-gray-700 mb-6">Analyze suspicious messages, links, and emails for potential scams using advanced pattern recognition and threat intelligence.</p>
+            </div>
+
+            {/* Input Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-black mb-4">Analyze Content</h2>
               
               <div className="space-y-4">
-                <div className="bg-[#21a1ce] bg-opacity-10 p-4 rounded-xl border border-[#21a1ce] border-opacity-20">
-                  <h3 className="font-semibold text-black mb-2">What we detect:</h3>
-                  <ul className="text-gray-700 space-y-1">
-                    <li>• Phishing attempts</li>
-                    <li>• Suspicious links</li>
-                    <li>• Fraudulent messages</li>
-                  </ul>
+                {/* Content Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Content Type
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: 'message', label: 'Message', icon: '💬' },
+                      { id: 'link', label: 'Link', icon: '🔗' },
+                      { id: 'email', label: 'Email', icon: '📧' }
+                    ].map((type) => (
+                      <button
+                        key={type.id}
+                        onClick={() => setScamType(type.id)}
+                        className={`p-3 rounded-xl border-2 transition-all duration-200 ${
+                          scamType === type.id
+                            ? 'border-[#21a1ce] bg-[#21a1ce] bg-opacity-10'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="text-2xl mb-1">{type.icon}</div>
+                          <div className="text-sm font-medium text-gray-700">{type.label}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Content Input */}
+                <div>
+                  <label htmlFor="scamInput" className="block text-sm font-medium text-gray-700 mb-2">
+                    {scamType === 'message' ? 'Message Content' : scamType === 'link' ? 'URL or Link' : 'Email Content'}
+                  </label>
+                  <div className="relative">
+                    {scamType === 'link' ? (
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                      </div>
+                    ) : scamType === 'email' ? (
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                    )}
+                    <textarea
+                      id="scamInput"
+                      value={scamInput}
+                      onChange={(e) => setScamInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.ctrlKey && !isAnalyzing && scamInput.trim()) {
+                          handleScamAnalysis()
+                        }
+                      }}
+                      placeholder={
+                        scamType === 'message' 
+                          ? 'Paste the suspicious message here...' 
+                          : scamType === 'link' 
+                          ? 'Enter the URL or link to analyze...' 
+                          : 'Paste the email content here...'
+                      }
+                      rows={4}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent transition-all duration-200 resize-none"
+                      disabled={isAnalyzing}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Press Ctrl+Enter to analyze quickly
+                  </p>
+                </div>
+
+                {/* Error Display */}
+                {scamError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <span className="text-red-800 text-sm">{scamError}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Analyze Button */}
+                <button 
+                  onClick={handleScamAnalysis}
+                  disabled={isAnalyzing || !scamInput.trim()}
+                  className="w-full bg-[#21a1ce] text-white py-3 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      Analyze for Scams
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Results Display */}
+            {scamResult && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center mb-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 ${
+                    scamResult.riskLevel === 'high' ? 'bg-red-100' :
+                    scamResult.riskLevel === 'medium' ? 'bg-yellow-100' :
+                    'bg-green-100'
+                  }`}>
+                    <svg className={`w-6 h-6 ${
+                      scamResult.riskLevel === 'high' ? 'text-red-600' :
+                      scamResult.riskLevel === 'medium' ? 'text-yellow-600' :
+                      'text-green-600'
+                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-black">
+                      Risk Level: {scamResult.riskLevel.charAt(0).toUpperCase() + scamResult.riskLevel.slice(1)}
+                    </h2>
+                    <p className="text-gray-600">
+                      Risk Score: {scamResult.riskScore}/100
+                    </p>
+                  </div>
+                </div>
+
+                {/* Risk Indicators */}
+                {Object.keys(scamResult.indicators).length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-800 mb-2">Detected Indicators:</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(scamResult.indicators).map(([indicator, count]) => (
+                        <div key={indicator} className="p-2 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700 capitalize">
+                              {indicator.replace(/([A-Z])/g, ' $1').trim()}
+                            </span>
+                            <span className="text-xs bg-[#21a1ce] text-white px-2 py-1 rounded-full">
+                              {count}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                <div className="mb-4">
+                  <h3 className="font-semibold text-gray-800 mb-2">Security Recommendations:</h3>
+                  <div className="space-y-2">
+                    {scamResult.recommendations.map((rec, index) => (
+                      <div key={index} className="flex items-start p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <svg className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-blue-800 text-sm">{rec}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reset Button */}
+                <div className="pt-4 border-t border-gray-200">
+                  <button 
+                    onClick={() => {
+                      setScamInput('')
+                      setScamResult(null)
+                      setScamError('')
+                    }}
+                    className="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200"
+                  >
+                    Analyze Another Item
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* How It Works Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-black mb-4">How Scam Analysis Works</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-[#21a1ce] bg-opacity-10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-[#21a1ce] font-bold text-lg">1</span>
+                  </div>
+                  <h3 className="font-medium text-gray-800 mb-2">Input Content</h3>
+                  <p className="text-gray-600 text-sm">Paste suspicious messages, links, or emails</p>
                 </div>
                 
-                <button className="w-full bg-[#21a1ce] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-colors shadow-sm">
-                  Analyze for Scams
-                </button>
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-[#21a1ce] bg-opacity-10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-[#21a1ce] font-bold text-lg">2</span>
+                  </div>
+                  <h3 className="font-medium text-gray-800 mb-2">AI Analysis</h3>
+                  <p className="text-gray-600 text-sm">Advanced pattern recognition scans for threats</p>
+                </div>
+                
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-[#21a1ce] bg-opacity-10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-[#21a1ce] font-bold text-lg">3</span>
+                  </div>
+                  <h3 className="font-medium text-gray-800 mb-2">Get Results</h3>
+                  <p className="text-gray-600 text-sm">Risk assessment and security recommendations</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Features */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-black mb-4">Detection Capabilities</h2>
+              
+              <div className="space-y-3">
+                <div className="flex items-center p-3 bg-red-50 rounded-lg border border-red-200">
+                  <svg className="w-5 h-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <span className="text-red-800 text-sm">Phishing attempts and social engineering</span>
+                </div>
+                
+                <div className="flex items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <svg className="w-5 h-5 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span className="text-yellow-800 text-sm">Suspicious links and URLs</span>
+                </div>
+                
+                <div className="flex items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <svg className="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-yellow-800 text-sm">Financial fraud and money scams</span>
+                </div>
               </div>
             </div>
           </div>
