@@ -441,7 +441,6 @@ function App() {
       money: /(\$[\d,]+|money|payment|bank|account|credit card|paypal|bitcoin|crypto|investment|profit|return)/gi,
       personal: /(password|login|verify|confirm|update|social security|ssn|birthday|address|phone)/gi,
       threats: /(suspended|blocked|locked|deleted|expired|legal action|police|fbi|irs|tax)/gi,
-      urgency: /(urgent|immediate|now|quick|fast|hurry|deadline|limited time|expires|last chance)/gi,
       suspicious: /(click here|verify now|login|password|bank|urgent|free|winner|prize|lottery)/gi
     }
     
