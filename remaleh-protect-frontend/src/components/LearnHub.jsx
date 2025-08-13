@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BookOpen, CheckCircle, Search, Shield, ArrowLeft } from 'lucide-react'
+import { BookOpen, CheckCircle, Search, Shield, ArrowLeft, RefreshCw } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
@@ -21,6 +21,40 @@ export default function LearnHub({ setActiveTab }) {
   const [difficultyFilter, setDifficultyFilter] = useState('all')
   const [completedLessons, setCompletedLessons] = useState([])
   const [showCompleted, setShowCompleted] = useState(false)
+  const [modules, setModules] = useState([])
+  const [overallProgress, setOverallProgress] = useState({ completed: 0, total: 0, progress: 0 })
+  const [nextLesson, setNextLesson] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  
+  // Load data from backend APIs
+  useEffect(() => {
+    loadData()
+  }, [])
+  
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Load modules and progress in parallel
+      const [modulesData, progressData, nextLessonData] = await Promise.all([
+        getAllModules(),
+        getOverallProgress(),
+        getNextRecommendedLesson()
+      ])
+      
+      setModules(modulesData)
+      setOverallProgress(progressData)
+      setNextLesson(nextLessonData)
+      
+    } catch (err) {
+      console.error('Error loading learning data:', err)
+      setError('Failed to load learning content. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
   
   // Load completed lessons from localStorage (in production, this would come from your backend)
   useEffect(() => {
@@ -39,26 +73,24 @@ export default function LearnHub({ setActiveTab }) {
   
   // Get filtered modules based on search and difficulty
   const getFilteredModules = () => {
-    let modules = getAllModules()
+    let filtered = modules
     
     if (difficultyFilter !== 'all') {
-      modules = getContentByDifficulty(difficultyFilter)
+      filtered = filtered.filter(module => module.difficulty === difficultyFilter)
     }
     
     if (searchTerm) {
-      const searchResults = searchLearningContent(searchTerm)
-      const moduleIds = [...new Set(searchResults.map(result => 
-        result.type === 'module' ? result.id : result.moduleId
-      ))]
-      modules = modules.filter(module => moduleIds.includes(module.id))
+      const searchLower = searchTerm.toLowerCase()
+      filtered = filtered.filter(module => 
+        module.title.toLowerCase().includes(searchLower) ||
+        (module.description && module.description.toLowerCase().includes(searchLower))
+      )
     }
     
-    return modules
+    return filtered
   }
   
   const filteredModules = getFilteredModules()
-  const overallProgress = getOverallProgress(completedLessons)
-  const nextLesson = getNextRecommendedLesson(completedLessons)
 
   return (
     <div className="space-y-4 p-4">
@@ -71,6 +103,14 @@ export default function LearnHub({ setActiveTab }) {
               <BookOpen className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold">Learning Hub</h1>
+            <button
+              onClick={loadData}
+              disabled={loading}
+              className="ml-4 bg-white bg-opacity-20 p-2 rounded-full hover:bg-opacity-30 transition-all disabled:opacity-50"
+              title="Refresh content"
+            >
+              <RefreshCw className={`w-5 h-5 text-white ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
           
           {/* Main Message */}
@@ -89,13 +129,26 @@ export default function LearnHub({ setActiveTab }) {
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800">{error}</p>
+          <button 
+            onClick={loadData}
+            className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
       {/* Progress Overview */}
       <MobileCard className="mb-4">
         <MobileCardHeader>
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Your Progress</h3>
             <div className="text-sm text-gray-600">
-              {overallProgress.completed}/{overallProgress.total} lessons
+              {loading ? 'Loading...' : `${overallProgress.completed_modules || 0}/${overallProgress.total_modules || 0} modules`}
             </div>
           </div>
         </MobileCardHeader>
@@ -103,14 +156,14 @@ export default function LearnHub({ setActiveTab }) {
           <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
             <div 
               className="bg-[#21a1ce] h-2 rounded-full transition-all duration-300" 
-              style={{ width: `${overallProgress.progress}%` }}
+              style={{ width: `${overallProgress.completion_percentage || 0}%` }}
             ></div>
           </div>
           <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>{overallProgress.progress}% Complete</span>
+            <span>{loading ? 'Loading...' : `${Math.round(overallProgress.completion_percentage || 0)}% Complete`}</span>
             {nextLesson && (
               <span className="text-sm text-[#21a1ce] font-medium">
-                Next: {nextLesson.lessonTitle}
+                Next: {nextLesson.lesson_title}
               </span>
             )}
           </div>
@@ -208,46 +261,62 @@ export default function LearnHub({ setActiveTab }) {
       {!selectedModule ? (
         /* Module Selection View */
         <div className="space-y-4">
-          {filteredModules.map(module => {
-            const progress = getModuleProgress(module.id, completedLessons)
-            return (
-              <MobileCard key={module.id} className="cursor-pointer hover:shadow-md transition-shadow" 
-                         onClick={() => setSelectedModule(module)}>
-                <MobileCardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white`} 
-                           style={{ backgroundColor: module.color }}>
-                        <BookOpen className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{module.title}</h3>
-                        <p className="text-sm text-gray-600">{module.subtitle}</p>
-                        <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
-                          <span>{module.lessons.length} lessons</span>
-                          <span>{module.estimatedTime}</span>
-                          <span className="capitalize">{module.difficulty}</span>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#21a1ce] mx-auto"></div>
+              <p className="text-gray-600 mt-2">Loading learning modules...</p>
+            </div>
+          ) : filteredModules.length === 0 ? (
+            <div className="text-center py-8">
+              <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No learning modules found</p>
+              <p className="text-sm text-gray-500">Check back later for new content</p>
+            </div>
+          ) : (
+            filteredModules.map(module => {
+              const lessonCount = module.content?.lessons?.length || 0
+              const isCompleted = completedLessons.includes(module.id)
+              const progressPercent = isCompleted ? 100 : 0
+              
+              return (
+                <MobileCard key={module.id} className="cursor-pointer hover:shadow-md transition-shadow" 
+                           onClick={() => setSelectedModule(module)}>
+                  <MobileCardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white`} 
+                             style={{ backgroundColor: module.color || '#21a1ce' }}>
+                          <BookOpen className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{module.title}</h3>
+                          <p className="text-sm text-gray-600">{module.description}</p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                            <span>{lessonCount} lessons</span>
+                            <span>{module.estimated_time} min</span>
+                            <span className="capitalize">{module.difficulty}</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-[#21a1ce]">{progressPercent}%</div>
+                        <div className="text-xs text-gray-500">{isCompleted ? 1 : 0}/1</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-[#21a1ce]">{progress.progress}%</div>
-                      <div className="text-xs text-gray-500">{progress.completed}/{progress.total}</div>
+                  </MobileCardHeader>
+                  
+                  <MobileCardContent>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-[#21a1ce] h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${progressPercent}%` }}
+                      ></div>
                     </div>
-                  </div>
-                </MobileCardHeader>
-                
-                <MobileCardContent>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-[#21a1ce] h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${progress.progress}%` }}
-                    ></div>
-                  </div>
-                </MobileCardContent>
-              </MobileCard>
-            )
-          })}
+                  </MobileCardContent>
+                </MobileCard>
+              )
+            })
+          )}
         </div>
       ) : !selectedLesson ? (
         /* Lesson Selection View */
@@ -271,14 +340,14 @@ export default function LearnHub({ setActiveTab }) {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">{selectedModule.title}</h2>
-                  <p className="text-gray-600">{selectedModule.subtitle}</p>
+                  <p className="text-gray-600">{selectedModule.description}</p>
                 </div>
               </div>
             </MobileCardHeader>
             
             <MobileCardContent>
               <div className="space-y-3">
-                {selectedModule.lessons.map(lesson => {
+                {selectedModule.content?.lessons?.map(lesson => {
                   const isCompleted = completedLessons.includes(lesson.id)
                   return (
                     <div 
@@ -294,7 +363,7 @@ export default function LearnHub({ setActiveTab }) {
                         )}
                         <div>
                           <h4 className="font-medium">{lesson.title}</h4>
-                          <p className="text-sm text-gray-600">{lesson.duration} • {lesson.contentType}</p>
+                          <p className="text-sm text-gray-600">{lesson.duration} min • {lesson.contentType}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
