@@ -130,25 +130,37 @@ export default function ContentAdmin() {
   }
 
   const handleDeleteModule = async (moduleId) => {
-    if (confirm('Are you sure you want to delete this module?')) {
+    if (!moduleId) {
+      alert('Invalid module ID')
+      return
+    }
+    
+    if (confirm('Are you sure you want to delete this module? This will also delete all lessons within it.')) {
       try {
         await deleteModule(moduleId)
         await loadModules() // Refresh the modules list
         alert('Module deleted successfully!')
       } catch (err) {
-        alert('Failed to delete module: ' + err.message)
+        console.error('❌ Error deleting module:', err)
+        alert('Failed to delete module: ' + (err.message || 'Unknown error'))
       }
     }
   }
 
   const handleDeleteLesson = async (moduleId, lessonId) => {
+    if (!moduleId || !lessonId) {
+      alert('Invalid module or lesson ID')
+      return
+    }
+    
     if (confirm('Are you sure you want to delete this lesson?')) {
       try {
         await deleteLesson(moduleId, lessonId)
         await loadModules() // Refresh the modules list
         alert('Lesson deleted successfully!')
       } catch (err) {
-        alert('Failed to delete lesson: ' + err.message)
+        console.error('❌ Error deleting lesson:', err)
+        alert('Failed to delete lesson: ' + (err.message || 'Unknown error'))
       }
     }
   }
@@ -156,11 +168,17 @@ export default function ContentAdmin() {
   const saveModule = async () => {
     if (editingModule && editingModule.id) {
       try {
+        // Validate required fields
+        if (!editingModule.title || editingModule.title.trim() === '') {
+          alert('Module title is required')
+          return
+        }
+        
         const updateData = {
-          title: editingModule.title || 'Untitled Module',
-          description: editingModule.description || 'No description',
+          title: editingModule.title.trim(),
+          description: editingModule.description?.trim() || 'No description',
           difficulty: editingModule.difficulty || 'BEGINNER',
-          estimated_time: editingModule.estimated_time || 10,
+          estimated_time: Math.max(1, Math.min(120, editingModule.estimated_time || 10)),
           content: editingModule.content || { lessons: [] }
         }
         
@@ -178,13 +196,24 @@ export default function ContentAdmin() {
   const saveLesson = async () => {
     if (editingLesson && editingLesson.id && selectedModuleId) {
       try {
+        // Validate required fields
+        if (!editingLesson.title || editingLesson.title.trim() === '') {
+          alert('Lesson title is required')
+          return
+        }
+        
+        if (!editingLesson.content || editingLesson.content.trim() === '') {
+          alert('Lesson content is required')
+          return
+        }
+        
         const updateData = {
-          title: editingLesson.title || 'Untitled Lesson',
+          title: editingLesson.title.trim(),
           type: editingLesson.type || 'info',
-          content: editingLesson.content || 'No content',
+          content: editingLesson.content.trim(),
           contentType: editingLesson.contentType || 'info',
           contentStyle: editingLesson.contentStyle || 'default',
-          duration: editingLesson.duration || 5
+          duration: Math.max(1, Math.min(60, editingLesson.duration || 5))
         }
         
         await updateLesson(selectedModuleId, editingLesson.id, updateData)
@@ -398,7 +427,10 @@ export default function ContentAdmin() {
               Create Module
             </MobileButton>
             <button
-              onClick={() => setShowAddModule(false)}
+              onClick={() => {
+                setShowAddModule(false)
+                // Reset any form state if needed
+              }}
               className="w-full mt-2 p-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
               Cancel
@@ -417,7 +449,10 @@ export default function ContentAdmin() {
               Create Lesson
             </MobileButton>
             <button
-              onClick={() => setShowAddLesson(false)}
+              onClick={() => {
+                setShowAddLesson(false)
+                setSelectedModuleId(null)
+              }}
               className="w-full mt-2 p-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
               Cancel
@@ -435,15 +470,17 @@ export default function ContentAdmin() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                 <MobileInput
-                  value={editingModule.title}
+                  value={editingModule.title || ''}
                   onChange={(e) => setEditingModule({ ...editingModule, title: e.target.value })}
+                  placeholder="Enter module title"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <MobileInput
-                  value={editingModule.description}
+                  value={editingModule.description || ''}
                   onChange={(e) => setEditingModule({ ...editingModule, description: e.target.value })}
+                  placeholder="Enter module description"
                 />
               </div>
               <div>
@@ -477,7 +514,10 @@ export default function ContentAdmin() {
                 Save Changes
               </MobileButton>
               <button
-                onClick={() => setEditingModule(null)}
+                onClick={() => {
+                  setEditingModule(null)
+                  // Reset form state
+                }}
                 className="flex-1 p-2 text-gray-600 hover:text-gray-800 transition-colors"
               >
                 Cancel
@@ -496,16 +536,18 @@ export default function ContentAdmin() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                 <MobileInput
-                  value={editingLesson.title}
+                  value={editingLesson.title || ''}
                   onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
+                  placeholder="Enter lesson title"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                 <Textarea
-                  value={editingLesson.content}
+                  value={editingLesson.content || ''}
                   onChange={(e) => setEditingLesson({ ...editingLesson, content: e.target.value })}
                   rows={4}
+                  placeholder="Enter lesson content"
                 />
               </div>
               <div>
@@ -542,7 +584,10 @@ export default function ContentAdmin() {
                 Save Changes
               </MobileButton>
               <button
-                onClick={() => setEditingLesson(null)}
+                onClick={() => {
+                  setEditingLesson(null)
+                  setSelectedModuleId(null)
+                }}
                 className="flex-1 p-2 text-gray-600 hover:text-gray-800 transition-colors"
               >
                 Cancel
