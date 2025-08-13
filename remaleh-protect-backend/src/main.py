@@ -142,6 +142,7 @@ def create_app():
         from routes.auth import auth_bp
         from routes.community import community_bp
         from routes.admin import admin_bp
+        from routes.learning_content import learning_content_bp
 
     # Register blueprints
     try:
@@ -168,6 +169,9 @@ def create_app():
         
         app.register_blueprint(admin_bp, url_prefix="/api/admin")
         logger.info("✓ Admin panel blueprint registered at /api/admin")
+        
+        app.register_blueprint(learning_content_bp, url_prefix="/api/learning")
+        logger.info("✓ Learning content blueprint registered at /api/learning")
         
         logger.info("✓ All security analysis blueprints registered successfully")
         

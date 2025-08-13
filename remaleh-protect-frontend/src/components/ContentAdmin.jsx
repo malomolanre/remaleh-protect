@@ -1,117 +1,154 @@
 import React, { useState, useEffect } from 'react'
-import { Edit3, Save, X, Plus, Trash2, Eye, Search } from 'lucide-react'
+import { Edit3, Save, X, Plus, Trash2, Eye, Search, RefreshCw } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
 import { Textarea } from './ui/textarea'
-import learningContent from '../data/learning-content.json'
+import {
+  getAllModules,
+  createModule,
+  updateModule,
+  deleteModule,
+  addLesson,
+  updateLesson,
+  deleteLesson,
+  exportContent,
+  importContent
+} from '../utils/contentManager'
 
 export default function ContentAdmin() {
-  const [content, setContent] = useState(learningContent)
+  const [modules, setModules] = useState([])
   const [editingModule, setEditingModule] = useState(null)
   const [editingLesson, setEditingLesson] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddModule, setShowAddModule] = useState(false)
   const [showAddLesson, setShowAddLesson] = useState(false)
+  const [selectedModuleId, setSelectedModuleId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // Save content to localStorage (in production, this would save to your backend)
-  const saveContent = () => {
-    localStorage.setItem('remaleh-learning-content', JSON.stringify(content))
-    // In production, you'd make an API call here
-    alert('Content saved successfully!')
-  }
-
-  // Load content from localStorage (in production, this would load from your backend)
+  // Load modules from backend API
   useEffect(() => {
-    const saved = localStorage.getItem('remaleh-learning-content')
-    if (saved) {
-      setContent(JSON.parse(saved))
-    }
+    loadModules()
   }, [])
 
-  const filteredModules = content.modules.filter(module =>
+  const loadModules = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const modulesData = await getAllModules()
+      setModules(modulesData)
+    } catch (err) {
+      setError('Failed to load modules: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredModules = modules.filter(module =>
     module.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    module.subtitle.toLowerCase().includes(searchTerm.toLowerCase())
+    (module.description && module.description.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  const addModule = () => {
-    const newModule = {
-      id: `module-${Date.now()}`,
-      title: 'New Module',
-      subtitle: 'Module description',
-      icon: 'BookOpen',
-      color: '#21a1ce',
-      estimatedTime: '10 minutes',
-      difficulty: 'beginner',
-      lessons: []
-    }
-    
-    setContent(prev => ({
-      ...prev,
-      modules: [...prev.modules, newModule],
-      metadata: {
-        ...prev.metadata,
-        totalModules: prev.modules.length + 1
+  const addModule = async () => {
+    try {
+      const newModuleData = {
+        title: 'New Module',
+        description: 'Module description',
+        difficulty: 'BEGINNER',
+        estimated_time: 10,
+        content: { lessons: [] }
       }
-    }))
-    setShowAddModule(false)
+      
+      const result = await createModule(newModuleData)
+      await loadModules() // Refresh the modules list
+      setShowAddModule(false)
+      alert('Module created successfully!')
+    } catch (err) {
+      alert('Failed to create module: ' + err.message)
+    }
   }
 
-  const addLesson = (moduleId) => {
-    const newLesson = {
-      id: `lesson-${Date.now()}`,
-      title: 'New Lesson',
-      type: 'content',
-      content: 'Lesson content here...',
-      contentType: 'info',
-      contentStyle: 'blue',
-      duration: '5 min'
-    }
-    
-    setContent(prev => ({
-      ...prev,
-      modules: prev.modules.map(module =>
-        module.id === moduleId
-          ? { ...module, lessons: [...module.lessons, newLesson] }
-          : module
-      ),
-      metadata: {
-        ...prev.metadata,
-        totalLessons: prev.metadata.totalLessons + 1
+  const addLesson = async (moduleId) => {
+    try {
+      const newLessonData = {
+        title: 'New Lesson',
+        type: 'info',
+        content: 'Lesson content here...',
+        contentType: 'info',
+        contentStyle: 'default',
+        duration: 5
       }
-    }))
-    setShowAddLesson(false)
+      
+      const result = await addLesson(moduleId, newLessonData)
+      await loadModules() // Refresh the modules list
+      setShowAddLesson(false)
+      alert('Lesson added successfully!')
+    } catch (err) {
+      alert('Failed to add lesson: ' + err.message)
+    }
   }
 
-  const deleteModule = (moduleId) => {
+  const deleteModule = async (moduleId) => {
     if (confirm('Are you sure you want to delete this module?')) {
-      setContent(prev => ({
-        ...prev,
-        modules: prev.modules.filter(module => module.id !== moduleId),
-        metadata: {
-          ...prev.metadata,
-          totalModules: prev.modules.length - 1,
-          totalLessons: prev.metadata.totalLessons - 
-            prev.modules.find(m => m.id === moduleId)?.lessons.length
-        }
-      }))
+      try {
+        await deleteModule(moduleId)
+        await loadModules() // Refresh the modules list
+        alert('Module deleted successfully!')
+      } catch (err) {
+        alert('Failed to delete module: ' + err.message)
+      }
     }
   }
 
-  const deleteLesson = (moduleId, lessonId) => {
+  const deleteLesson = async (moduleId, lessonId) => {
     if (confirm('Are you sure you want to delete this lesson?')) {
-      setContent(prev => ({
-        ...prev,
-        modules: prev.modules.map(module =>
-          module.id === moduleId
-            ? { ...module, lessons: module.lessons.filter(lesson => lesson.id !== lessonId) }
-            : module
-        ),
-        metadata: {
-          ...prev.metadata,
-          totalLessons: prev.metadata.totalLessons - 1
-        }
-      }))
+      try {
+        await deleteLesson(moduleId, lessonId)
+        await loadModules() // Refresh the modules list
+        alert('Lesson deleted successfully!')
+      } catch (err) {
+        alert('Failed to delete lesson: ' + err.message)
+      }
+    }
+  }
+
+  const saveModule = async () => {
+    if (editingModule) {
+      try {
+        await updateModule(editingModule.id, {
+          title: editingModule.title,
+          description: editingModule.description,
+          difficulty: editingModule.difficulty,
+          estimated_time: editingModule.estimated_time,
+          content: editingModule.content
+        })
+        await loadModules() // Refresh the modules list
+        setEditingModule(null)
+        alert('Module updated successfully!')
+      } catch (err) {
+        alert('Failed to update module: ' + err.message)
+      }
+    }
+  }
+
+  const saveLesson = async () => {
+    if (editingLesson && selectedModuleId) {
+      try {
+        await updateLesson(selectedModuleId, editingLesson.id, {
+          title: editingLesson.title,
+          type: editingLesson.type,
+          content: editingLesson.content,
+          contentType: editingLesson.contentType,
+          contentStyle: editingLesson.contentStyle,
+          duration: editingLesson.duration
+        })
+        await loadModules() // Refresh the modules list
+        setEditingLesson(null)
+        alert('Lesson updated successfully!')
+      } catch (err) {
+        alert('Failed to update lesson: ' + err.message)
+      }
     }
   }
 
@@ -124,12 +161,19 @@ export default function ContentAdmin() {
             <Plus className="w-4 h-4 mr-2" />
             Add Module
           </MobileButton>
-          <MobileButton onClick={saveContent} variant="primary">
-            <Save className="w-4 h-4 mr-2" />
-            Save All
+          <MobileButton onClick={loadModules} variant="primary">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
           </MobileButton>
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
@@ -151,20 +195,24 @@ export default function ContentAdmin() {
         <MobileCardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-[#21a1ce]">{content.metadata.totalModules}</div>
+              <div className="text-2xl font-bold text-[#21a1ce]">{modules.length}</div>
               <div className="text-sm text-gray-600">Modules</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#21a1ce]">{content.metadata.totalLessons}</div>
+              <div className="text-2xl font-bold text-[#21a1ce]">
+                {modules.reduce((total, m) => total + (m.content?.lessons?.length || 0), 0)}
+              </div>
               <div className="text-sm text-gray-600">Lessons</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#21a1ce]">{content.metadata.version}</div>
+              <div className="text-2xl font-bold text-[#21a1ce]">v1.0</div>
               <div className="text-sm text-gray-600">Version</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#21a1ce]">{content.metadata.lastUpdated}</div>
-              <div className="text-sm text-gray-600">Last Updated</div>
+              <div className="text-2xl font-bold text-[#21a1ce]">
+                {modules.length > 0 ? 'Active' : 'No Content'}
+              </div>
+              <div className="text-sm text-gray-600">Status</div>
             </div>
           </div>
         </MobileCardContent>
@@ -172,79 +220,102 @@ export default function ContentAdmin() {
 
       {/* Modules List */}
       <div className="space-y-4">
-        {filteredModules.map(module => (
-          <MobileCard key={module.id}>
-            <MobileCardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white`} 
-                       style={{ backgroundColor: module.color }}>
-                    <span className="text-lg font-bold">{module.title.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">{module.title}</h3>
-                    <p className="text-sm text-gray-600">{module.subtitle}</p>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
-                      <span>{module.lessons.length} lessons</span>
-                      <span>{module.estimatedTime}</span>
-                      <span className="capitalize">{module.difficulty}</span>
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#21a1ce] mx-auto"></div>
+            <p className="text-gray-600 mt-2">Loading modules...</p>
+          </div>
+        ) : filteredModules.length === 0 ? (
+          <div className="text-center py-8">
+            <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No modules found</p>
+            <p className="text-sm text-gray-500">Create your first module to get started</p>
+          </div>
+        ) : (
+          filteredModules.map(module => (
+            <MobileCard key={module.id}>
+              <MobileCardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white`} 
+                         style={{ backgroundColor: module.color || '#21a1ce' }}>
+                      <span className="text-lg font-bold">{module.title.charAt(0)}</span>
                     </div>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setEditingModule(module)}
-                    className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setShowAddLesson(module.id)}
-                    className="p-2 text-[#21a1ce] hover:text-[#1a8bb8] transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => deleteModule(module.id)}
-                    className="p-2 text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </MobileCardHeader>
-            
-            <MobileCardContent>
-              <div className="space-y-2">
-                {module.lessons.map(lesson => (
-                  <div key={lesson.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 rounded-full bg-[#21a1ce]"></div>
-                      <div>
-                        <h4 className="font-medium text-sm">{lesson.title}</h4>
-                        <p className="text-xs text-gray-600">{lesson.duration} • {lesson.contentType}</p>
+                    <div>
+                      <h3 className="text-lg font-semibold">{module.title}</h3>
+                      <p className="text-sm text-gray-600">{module.description}</p>
+                      <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                        <span>{module.content?.lessons?.length || 0} lessons</span>
+                        <span>{module.estimated_time} min</span>
+                        <span className="capitalize">{module.difficulty}</span>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setEditingModule(module)}
+                      className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setShowAddLesson(module.id)}
+                      className="p-2 text-[#21a1ce] hover:text-[#1a8bb8] transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteModule(module.id)}
+                      className="p-2 text-red-600 hover:text-red-800 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </MobileCardHeader>
+              
+              <MobileCardContent>
+                <div className="space-y-2">
+                  {module.content?.lessons?.map(lesson => (
+                    <div key={lesson.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 rounded-full bg-[#21a1ce]"></div>
+                        <div>
+                          <h4 className="font-medium text-sm">{lesson.title}</h4>
+                          <p className="text-xs text-gray-600">{lesson.duration} min • {lesson.contentType}</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setEditingLesson({ ...lesson, moduleId: module.id })}
+                          className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => deleteLesson(module.id, lesson.id)}
+                          className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )) || (
+                    <div className="text-center py-4 text-gray-500">
+                      <p>No lessons yet</p>
                       <button
-                        onClick={() => setEditingLesson({ ...lesson, moduleId: module.id })}
-                        className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                        onClick={() => setShowAddLesson(module.id)}
+                        className="text-[#21a1ce] hover:text-[#1a8bb8] text-sm mt-1"
                       >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => deleteLesson(module.id, lesson.id)}
-                        className="p-1 text-red-600 hover:text-red-800 transition-colors"
-                      >
-                        <Trash2 className="w-3 h-3" />
+                        Add first lesson
                       </button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </MobileCardContent>
-          </MobileCard>
-        ))}
+                  )}
+                </div>
+              </MobileCardContent>
+            </MobileCard>
+          ))
+        )}
       </div>
 
       {/* Add Module Modal */}
@@ -299,10 +370,10 @@ export default function ContentAdmin() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <MobileInput
-                  value={editingModule.subtitle}
-                  onChange={(e) => setEditingModule({ ...editingModule, subtitle: e.target.value })}
+                  value={editingModule.description}
+                  onChange={(e) => setEditingModule({ ...editingModule, description: e.target.value })}
                 />
               </div>
               <div>
@@ -320,15 +391,7 @@ export default function ContentAdmin() {
             </div>
             <div className="flex space-x-2 mt-6">
               <MobileButton
-                onClick={() => {
-                  setContent(prev => ({
-                    ...prev,
-                    modules: prev.modules.map(m => 
-                      m.id === editingModule.id ? editingModule : m
-                    )
-                  }))
-                  setEditingModule(null)
-                }}
+                onClick={saveModule}
                 className="flex-1"
               >
                 Save Changes
@@ -375,22 +438,7 @@ export default function ContentAdmin() {
             </div>
             <div className="flex space-x-2 mt-6">
               <MobileButton
-                onClick={() => {
-                  setContent(prev => ({
-                    ...prev,
-                    modules: prev.modules.map(module =>
-                      module.id === editingLesson.moduleId
-                        ? {
-                            ...module,
-                            lessons: module.lessons.map(lesson =>
-                              lesson.id === editingLesson.id ? editingLesson : lesson
-                            )
-                          }
-                        : module
-                    )
-                  }))
-                  setEditingLesson(null)
-                }}
+                onClick={saveLesson}
                 className="flex-1"
               >
                 Save Changes
