@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, ArrowLeft, MessageSquare, Shield } from 'lucide-react'
-import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
+import { Send, Bot, User, MessageSquare, Shield } from 'lucide-react'
+import { MobileCard, MobileCardContent } from './ui/mobile-card'
 import { MobileInput } from './ui/mobile-input'
 import { Button } from './ui/button'
 import { useChatAssistant } from '../hooks/useChatAssistant'
@@ -18,33 +18,9 @@ export default function ChatAssistant({ setActiveTab }) {
 
   return (
     <div className="p-4 md:p-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center mb-4">
-        <button
-          onClick={() => setActiveTab('community')}
-          className="p-2 mr-3 text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="flex-1 text-center">
-          <h1 className="text-xl font-bold text-gray-900">AI Assistant</h1>
-          <p className="text-gray-600 text-sm">Get help from our security expert</p>
-        </div>
-      </div>
+
 
       <MobileCard className="mb-6">
-        <MobileCardHeader>
-          <div className="flex items-center mb-3">
-            <div className="bg-[#21a1ce] p-2 rounded-lg mr-3">
-              <MessageSquare className="text-white" size={24} />
-            </div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900">AI Security Assistant</h2>
-              <p className="text-sm md:text-base text-gray-600">Get instant help with cybersecurity questions</p>
-            </div>
-          </div>
-        </MobileCardHeader>
-        
         <MobileCardContent>
           <div className="border border-gray-200 rounded-lg h-80 md:h-96 flex flex-col">
             <div className="flex-1 p-4 overflow-y-auto space-y-4">

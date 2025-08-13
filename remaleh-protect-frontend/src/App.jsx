@@ -1540,11 +1540,10 @@ function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                <h1 className="text-2xl font-bold text-black mb-2">Chat with Remaleh CyberBot</h1>
                 <p className="text-gray-600 mb-3">Your AI cybersecurity assistant for instant help and guidance</p>
                 <div className="bg-[#21a1ce] bg-opacity-10 p-3 rounded-lg border border-[#21a1ce] border-opacity-20">
                   <p className="text-[#21a1ce] text-sm font-medium">
-                    💡 <strong>Need human help?</strong> Just tell the bot to connect you with a Remaleh Guardian
+                    💡 <strong>Need human help?</strong> Send "connect me with a Remaleh Guardian"
                   </p>
                 </div>
               </div>
