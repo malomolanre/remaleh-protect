@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 import os
-import openai
+from openai import OpenAI
 import logging
 
 # Set up minimal logging for production
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 chat_bp = Blueprint('chat', __name__)
 
 # Configure OpenAI
-openai.api_key = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 # Rule-based knowledge base
 CYBERSECURITY_KNOWLEDGE = {
@@ -187,10 +187,10 @@ Our cybersecurity specialists can provide detailed analysis and customized secur
 def get_openai_response(message):
     """Get response from OpenAI API"""
     try:
-        if not openai.api_key:
+        if not client.api_key:
             return None
             
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
