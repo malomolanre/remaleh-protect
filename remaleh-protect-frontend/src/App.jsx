@@ -285,12 +285,12 @@ function App() {
   const generateEmailRecommendations = (riskLevel, indicators) => {
     const recommendations = []
     
-    if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
+    if (riskLevel === 'SCAM') {
       recommendations.push('Do not respond to this email')
       recommendations.push('Delete immediately and contact Remaleh Guardians')
       recommendations.push('Do not click any links or attachments')
       recommendations.push('If you clicked any links, reach out to Remaleh Guardians via chat immediately')
-    } else if (riskLevel === 'MEDIUM') {
+    } else if (riskLevel === 'SUSPICIOUS') {
       recommendations.push('Exercise extreme caution with this email')
       recommendations.push('Verify sender authenticity before responding')
       recommendations.push('Do not share personal information')
@@ -358,12 +358,12 @@ function App() {
   const generateEnhancedRecommendations = (riskLevel, indicators, patterns) => {
     const recommendations = []
     
-    if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
+    if (riskLevel === 'SCAM') {
       recommendations.push('Do not respond to this message')
       recommendations.push('Delete immediately and contact Remaleh Guardians')
       recommendations.push('Do not click any links or attachments')
       recommendations.push('If you clicked any links, reach out to Remaleh Guardians via chat immediately')
-    } else if (riskLevel === 'MEDIUM') {
+    } else if (riskLevel === 'SUSPICIOUS') {
       recommendations.push('Exercise extreme caution with this message')
       recommendations.push('Verify authenticity before responding')
       recommendations.push('Do not share personal information')
@@ -381,20 +381,23 @@ function App() {
     // Add specific recommendations based on patterns
     if (patterns && patterns.includes('suspicious_domain')) {
       recommendations.push('Contains suspicious domain (.buzz, .tk, etc.) - high risk')
-      recommendations.push('Contact Remaleh Guardians immediately')
     }
     if (patterns && patterns.includes('url')) {
       recommendations.push('Contains URLs - verify before clicking')
-      recommendations.push('If you clicked any links, contact Remaleh Guardians via chat')
     }
     if (patterns && patterns.includes('phone_number')) {
       recommendations.push('Contains phone numbers - do not call unknown numbers')
     }
     
-    // Always add Remaleh Guardians contact info
-    recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
+    // Add Remaleh Guardians contact info only once
+    if (!recommendations.some(rec => rec.includes('Remaleh Guardians'))) {
+      recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
+    }
     
-    return recommendations
+    // Remove any duplicate recommendations
+    const uniqueRecommendations = [...new Set(recommendations)]
+    
+    return uniqueRecommendations
   }
 
   // Generate recommendations from detected threats
@@ -407,15 +410,12 @@ function App() {
       }
       if (threat.includes('Financial')) {
         recommendations.push('Never send money to unknown sources or for urgent requests')
-        recommendations.push('Contact Remaleh Guardians if you have financial concerns')
       }
       if (threat.includes('Personal')) {
         recommendations.push('Never share passwords, SSN, or other sensitive information via message')
-        recommendations.push('Contact Remaleh Guardians if you shared sensitive information')
       }
       if (threat.includes('Suspicious')) {
         recommendations.push('Avoid clicking suspicious links or responding to unknown contacts')
-        recommendations.push('If you clicked any links, contact Remaleh Guardians via chat immediately')
       }
     })
     
@@ -423,10 +423,15 @@ function App() {
       recommendations.push('Review the content carefully before taking any action')
     }
     
-    // Always add Remaleh Guardians contact info
-    recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
+    // Add Remaleh Guardians contact info only once
+    if (!recommendations.some(rec => rec.includes('Remaleh Guardians'))) {
+      recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
+    }
     
-    return recommendations
+    // Remove any duplicate recommendations
+    const uniqueRecommendations = [...new Set(recommendations)]
+    
+    return uniqueRecommendations
   }
 
   // Scam content analysis logic
@@ -461,7 +466,7 @@ function App() {
       if (content.includes('@') && !content.includes('@gmail.com') && !content.includes('@yahoo.com')) riskScore += 2
     }
     
-    const riskLevel = riskScore < 10 ? 'low' : riskScore < 20 ? 'medium' : 'high'
+    const riskLevel = riskScore < 10 ? 'safe' : riskScore < 20 ? 'suspicious' : 'scam'
     
     return {
       riskLevel,
@@ -475,7 +480,7 @@ function App() {
   const generateRecommendations = (riskLevel, indicators, type) => {
     const recommendations = []
     
-    if (riskLevel === 'high') {
+    if (riskLevel === 'scam') {
       recommendations.push('Do not click any links or provide personal information')
       recommendations.push('Contact Remaleh Guardians immediately')
       recommendations.push('Delete the message immediately')
@@ -488,24 +493,26 @@ function App() {
     
     if (indicators.money) {
       recommendations.push('Never send money to unknown sources or for urgent requests')
-      recommendations.push('Contact Remaleh Guardians if you have financial concerns')
     }
     
     if (indicators.personal) {
       recommendations.push('Never share passwords, SSN, or other sensitive information via message')
-      recommendations.push('Contact Remaleh Guardians if you shared sensitive information')
     }
     
     if (type === 'link') {
       recommendations.push('Hover over links to verify the actual destination')
       recommendations.push('Use link scanning tools before clicking')
-      recommendations.push('If you clicked any links, contact Remaleh Guardians via chat immediately')
     }
     
-    // Always add Remaleh Guardians contact info
-    recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
+    // Add Remaleh Guardians contact info only once
+    if (!recommendations.some(rec => rec.includes('Remaleh Guardians'))) {
+      recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
+    }
     
-    return recommendations
+    // Remove any duplicate recommendations
+    const uniqueRecommendations = [...new Set(recommendations)]
+    
+    return uniqueRecommendations
   }
 
 
@@ -1234,14 +1241,14 @@ function App() {
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center mb-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 ${
-                    scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? 'bg-red-100' :
-                    scamResult.riskLevel === 'medium' ? 'bg-yellow-100' :
+                    scamResult.riskLevel === 'scam' ? 'bg-red-100' :
+                    scamResult.riskLevel === 'suspicious' ? 'bg-yellow-100' :
                     scamResult.riskLevel === 'safe' ? 'bg-green-100' :
                     'bg-green-100'
                   }`}>
                     <svg className={`w-6 h-6 ${
-                      scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? 'text-red-600' :
-                      scamResult.riskLevel === 'medium' ? 'text-yellow-600' :
+                      scamResult.riskLevel === 'scam' ? 'text-red-600' :
+                      scamResult.riskLevel === 'suspicious' ? 'text-yellow-600' :
                       scamResult.riskLevel === 'safe' ? 'text-green-600' :
                       'text-green-600'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1250,14 +1257,19 @@ function App() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-black">
-                      Risk Level: {scamResult.riskLevel === 'safe' ? 'Safe ✅' : scamResult.riskLevel.charAt(0).toUpperCase() + scamResult.riskLevel.slice(1)}
-                      {scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? ' ⚠️ URGENT' : ''}
+                      Risk Level: {scamResult.riskLevel === 'safe' ? 'Safe ✅' : 
+                                  scamResult.riskLevel === 'scam' ? 'Scam 🚨' :
+                                  scamResult.riskLevel === 'suspicious' ? 'Suspicious ⚠️' :
+                                  scamResult.riskLevel.charAt(0).toUpperCase() + scamResult.riskLevel.slice(1)}
+                      {scamResult.riskLevel === 'scam' ? ' - IMMEDIATE ACTION REQUIRED' : ''}
                       {scamResult.riskLevel === 'safe' ? ' - No threats detected' : ''}
+                      {scamResult.riskLevel === 'suspicious' ? ' - Exercise caution' : ''}
                     </h2>
                     <p className="text-gray-600">
                       Risk Score: {scamResult.riskScore}/100
                       {scamResult.riskScore >= 70 ? ' - IMMEDIATE ACTION REQUIRED' : ''}
                       {scamResult.riskLevel === 'safe' ? ' - Content appears safe' : ''}
+                      {scamResult.riskLevel === 'suspicious' ? ' - Review carefully' : ''}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Analyzed with {scamType === 'link' ? 'Link Analysis Engine' : scamType === 'email' ? 'Enhanced Scam Detection Engine' : 'Comprehensive Scam Analysis Engine'}
@@ -1277,23 +1289,44 @@ function App() {
                   </div>
                 </div>
 
-                {/* High Risk Warning */}
-                {(scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' || scamResult.riskScore >= 70) && (
+                {/* Scam Warning */}
+                {(scamResult.riskLevel === 'scam' || scamResult.riskScore >= 70) && (
                   <div className="mb-4 p-4 bg-red-50 border-2 border-red-300 rounded-xl">
                     <div className="flex items-center mb-3">
                       <svg className="w-6 h-6 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                       </svg>
-                      <h3 className="text-lg font-bold text-red-800">🚨 HIGH RISK CONTENT DETECTED</h3>
+                      <h3 className="text-lg font-bold text-red-800">🚨 SCAM DETECTED</h3>
                     </div>
                     <div className="space-y-2 text-red-700">
                       <p className="font-medium">This content shows multiple signs of being a scam:</p>
                       <ul className="list-disc list-inside space-y-1 text-sm">
-                        {scamResult.riskLevel === 'critical' && <li>Critical risk level - immediate action required</li>}
+                        {scamResult.riskLevel === 'scam' && <li>Scam risk level - immediate action required</li>}
                         {scamResult.riskScore >= 70 && <li>Very high risk score ({scamResult.riskScore}/100)</li>}
                         {scamResult.indicators && scamResult.indicators.length > 0 && <li>Multiple suspicious indicators detected</li>}
                         <li>Do NOT click any links or respond to this message</li>
                         <li>Contact Remaleh Guardians via chat immediately</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {/* Suspicious Content Warning */}
+                {scamResult.riskLevel === 'suspicious' && (
+                  <div className="mb-4 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl">
+                    <div className="flex items-center mb-3">
+                      <svg className="w-6 h-6 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <h3 className="text-lg font-bold text-yellow-800">⚠️ SUSPICIOUS CONTENT DETECTED</h3>
+                    </div>
+                    <div className="space-y-2 text-yellow-700">
+                      <p className="font-medium">This content shows some concerning signs:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        <li>Exercise caution with this content</li>
+                        <li>Verify authenticity before responding</li>
+                        <li>Do not share personal information</li>
+                        <li>Contact Remaleh Guardians via chat if you need assistance</li>
                       </ul>
                     </div>
                   </div>

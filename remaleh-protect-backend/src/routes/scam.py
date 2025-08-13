@@ -45,11 +45,11 @@ def extract_urls(text):
 def get_risk_level(score):
     """Convert risk score to risk level"""
     if score >= 70:
-        return 'HIGH'
+        return 'SCAM'
     elif score >= 40:
-        return 'MEDIUM'
+        return 'SUSPICIOUS'
     elif score >= 20:
-        return 'LOW'
+        return 'SUSPICIOUS'
     else:
         return 'SAFE'
 

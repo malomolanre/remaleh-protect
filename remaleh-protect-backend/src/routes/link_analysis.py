@@ -308,13 +308,13 @@ class LocalLinkAnalyzer:
         
         # Determine risk level
         if total_risk_score >= 50:
-            risk_level = 'HIGH'
+            risk_level = 'SCAM'
             is_malicious = True
         elif total_risk_score >= 25:
-            risk_level = 'MEDIUM'
+            risk_level = 'SUSPICIOUS'
             is_malicious = True
         elif total_risk_score >= 10:
-            risk_level = 'LOW'
+            risk_level = 'SUSPICIOUS'
             is_malicious = False
         else:
             risk_level = 'SAFE'
@@ -361,11 +361,11 @@ def analyze_links_in_text(text):
     # Determine overall risk
     avg_risk_score = total_risk_score / len(urls)
     if avg_risk_score >= 40:
-        overall_risk = 'HIGH'
+        overall_risk = 'SCAM'
     elif avg_risk_score >= 20:
-        overall_risk = 'MEDIUM'
+        overall_risk = 'SUSPICIOUS'
     elif avg_risk_score >= 10:
-        overall_risk = 'LOW'
+        overall_risk = 'SUSPICIOUS'
     else:
         overall_risk = 'SAFE'
     
@@ -514,11 +514,11 @@ def analyze_single_url():
             
             risk_score = url_analysis['risk_score']
             if risk_score >= 70:
-                risk_level = 'HIGH'
+                risk_level = 'SCAM'
             elif risk_score >= 40:
-                risk_level = 'MEDIUM'
+                risk_level = 'SUSPICIOUS'
             else:
-                risk_level = 'LOW'
+                risk_level = 'SUSPICIOUS'
             
             result = {
                 'url': url,
@@ -540,11 +540,11 @@ def analyze_single_url():
             
             risk_score = url_analysis['risk_score']
             if risk_score >= 70:
-                risk_level = 'HIGH'
+                risk_level = 'SCAM'
             elif risk_score >= 40:
-                risk_level = 'MEDIUM'
+                risk_level = 'SUSPICIOUS'
             else:
-                risk_level = 'LOW'
+                risk_level = 'SUSPICIOUS'
             
             result = {
                 'url': primary_url,
@@ -585,13 +585,12 @@ def generate_url_recommendations(risk_score, indicators):
     recommendations = []
     
     if risk_score >= 70:
-        recommendations.append("Do not click this link - high risk detected")
+        recommendations.append("Do not click this link - scam detected")
         recommendations.append("Contact Remaleh Guardians immediately")
         recommendations.append("If you clicked this link, reach out to Remaleh Guardians via chat")
     elif risk_score >= 40:
         recommendations.append("Exercise caution before clicking this link")
         recommendations.append("Verify the destination domain")
-        recommendations.append("Contact Remaleh Guardians if you need assistance")
     
     if any('suspicious' in indicator.lower() for indicator in indicators):
         recommendations.append("Contains suspicious patterns - verify authenticity")
@@ -602,10 +601,14 @@ def generate_url_recommendations(risk_score, indicators):
     if not recommendations:
         recommendations.append("Link appears safe, but always verify before clicking")
     
-    # Always add Remaleh Guardians contact info
-    recommendations.append("Contact Remaleh Guardians via chat for immediate assistance")
+    # Add Remaleh Guardians contact info only once
+    if not any("Remaleh Guardians" in rec for rec in recommendations):
+        recommendations.append("Contact Remaleh Guardians via chat for immediate assistance")
     
-    return recommendations
+    # Remove duplicates
+    unique_recommendations = list(dict.fromkeys(recommendations))
+    
+    return unique_recommendations
 
 @link_analysis_bp.route('/debug', methods=['GET'])
 def debug_info():

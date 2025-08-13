@@ -249,14 +249,12 @@ def analyze_enhanced_scam(text):
         print(f"💵 Money amount: +25 points")
     
     # Determine risk level
-    if total_score >= 80:
-        risk_level = 'CRITICAL'
-    elif total_score >= 60:
-        risk_level = 'HIGH'
+    if total_score >= 60:
+        risk_level = 'SCAM'
     elif total_score >= 30:
-        risk_level = 'MEDIUM'
+        risk_level = 'SUSPICIOUS'
     elif total_score >= 10:
-        risk_level = 'LOW'
+        risk_level = 'SUSPICIOUS'
     else:
         risk_level = 'SAFE'
     
