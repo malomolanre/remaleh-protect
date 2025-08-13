@@ -10,7 +10,18 @@ logger = logging.getLogger(__name__)
 chat_bp = Blueprint('chat', __name__)
 
 # Configure OpenAI
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+client = None
+
+def get_openai_client():
+    """Get OpenAI client, initializing if needed"""
+    global client
+    if client is None:
+        api_key = os.getenv('OPENAI_API_KEY')
+        if api_key:
+            client = OpenAI(api_key=api_key)
+        else:
+            raise ValueError("OPENAI_API_KEY environment variable not set")
+    return client
 
 # Rule-based knowledge base
 CYBERSECURITY_KNOWLEDGE = {
@@ -330,12 +341,12 @@ Our cybersecurity specialists can provide detailed analysis and customized secur
 def get_openai_response(message):
     """Get response from OpenAI API"""
     try:
-        if not client.api_key:
-            return None
-            
+        # Get OpenAI client
+        openai_client = get_openai_client()
+        
         try:
             # Try GPT-4 first for better accuracy
-            response = client.chat.completions.create(
+            response = openai_client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {
@@ -353,7 +364,7 @@ def get_openai_response(message):
         except Exception as gpt4_error:
             logger.warning(f"GPT-4 not available, falling back to GPT-3.5-turbo: {str(gpt4_error)}")
             # Fallback to GPT-3.5-turbo with even stricter instructions
-            response = client.chat.completions.create(
+            response = openai_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {
