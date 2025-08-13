@@ -73,6 +73,7 @@ export default function LearnHub({ setActiveTab }) {
         <div className="flex-1 text-center">
           <h1 className="text-2xl font-bold text-gray-900">Learning Hub</h1>
           <p className="text-gray-600 text-sm">We understand learning is not enough and sometimes one has to be guided and this is why Remaleh exists. If there is anything you don't feel confident doing or implementing, reach out to us and a Remaleh Guardian will guide you and walk you through implementing it and leave you empowered and confident.</p>
+          <p className="text-gray-500 text-xs mt-2 italic">No one ever learns driving by reading alone - they were guided by an expert. Let us be your guide! 🚗✨</p>
         </div>
       </div>
 
