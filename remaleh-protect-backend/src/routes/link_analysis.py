@@ -491,7 +491,8 @@ def analyze_single_url():
                     'recommendations': [
                         'No URLs detected in the provided content',
                         'Consider using the Message analysis tab for text content',
-                        'Or paste a specific URL to analyze'
+                        'Or paste a specific URL to analyze',
+                        'Contact Remaleh Guardians via chat for assistance with text content'
                     ],
                     'content_type': 'text_without_urls',
                     'urls_found': 0
@@ -551,7 +552,8 @@ def analyze_single_url():
                 'ssl_info': ssl_info,
                 'recommendations': generate_url_recommendations(risk_score, url_analysis['indicators']) + [
                     f'Content contains {len(urls_found)} URLs total',
-                    'Consider using Message analysis for comprehensive content review'
+                    'Consider using Message analysis for comprehensive content review',
+                    'Contact Remaleh Guardians via chat for assistance with multiple URLs'
                 ],
                 'content_type': 'text_with_multiple_urls',
                 'urls_found': len(urls_found),
@@ -581,10 +583,12 @@ def generate_url_recommendations(risk_score, indicators):
     
     if risk_score >= 70:
         recommendations.append("Do not click this link - high risk detected")
-        recommendations.append("Report this URL to security team if applicable")
+        recommendations.append("Contact Remaleh Guardians immediately")
+        recommendations.append("If you clicked this link, reach out to Remaleh Guardians via chat")
     elif risk_score >= 40:
         recommendations.append("Exercise caution before clicking this link")
         recommendations.append("Verify the destination domain")
+        recommendations.append("Contact Remaleh Guardians if you need assistance")
     
     if any('suspicious' in indicator.lower() for indicator in indicators):
         recommendations.append("Contains suspicious patterns - verify authenticity")
@@ -594,6 +598,9 @@ def generate_url_recommendations(risk_score, indicators):
     
     if not recommendations:
         recommendations.append("Link appears safe, but always verify before clicking")
+    
+    # Always add Remaleh Guardians contact info
+    recommendations.append("Contact Remaleh Guardians via chat for immediate assistance")
     
     return recommendations
 

@@ -287,12 +287,14 @@ function App() {
     
     if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
       recommendations.push('Do not respond to this email')
-      recommendations.push('Delete immediately and report to IT security')
+      recommendations.push('Delete immediately and contact Remaleh Guardians')
       recommendations.push('Do not click any links or attachments')
+      recommendations.push('If you clicked any links, reach out to Remaleh Guardians via chat immediately')
     } else if (riskLevel === 'MEDIUM') {
       recommendations.push('Exercise extreme caution with this email')
       recommendations.push('Verify sender authenticity before responding')
       recommendations.push('Do not share personal information')
+      recommendations.push('Contact Remaleh Guardians if you need assistance')
     } else {
       recommendations.push('Review this email carefully')
       recommendations.push('Check sender authenticity')
@@ -302,6 +304,7 @@ function App() {
     // Add specific recommendations based on indicators
     if (indicators.some(ind => ind.includes('financial'))) {
       recommendations.push('Never send money or financial information via email')
+      recommendations.push('Contact Remaleh Guardians if you have financial concerns')
     }
     if (indicators.some(ind => ind.includes('urgency'))) {
       recommendations.push('Be cautious of urgent requests - legitimate organizations rarely pressure you')
@@ -356,18 +359,24 @@ function App() {
       }
       if (threat.includes('Financial')) {
         recommendations.push('Never send money to unknown sources or for urgent requests')
+        recommendations.push('Contact Remaleh Guardians if you have financial concerns')
       }
       if (threat.includes('Personal')) {
         recommendations.push('Never share passwords, SSN, or other sensitive information via message')
+        recommendations.push('Contact Remaleh Guardians if you shared sensitive information')
       }
       if (threat.includes('Suspicious')) {
         recommendations.push('Avoid clicking suspicious links or responding to unknown contacts')
+        recommendations.push('If you clicked any links, contact Remaleh Guardians via chat immediately')
       }
     })
     
     if (recommendations.length === 0) {
       recommendations.push('Review the content carefully before taking any action')
     }
+    
+    // Always add Remaleh Guardians contact info
+    recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
     
     return recommendations
   }
@@ -420,8 +429,9 @@ function App() {
     
     if (riskLevel === 'high') {
       recommendations.push('Do not click any links or provide personal information')
-      recommendations.push('Report this to relevant authorities if applicable')
+      recommendations.push('Contact Remaleh Guardians immediately')
       recommendations.push('Delete the message immediately')
+      recommendations.push('If you clicked any links, reach out to Remaleh Guardians via chat')
     }
     
     if (indicators.urgency) {
@@ -430,16 +440,22 @@ function App() {
     
     if (indicators.money) {
       recommendations.push('Never send money to unknown sources or for urgent requests')
+      recommendations.push('Contact Remaleh Guardians if you have financial concerns')
     }
     
     if (indicators.personal) {
       recommendations.push('Never share passwords, SSN, or other sensitive information via message')
+      recommendations.push('Contact Remaleh Guardians if you shared sensitive information')
     }
     
     if (type === 'link') {
       recommendations.push('Hover over links to verify the actual destination')
       recommendations.push('Use link scanning tools before clicking')
+      recommendations.push('If you clicked any links, contact Remaleh Guardians via chat immediately')
     }
+    
+    // Always add Remaleh Guardians contact info
+    recommendations.push('Contact Remaleh Guardians via chat for immediate assistance')
     
     return recommendations
   }
@@ -1151,7 +1167,7 @@ function App() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Analyzing with {scamType === 'link' ? 'Link Analysis' : scamType === 'email' ? 'Enhanced Scam Detection' : 'Comprehensive Scam Analysis'}...
+                      Analyzing with {scamType === 'link' ? 'Link Analysis Engine' : scamType === 'email' ? 'Enhanced Scam Detection Engine' : 'Comprehensive Scam Analysis Engine'}...
                     </>
                   ) : (
                     <>
@@ -1190,7 +1206,7 @@ function App() {
                       Risk Score: {scamResult.riskScore}/100
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Analyzed with {scamType === 'link' ? 'Link Analysis API' : scamType === 'email' ? 'Enhanced Scam Detection API' : 'Comprehensive Scam Analysis API'}
+                      Analyzed with {scamType === 'link' ? 'Link Analysis Engine' : scamType === 'email' ? 'Enhanced Scam Detection Engine' : 'Comprehensive Scam Analysis Engine'}
                     </p>
                     {scamResult.contentTypeNote && (
                       <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
