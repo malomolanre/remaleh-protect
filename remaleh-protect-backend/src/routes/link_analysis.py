@@ -446,7 +446,7 @@ def health_check():
 
 @link_analysis_bp.route('/analyze-url', methods=['POST'])
 def analyze_single_url():
-    """API endpoint to analyze a single URL"""
+    """API endpoint to analyze a single URL or extract URLs from text"""
     try:
         logger.info("=== SINGLE URL ANALYSIS REQUEST RECEIVED ===")
         
@@ -459,48 +459,106 @@ def analyze_single_url():
                 'error': 'No JSON data provided'
             }), 400
         
-        # Extract URL from request
-        url = data.get('url', '')
-        if not url:
-            logger.warning("No URL provided in request")
+        # Extract URL or text from request
+        content = data.get('url', '')
+        if not content:
+            logger.warning("No content provided in request")
             return jsonify({
                 'success': False,
-                'error': 'No URL provided for analysis'
+                'error': 'No content provided for analysis'
             }), 400
         
-        logger.info(f"Analyzing single URL: {url}")
+        logger.info(f"Analyzing content: {content[:100]}...")
         
         # Create analyzer instance
         analyzer = LocalLinkAnalyzer()
         
-        # Analyze the single URL
-        url_analysis = analyzer.analyze_url_structure(url)
+        # Check if content is a single URL or contains URLs
+        url_pattern = r'https?://[^\s]+'
+        urls_found = re.findall(url_pattern, content, re.IGNORECASE)
         
-        # Get additional details
-        domain_info = analyzer.get_domain_info(url)
-        ssl_info = analyzer.check_ssl_certificate(url)
+        if not urls_found:
+            # No URLs found - return informative response
+            return jsonify({
+                'success': True,
+                'result': {
+                    'url': content,
+                    'risk_level': 'UNKNOWN',
+                    'risk_score': 0,
+                    'indicators': ['No URLs detected in content'],
+                    'domain_info': {'domain': 'N/A', 'suspicion': 'No URLs found'},
+                    'ssl_info': {'has_ssl': False, 'risk_score': 0, 'indicators': ['No URLs to analyze']},
+                    'recommendations': [
+                        'No URLs detected in the provided content',
+                        'Consider using the Message analysis tab for text content',
+                        'Or paste a specific URL to analyze'
+                    ],
+                    'content_type': 'text_without_urls',
+                    'urls_found': 0
+                },
+                'timestamp': datetime.now().isoformat(),
+                'service': 'link_analysis'
+            })
         
-        # Calculate risk level
-        risk_score = url_analysis['risk_score']
-        if risk_score >= 70:
-            risk_level = 'HIGH'
-        elif risk_score >= 40:
-            risk_level = 'MEDIUM'
+        # Analyze the first URL found (or all if multiple)
+        if len(urls_found) == 1:
+            # Single URL - detailed analysis
+            url = urls_found[0]
+            url_analysis = analyzer.analyze_url_structure(url)
+            domain_info = analyzer.get_domain_info(url)
+            ssl_info = analyzer.check_ssl_certificate(url)
+            
+            risk_score = url_analysis['risk_score']
+            if risk_score >= 70:
+                risk_level = 'HIGH'
+            elif risk_score >= 40:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
+            result = {
+                'url': url,
+                'risk_level': risk_level,
+                'risk_score': risk_score,
+                'indicators': url_analysis['indicators'],
+                'domain_info': domain_info,
+                'ssl_info': ssl_info,
+                'recommendations': generate_url_recommendations(risk_score, url_analysis['indicators']),
+                'content_type': 'single_url',
+                'urls_found': 1
+            }
         else:
-            risk_level = 'LOW'
+            # Multiple URLs - analyze first one and note others
+            primary_url = urls_found[0]
+            url_analysis = analyzer.analyze_url_structure(primary_url)
+            domain_info = analyzer.get_domain_info(primary_url)
+            ssl_info = analyzer.check_ssl_certificate(primary_url)
+            
+            risk_score = url_analysis['risk_score']
+            if risk_score >= 70:
+                risk_level = 'HIGH'
+            elif risk_score >= 40:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
+            result = {
+                'url': primary_url,
+                'risk_level': risk_level,
+                'risk_score': risk_score,
+                'indicators': url_analysis['indicators'] + [f'Found {len(urls_found)} total URLs in content'],
+                'domain_info': domain_info,
+                'ssl_info': ssl_info,
+                'recommendations': generate_url_recommendations(risk_score, url_analysis['indicators']) + [
+                    f'Content contains {len(urls_found)} URLs total',
+                    'Consider using Message analysis for comprehensive content review'
+                ],
+                'content_type': 'text_with_multiple_urls',
+                'urls_found': len(urls_found),
+                'all_urls': urls_found[:5]  # Show first 5 URLs
+            }
         
-        # Prepare response
-        result = {
-            'url': url,
-            'risk_level': risk_level,
-            'risk_score': risk_score,
-            'indicators': url_analysis['indicators'],
-            'domain_info': domain_info,
-            'ssl_info': ssl_info,
-            'recommendations': generate_url_recommendations(risk_score, url_analysis['indicators'])
-        }
-        
-        logger.info(f"Single URL analysis complete - Risk: {risk_level} ({risk_score})")
+        logger.info(f"URL analysis complete - Risk: {result['risk_level']} ({result['risk_score']})")
         
         return jsonify({
             'success': True,

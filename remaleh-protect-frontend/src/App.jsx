@@ -133,17 +133,55 @@ function App() {
     
     try {
       let analysis
+      let detectedContentType = scamType
+      let contentTypeNote = ''
       
-      // Route to appropriate API based on content type
+      // Intelligent content detection and routing
       if (scamType === 'link') {
-        // Use link analysis API
-        analysis = await analyzeLink(scamInput)
+        // Check if user actually pasted a URL or a message
+        const urlPattern = /^https?:\/\/[^\s]+$/i
+        const containsUrls = /https?:\/\/[^\s]+/gi.test(scamInput)
+        
+        if (urlPattern.test(scamInput.trim())) {
+          // Single URL - use link analysis
+          analysis = await analyzeLink(scamInput)
+          contentTypeNote = 'Analyzed as single URL'
+        } else if (containsUrls) {
+          // Message containing URLs - use comprehensive analysis
+          analysis = await analyzeMessage(scamInput)
+          detectedContentType = 'message'
+          contentTypeNote = 'Detected message with URLs - used comprehensive analysis'
+        } else {
+          // No URLs found - suggest using message analysis
+          analysis = await analyzeMessage(scamInput)
+          detectedContentType = 'message'
+          contentTypeNote = 'No URLs detected - analyzed as message content'
+        }
       } else if (scamType === 'email') {
-        // Use enhanced scam API for email content
-        analysis = await analyzeEmail(scamInput)
+        // Check if content looks like an email
+        const emailPattern = /^[^\s]+@[^\s]+\.[^\s]+/i
+        const containsEmailHeaders = /^(from|to|subject|date):/im.test(scamInput)
+        
+        if (emailPattern.test(scamInput.split('\n')[0]) || containsEmailHeaders) {
+          // Looks like email - use enhanced scam API
+          analysis = await analyzeEmail(scamInput)
+          contentTypeNote = 'Analyzed as email content'
+        } else {
+          // Doesn't look like email - use comprehensive analysis
+          analysis = await analyzeMessage(scamInput)
+          detectedContentType = 'message'
+          contentTypeNote = 'Content doesn\'t appear to be email - used comprehensive analysis'
+        }
       } else {
-        // Use comprehensive scam API for general messages
+        // General message analysis
         analysis = await analyzeMessage(scamInput)
+        contentTypeNote = 'Analyzed as general message'
+      }
+      
+      // Add content type detection note to results
+      if (contentTypeNote) {
+        analysis.contentTypeNote = contentTypeNote
+        analysis.detectedContentType = detectedContentType
       }
       
       setScamResult(analysis)
@@ -1073,6 +1111,20 @@ function App() {
                   <p className="text-xs text-gray-500 mt-1">
                     Press Ctrl+Enter to analyze quickly
                   </p>
+                  <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-600">
+                      <strong>Content Guide:</strong> {
+                        scamType === 'link' 
+                          ? 'Paste a single URL (e.g., https://example.com) or a message containing URLs'
+                          : scamType === 'email' 
+                          ? 'Paste email content with headers (From:, To:, Subject:) or email body text'
+                          : 'Paste any suspicious message, text, or content for analysis'
+                      }
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      💡 <strong>Smart Detection:</strong> The system automatically detects content type and routes to the best analysis method
+                    </p>
+                  </div>
                 </div>
 
                 {/* Error Display */}
@@ -1140,6 +1192,18 @@ function App() {
                     <p className="text-xs text-gray-500 mt-1">
                       Analyzed with {scamType === 'link' ? 'Link Analysis API' : scamType === 'email' ? 'Enhanced Scam Detection API' : 'Comprehensive Scam Analysis API'}
                     </p>
+                    {scamResult.contentTypeNote && (
+                      <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-blue-800 text-xs">
+                            <strong>Content Detection:</strong> {scamResult.contentTypeNote}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
