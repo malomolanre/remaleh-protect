@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BookOpen, CheckCircle, ArrowLeft, Search, Shield } from 'lucide-react'
+import { BookOpen, CheckCircle, Search, Shield } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
@@ -62,18 +62,30 @@ export default function LearnHub({ setActiveTab }) {
 
   return (
     <div className="space-y-4 p-4">
-      {/* Header with Back Button */}
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => setActiveTab('learn')}
-          className="p-2 mr-3 text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="flex-1 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Learning Hub</h1>
-          <p className="text-gray-600 text-sm">We understand learning is not enough and sometimes one has to be guided and this is why Remaleh exists. If there is anything you don't feel confident doing or implementing, reach out to us and a Remaleh Guardian will guide you and walk you through implementing it and leave you empowered and confident.</p>
-          <p className="text-gray-500 text-xs mt-2 italic">No one ever learns driving by reading alone - they were guided by an expert. Let us be your guide! 🚗✨</p>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#21a1ce] to-[#1a8bb8] rounded-2xl p-6 mb-6 text-white shadow-lg">
+        <div className="text-center">
+          {/* Icon and Title */}
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-white bg-opacity-20 p-3 rounded-full mr-3">
+              <BookOpen className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold">Learning Hub</h1>
+          </div>
+          
+          {/* Main Message */}
+          <div className="bg-white bg-opacity-10 rounded-xl p-4 mb-4 backdrop-blur-sm">
+            <p className="text-white text-base leading-relaxed font-medium">
+              Remaleh isn't just about learning it's about doing. Stuck or unsure? A Remaleh Guardian will guide you step-by-step until you're confident, capable, and ready to take action.
+            </p>
+          </div>
+          
+          {/* Cheeky Driving Analogy */}
+          <div className="bg-white bg-opacity-15 rounded-lg p-3 inline-block">
+            <p className="text-white text-sm italic font-medium">
+              🚗 No one ever learns driving by reading alone - they were guided by an expert. Let us be your guide! ✨
+            </p>
+          </div>
         </div>
       </div>
 
