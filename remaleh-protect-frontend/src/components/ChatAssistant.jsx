@@ -17,12 +17,11 @@ export default function ChatAssistant({ setActiveTab }) {
   } = useChatAssistant()
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-2 md:p-4">
 
-
-      <MobileCard className="mb-6">
+      <MobileCard className="mb-2">
         <MobileCardContent>
-          <div className="border border-gray-200 rounded-lg h-80 md:h-96 flex flex-col">
+          <div className="border border-gray-200 rounded-lg h-96 md:h-[32rem] flex flex-col">
             <div className="flex-1 p-4 overflow-y-auto space-y-4">
               {chatMessages.length === 0 && (
                 <div className="text-center text-gray-500 mt-8">
@@ -73,24 +72,26 @@ export default function ChatAssistant({ setActiveTab }) {
             </div>
 
             <form onSubmit={handleChatSubmit} className="border-t border-gray-200 p-4">
-              <div className="flex space-x-2">
-                <MobileInput
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Type your cybersecurity question..."
-                  disabled={isTyping}
-                  className="flex-1"
-                />
-                <Button
-                  type="submit"
-                  disabled={isTyping || !inputMessage.trim()}
-                  className="bg-[#21a1ce] hover:bg-[#1a80a3] text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Send
-                </Button>
+              <div className="flex flex-col items-center space-y-3">
+                <div className="flex w-full max-w-md space-x-2">
+                  <MobileInput
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Type your cybersecurity question..."
+                    disabled={isTyping}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={isTyping || !inputMessage.trim()}
+                    className="bg-[#21a1ce] hover:bg-[#1a80a3] text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Send
+                  </Button>
+                </div>
+                {chatError && <p className="text-red-500 text-sm">Connection error. Please check your internet and try again.</p>}
               </div>
-              {chatError && <p className="text-red-500 text-sm mt-2">Connection error. Please check your internet and try again.</p>}
             </form>
           </div>
         </MobileCardContent>
