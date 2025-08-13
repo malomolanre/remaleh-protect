@@ -4,7 +4,8 @@ import { apiPost, API_ENDPOINTS, API } from './lib/api'
 import PasswordGenerator from './components/PasswordGenerator'
 import ChatAssistant from './components/ChatAssistant'
 import LearnHub from './components/LearnHub'
-import ContentAdmin from './components/ContentAdmin'
+import AdminDashboard from './components/admin/AdminDashboard'
+import ProfileSettings from './components/ProfileSettings'
 import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth } from './hooks/useAuth'
@@ -85,11 +86,7 @@ function App() {
   
   // Handle profile icon click
   const handleProfileClick = () => {
-    if (isAuthenticated) {
-      setShowProfileDropdown(!showProfileDropdown)
-    } else {
-      setActiveTab('login')
-    }
+    setShowProfileDropdown(!showProfileDropdown)
   }
   
   // Handle logout
@@ -181,24 +178,6 @@ function App() {
         </svg>
       ),
       label: 'Admin'
-    },
-    { 
-      id: 'login', 
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-        </svg>
-      ),
-      label: 'Login'
-    },
-    { 
-      id: 'register', 
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-        </svg>
-      ),
-      label: 'Register'
     }
   ]
 
@@ -1681,11 +1660,13 @@ function App() {
       case 'learn':
         return <LearnHub setActiveTab={setActiveTab} />
       case 'admin':
-        return <ContentAdmin setActiveTab={setActiveTab} />
+        return <AdminDashboard setActiveTab={setActiveTab} />
       case 'login':
         return <Login onLoginSuccess={() => setActiveTab('home')} onSwitchToRegister={() => setActiveTab('register')} />
       case 'register':
         return <Register onRegisterSuccess={() => setActiveTab('home')} />
+      case 'profile':
+        return <ProfileSettings setActiveTab={setActiveTab} />
       case 'community':
         return (
           <div className="space-y-6">
@@ -1745,26 +1726,52 @@ function App() {
             </button>
             
             {/* Profile Dropdown */}
-            {showProfileDropdown && isAuthenticated && (
+            {showProfileDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 profile-dropdown">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-                
-                <button
-                  onClick={() => setActiveTab('profile')}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Profile Settings
-                </button>
-                
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  Sign Out
-                </button>
+                {isAuthenticated ? (
+                  <>
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
+                      <p className="text-xs text-gray-500">{user?.email}</p>
+                    </div>
+                    
+                    <button
+                      onClick={() => setActiveTab('profile')}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Profile Settings
+                    </button>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setActiveTab('login')
+                        setShowProfileDropdown(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Sign In
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setActiveTab('register')
+                        setShowProfileDropdown(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Create Account
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
