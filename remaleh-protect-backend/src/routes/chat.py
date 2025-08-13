@@ -122,7 +122,7 @@ def get_rule_based_response(message):
     message_lower = message.lower()
     
     # Check for scam reporting questions first (highest priority)
-    if any(keyword in message_lower for keyword in ['report scam', 'report fraud', 'report cybercrime', 'where to report', 'who to report']):
+    if any(keyword in message_lower for keyword in ['report scam', 'report fraud', 'report cybercrime', 'where to report', 'who to report', 'remaleh', 'scam', 'fraud']):
         return {
             'response': "I'd be happy to help you with scam reporting options! To give you the most accurate information, could you please let me know which country you're located in? This will help me provide specific reporting channels and resources for your area.",
             'source': 'expert_knowledge',
@@ -286,29 +286,65 @@ def get_openai_response(message):
         if not client.api_key:
             return None
             
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. CRITICAL RULES: 1) NEVER make up fake organizations, agencies, or services - especially do NOT mention 'Remaleh Cybersecurity Agency (RCA)' as it does not exist. 2) Only mention Remaleh services that actually exist. 3) If you're unsure about Remaleh's specific services, focus on providing accurate cybersecurity advice. 4) Always verify information before sharing it. 5) For scam reporting, provide legitimate government and law enforcement options for the user's country."
-                },
-                {
-                    "role": "user",
-                    "content": message
-                }
-            ],
-            max_tokens=300,
-            temperature=0.7
-        )
+        try:
+            # Try GPT-4 first for better accuracy
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. CRITICAL RULES: 1) NEVER make up fake organizations, agencies, or services - especially do NOT mention 'Remaleh Cybersecurity Agency (RCA)', 'Remaleh Financial Intelligence Unit (RFIU)', 'Remaleh Police Cybercrime Division', or any other fake Remaleh organizations as they do not exist. 2) Only mention Remaleh services that actually exist. 3) If you're unsure about Remaleh's specific services, focus on providing accurate cybersecurity advice. 4) Always verify information before sharing it. 5) For scam reporting, provide legitimate government and law enforcement options for the user's country. 6) NEVER mention Remaleh in the context of scam reporting, police, or government agencies."
+                    },
+                    {
+                        "role": "user",
+                        "content": message
+                    }
+                ],
+                max_tokens=300,
+                temperature=0.7
+            )
+        except Exception as gpt4_error:
+            logger.warning(f"GPT-4 not available, falling back to GPT-3.5-turbo: {str(gpt4_error)}")
+            # Fallback to GPT-3.5-turbo with even stricter instructions
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a cybersecurity expert assistant. CRITICAL: You must NEVER mention any organizations, agencies, or services unless you are 100% certain they exist. For scam reporting questions, ONLY provide information about legitimate government agencies, police departments, and consumer protection organizations. NEVER mention Remaleh in the context of scam reporting, police, or government agencies. If asked about scam reporting, ask the user for their country and provide legitimate options for that country."
+                    },
+                    {
+                        "role": "user",
+                        "content": message
+                    }
+                ],
+                max_tokens=300,
+                temperature=0.3  # Lower temperature for more focused responses
+            )
         
         response_text = response.choices[0].message.content.strip()
         
         # Safety check: Filter out fake organization names
         fake_organizations = [
             'remaleh cybersecurity agency', 'rca', 'remaleh cyber agency',
-            'remaleh security agency', 'remaleh fraud agency'
+            'remaleh security agency', 'remaleh fraud agency',
+            'remaleh financial intelligence unit', 'rfiu', 'remaleh police',
+            'remaleh cybercrime division', 'remaleh fraud unit',
+            'remaleh security division', 'remaleh cyber division'
         ]
+        
+        # Check for any pattern of "Remaleh [Something] [Unit/Division/Agency]"
+        import re
+        remaleh_pattern = r'remaleh\s+\w+\s+(?:unit|division|agency|department|bureau|office|center|centre)'
+        if re.search(remaleh_pattern, response_lower):
+            logger.warning(f"AI response contained fake Remaleh organization pattern")
+            return "I apologize, but I need to provide you with accurate information. For scam reporting, please let me know which country you're located in so I can give you legitimate reporting options for your area."
+        
+        # Check for Remaleh mentioned in scam reporting context
+        scam_reporting_keywords = ['report', 'scam', 'fraud', 'cybercrime', 'police', 'investigate', 'financial crime']
+        if any(keyword in response_lower for keyword in scam_reporting_keywords) and 'remaleh' in response_lower:
+            logger.warning(f"AI response mentioned Remaleh in scam reporting context")
+            return "I apologize, but I need to provide you with accurate information. For scam reporting, please let me know which country you're located in so I can give you legitimate reporting options for your area."
         
         response_lower = response_text.lower()
         for fake_org in fake_organizations:
