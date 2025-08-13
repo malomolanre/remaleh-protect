@@ -1,5 +1,5 @@
 // Central API base for all fetch calls.
-export const API = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || "http://localhost:10000";
+export const API = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || "https://api.remalehprotect.remaleh.com.au";
 
 // Log the API base URL for debugging (remove in production)
 if (import.meta.env.DEV) {

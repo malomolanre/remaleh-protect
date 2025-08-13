@@ -99,20 +99,26 @@ def create_app():
             import traceback
             traceback.print_exc()
 
-    # Restrict CORS origins to local development and production (when configured)
+    # Restrict CORS origins to local development and production
     allowed_origins = [
         "http://localhost:5173",  # Vite dev server
         "http://localhost:5174",  # Vite dev server alternative
         "http://localhost:5175",  # Vite dev server alternative
         "http://localhost:3000",  # Alternative dev server
-        "http://localhost:10000"  # Backend server (for testing)
+        "https://app.remalehprotect.remaleh.com.au",  # Production Render frontend
+        "https://api.remalehprotect.remaleh.com.au"   # Production Render backend
     ]
     
-    # Add production domain if environment variable is set
+    # Add additional production domains from environment variables
     production_frontend = os.getenv('FRONTEND_URL')
-    if production_frontend:
+    if production_frontend and production_frontend not in allowed_origins:
         allowed_origins.append(production_frontend)
         logger.info(f"Added production frontend to CORS: {production_frontend}")
+    
+    production_backend = os.getenv('BACKEND_URL')
+    if production_backend and production_backend not in allowed_origins:
+        allowed_origins.append(production_backend)
+        logger.info(f"Added production backend to CORS: {production_backend}")
     
     CORS(app, resources={r"/api/*": {
         "origins": allowed_origins,
