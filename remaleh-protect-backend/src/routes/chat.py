@@ -121,6 +121,14 @@ def get_rule_based_response(message):
     """Check if message matches rule-based knowledge"""
     message_lower = message.lower()
     
+    # Check for scam reporting questions first (highest priority)
+    if any(keyword in message_lower for keyword in ['report scam', 'report fraud', 'report cybercrime', 'where to report', 'who to report']):
+        return {
+            'response': "I'd be happy to help you with scam reporting options! To give you the most accurate information, could you please let me know which country you're located in? This will help me provide specific reporting channels and resources for your area.",
+            'source': 'expert_knowledge',
+            'category': 'scam_reporting'
+        }
+    
     for category, data in CYBERSECURITY_KNOWLEDGE.items():
         for keyword in data['keywords']:
             if keyword in message_lower:
@@ -283,7 +291,7 @@ def get_openai_response(message):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. IMPORTANT: Only mention Remaleh services that actually exist - do not make up fake organizations, agencies, or services. If you're unsure about Remaleh's specific services, focus on providing accurate cybersecurity advice. Always verify information before sharing it."
+                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. CRITICAL RULES: 1) NEVER make up fake organizations, agencies, or services - especially do NOT mention 'Remaleh Cybersecurity Agency (RCA)' as it does not exist. 2) Only mention Remaleh services that actually exist. 3) If you're unsure about Remaleh's specific services, focus on providing accurate cybersecurity advice. 4) Always verify information before sharing it. 5) For scam reporting, provide legitimate government and law enforcement options for the user's country."
                 },
                 {
                     "role": "user",
@@ -294,7 +302,21 @@ def get_openai_response(message):
             temperature=0.7
         )
         
-        return response.choices[0].message.content.strip()
+        response_text = response.choices[0].message.content.strip()
+        
+        # Safety check: Filter out fake organization names
+        fake_organizations = [
+            'remaleh cybersecurity agency', 'rca', 'remaleh cyber agency',
+            'remaleh security agency', 'remaleh fraud agency'
+        ]
+        
+        response_lower = response_text.lower()
+        for fake_org in fake_organizations:
+            if fake_org in response_lower:
+                logger.warning(f"AI response contained fake organization: {fake_org}")
+                return "I apologize, but I need to provide you with accurate information. For scam reporting, please let me know which country you're located in so I can give you legitimate reporting options for your area."
+        
+        return response_text
         
     except Exception as e:
         logger.error(f"OpenAI API error: {str(e)}")
