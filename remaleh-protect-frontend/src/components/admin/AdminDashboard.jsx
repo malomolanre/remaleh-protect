@@ -16,6 +16,7 @@ import { MobileCard } from '../ui/mobile-card'
 import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
+import { createModule, getAllModules } from '../../utils/contentManager'
 
 export default function AdminDashboard({ setActiveTab }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
@@ -25,12 +26,76 @@ export default function AdminDashboard({ setActiveTab }) {
   const [editingModule, setEditingModule] = useState(null)
   const [editingUser, setEditingUser] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  
+  // Form state for new module
+  const [newModuleData, setNewModuleData] = useState({
+    title: '',
+    description: '',
+    difficulty: 'BEGINNER',
+    estimated_time: 10
+  })
 
   // Mock data for demonstration
-  const [modules] = useState([
+  const [modules, setModules] = useState([
     { id: 1, title: 'Cybersecurity Basics', description: 'Learn the fundamentals', status: 'active', lessons: 5 },
     { id: 2, title: 'Password Security', description: 'Master password management', status: 'active', lessons: 3 }
   ])
+  
+  // Load modules from backend
+  const loadModules = async () => {
+    try {
+      const modulesData = await getAllModules()
+      setModules(modulesData)
+    } catch (error) {
+      console.error('Failed to load modules:', error)
+    }
+  }
+  
+  // Handle module creation
+  const handleCreateModule = async () => {
+    if (!newModuleData.title.trim() || !newModuleData.description.trim()) {
+      alert('Please fill in all required fields')
+      return
+    }
+    
+    try {
+      setActionLoading(true)
+      
+      // Prepare module data with content structure
+      const moduleData = {
+        ...newModuleData,
+        content: {
+          lessons: []
+        }
+      }
+      
+      await createModule(moduleData)
+      
+      // Reset form and close modal
+      setNewModuleData({
+        title: '',
+        description: '',
+        difficulty: 'BEGINNER',
+        estimated_time: 10
+      })
+      setShowAddModule(false)
+      
+      // Reload modules
+      await loadModules()
+      
+      alert('Module created successfully!')
+    } catch (error) {
+      console.error('Failed to create module:', error)
+      alert(`Failed to create module: ${error.message}`)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+  
+  // Load modules on component mount
+  React.useEffect(() => {
+    loadModules()
+  }, [])
   
   const [users] = useState([
     { id: 1, name: 'John Doe', email: 'john@example.com', role: 'user', status: 'active' },
@@ -169,38 +234,56 @@ export default function AdminDashboard({ setActiveTab }) {
       </div>
 
       <div className="space-y-4">
-        {modules.map((module) => (
-          <MobileCard key={module.id}>
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">{module.title}</h3>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setEditingModule(module)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => {/* Handle delete */}}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <p className="text-gray-600 text-sm mb-2">{module.description}</p>
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <span>{module.lessons} lessons</span>
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  module.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {module.status}
-                </span>
-              </div>
+        {modules.length === 0 ? (
+          <MobileCard>
+            <div className="text-center py-8">
+              <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Modules Yet</h3>
+              <p className="text-gray-600 mb-4">Create your first learning module to get started.</p>
+              <MobileButton
+                onClick={() => setShowAddModule(true)}
+                className="bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Module
+              </MobileButton>
             </div>
           </MobileCard>
-        ))}
+        ) : (
+          modules.map((module) => (
+            <MobileCard key={module.id}>
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-gray-900">{module.title}</h3>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setEditingModule(module)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {/* Handle delete */}}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-gray-600 text-sm mb-2">{module.description}</p>
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <span>{module.content?.lessons?.length || 0} lessons</span>
+                  <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                    {module.difficulty}
+                  </span>
+                  <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    {module.estimated_time} min
+                  </span>
+                </div>
+              </div>
+            </MobileCard>
+          ))
+        )}
       </div>
     </div>
   )
@@ -387,20 +470,50 @@ export default function AdminDashboard({ setActiveTab }) {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Module Title</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Module Title *</label>
                   <MobileInput
                     type="text"
+                    value={newModuleData.title}
+                    onChange={(e) => setNewModuleData(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter module title"
                     className="w-full"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
                   <Textarea
+                    value={newModuleData.description}
+                    onChange={(e) => setNewModuleData(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Enter module description"
                     className="w-full"
                     rows={3}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                  <select
+                    value={newModuleData.difficulty}
+                    onChange={(e) => setNewModuleData(prev => ({ ...prev, difficulty: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                  >
+                    <option value="BEGINNER">Beginner</option>
+                    <option value="INTERMEDIATE">Intermediate</option>
+                    <option value="ADVANCED">Advanced</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Time (minutes)</label>
+                  <MobileInput
+                    type="number"
+                    value={newModuleData.estimated_time}
+                    onChange={(e) => setNewModuleData(prev => ({ ...prev, estimated_time: parseInt(e.target.value) || 10 }))}
+                    placeholder="10"
+                    min="1"
+                    max="120"
+                    className="w-full"
                   />
                 </div>
                 
@@ -412,10 +525,11 @@ export default function AdminDashboard({ setActiveTab }) {
                     Cancel
                   </MobileButton>
                   <MobileButton
-                    onClick={() => {/* Handle save */}}
+                    onClick={handleCreateModule}
+                    disabled={actionLoading}
                     className="flex-1 bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
                   >
-                    Create Module
+                    {actionLoading ? 'Creating...' : 'Create Module'}
                   </MobileButton>
                 </div>
               </div>
