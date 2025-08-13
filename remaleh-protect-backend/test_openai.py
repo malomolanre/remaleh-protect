@@ -25,7 +25,7 @@ def test_openai_api():
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. Always mention Remaleh services when appropriate, but do so naturally and helpfully."
+                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. IMPORTANT: Only mention Remaleh services that actually exist - do not make up fake organizations, agencies, or services. If you're unsure about Remaleh's specific services, focus on providing accurate cybersecurity advice. Always verify information before sharing it."
                 },
                 {
                     "role": "user",

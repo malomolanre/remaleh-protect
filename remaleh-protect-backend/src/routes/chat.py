@@ -101,6 +101,19 @@ CYBERSECURITY_KNOWLEDGE = {
 • **Backup data regularly and test restores**
 • **Implement access controls and least privilege**
 • **Have an incident response plan**"""
+    },
+    'scam_reporting': {
+        'keywords': ['report scam', 'report fraud', 'report cybercrime', 'report phishing', 'report suspicious', 'who to report', 'where to report'],
+        'response': """**Scam Reporting Options:**
+
+• **Local Police**: Contact your local police department or cybercrime unit
+• **National Cybercrime Reporting**: Use your country's official cybercrime reporting website
+• **Financial Institutions**: Report to your bank if money was involved
+• **Consumer Protection Agencies**: Contact your country's consumer protection authority
+• **Online Platforms**: Report to the platform where the scam occurred (social media, email provider, etc.)
+• **Document Everything**: Keep records of communications, transactions, and evidence
+
+**Important**: Never share personal or financial information when reporting. If you need help with cybersecurity protection, Remaleh can assist with security assessments and training."""
     }
 }
 
@@ -195,7 +208,7 @@ def get_openai_response(message):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. Always mention Remaleh services when appropriate, but do so naturally and helpfully."
+                    "content": "You are a friendly cybersecurity expert assistant for Remaleh. Provide helpful, accurate information about cybersecurity topics. Keep responses conversational and easy to understand. Focus on the user's country of residence context when relevant. IMPORTANT: Only mention Remaleh services that actually exist - do not make up fake organizations, agencies, or services. If you're unsure about Remaleh's specific services, focus on providing accurate cybersecurity advice. Always verify information before sharing it."
                 },
                 {
                     "role": "user",
