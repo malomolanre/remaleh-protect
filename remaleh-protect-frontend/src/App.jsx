@@ -1353,33 +1353,68 @@ function App() {
                   </div>
                 )}
 
-                {/* Risk Indicators */}
-                {scamResult.indicators && Object.keys(scamResult.indicators).length > 0 && (
+                {/* Risk Indicators - Handle both object and array formats */}
+                {scamResult.indicators && (
                   <div className="mb-4">
                     <h3 className="font-semibold text-gray-800 mb-2">Detected Indicators:</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.entries(scamResult.indicators).map(([indicator, count]) => (
-                        <div key={indicator} className="p-2 bg-gray-50 rounded-lg border border-gray-200">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-700 capitalize">
-                              {indicator.replace(/([A-Z])/g, ' $1').trim()}
-                            </span>
-                            <span className="text-xs bg-[#21a1ce] text-white px-2 py-1 rounded-full">
-                              {count}
-                            </span>
+                    
+                    {/* Object format indicators (with counts) */}
+                    {Object.keys(scamResult.indicators).length > 0 && !Array.isArray(scamResult.indicators) && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(scamResult.indicators).map(([indicator, count]) => (
+                          <div key={indicator} className="p-2 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-700 capitalize">
+                                {indicator.replace(/([A-Z])/g, ' $1').trim()}
+                              </span>
+                              <span className="text-xs bg-[#21a1ce] text-white px-2 py-1 rounded-full">
+                                {count}
+                              </span>
+                            </div>
                           </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Array format indicators (link analysis, enhanced scam) */}
+                    {Array.isArray(scamResult.indicators) && scamResult.indicators.length > 0 && (
+                      <div className="space-y-2">
+                        {scamResult.indicators.map((indicator, index) => (
+                          <div key={index} className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <div className="flex items-center">
+                              <svg className="w-4 h-4 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                              </svg>
+                              <span className="text-yellow-800 text-sm">{indicator}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* No indicators case */}
+                    {(!scamResult.indicators || 
+                      (Array.isArray(scamResult.indicators) && scamResult.indicators.length === 0) ||
+                      (!Array.isArray(scamResult.indicators) && Object.keys(scamResult.indicators).length === 0)) && (
+                      <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-green-800 text-sm">No suspicious indicators detected</span>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Threats Detected (for message analysis) */}
+                {/* Threats Detected section removed - now handled in consolidated indicators above */}
+                {/* 
                 {scamResult.indicators && Array.isArray(scamResult.indicators) && scamResult.indicators.length > 0 && (
                   <div className="mb-4">
                     <h3 className="font-semibold text-gray-800 mb-2">Threats Detected:</h3>
                     <div className="space-y-2">
-                      {scamResult.indicators.map((threat, index) => (
+                      {/* {scamResult.indicators.map((threat, index) => ( */}
                         <div key={index} className="p-3 bg-red-50 rounded-lg border border-red-200">
                           <div className="flex items-center">
                             <svg className="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1392,6 +1427,7 @@ function App() {
                     </div>
                   </div>
                 )}
+                */}
 
                 {/* Link Analysis Details */}
                 {scamResult.linkDetails && (
