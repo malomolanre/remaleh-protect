@@ -114,6 +114,37 @@ CYBERSECURITY_KNOWLEDGE = {
 • **Document Everything**: Keep records of communications, transactions, and evidence
 
 **Important**: Never share personal or financial information when reporting. If you need help with cybersecurity protection, Remaleh can assist with security assessments and training."""
+    },
+    'remaleh_services': {
+        'keywords': ['remaleh services', 'what does remaleh do', 'remaleh help', 'remaleh offer', 'remaleh cybersecurity', 'remaleh protection'],
+        'response': """**Remaleh Cybersecurity Services for Everyday People:**
+
+• **Cybersecurity Awareness Training**: Learn essential online safety practices, password security, and how to spot scams
+• **Personalized Cybersecurity Advice & Education**: Get customized guidance for your specific situation and security needs
+• **Smart Home Device Security Assessments**: Ensure your smart devices, cameras, and IoT gadgets are properly secured
+• **Scam Detection & Prevention**: Learn to identify phishing emails, fake websites, and social engineering tactics
+• **Personal Data Protection**: Understand how to protect your personal information online and manage privacy settings
+• **Mobile Security**: Secure your smartphone, apps, and mobile banking practices
+• **Social Media Safety**: Learn to use social platforms safely while protecting your privacy and avoiding scams
+
+**Perfect for**: Individuals, families, seniors, small business owners, and anyone who wants to stay safe online
+
+**Contact Us**: For personalized cybersecurity guidance and training, reach out to our team. We're here to make cybersecurity simple and accessible for everyone!"""
+    },
+    'guardian_escalation': {
+        'keywords': ['connect me with a remaleh guardian', 'connect me with remaleh guardian', 'remaleh guardian', 'human help', 'speak to someone', 'talk to someone', 'human assistance', 'escalate', 'guardian'],
+        'response': """**Connecting you to a Remaleh Guardian...** 🔗
+
+I'm escalating your request to connect you with a Remaleh Guardian for direct human assistance. A Guardian will be in touch with you shortly to provide personalized cybersecurity guidance and support.
+
+**What to expect:**
+• A Remaleh Guardian will contact you within 24 hours
+• They'll review your specific situation and provide tailored advice
+• You'll receive ongoing support for your cybersecurity needs
+
+**In the meantime:** If you have an urgent security concern, please ensure you're safe and don't share any sensitive information. The Guardian will help you address any immediate threats when they connect.
+
+Thank you for reaching out - we're here to help keep you safe online! 🛡️"""
     }
 }
 
@@ -121,8 +152,24 @@ def get_rule_based_response(message):
     """Check if message matches rule-based knowledge"""
     message_lower = message.lower()
     
-    # Check for scam reporting questions first (highest priority)
-    if any(keyword in message_lower for keyword in ['report scam', 'report fraud', 'report cybercrime', 'where to report', 'who to report', 'remaleh', 'scam', 'fraud']):
+    # Check for Remaleh Guardian escalation requests first (highest priority)
+    if any(keyword in message_lower for keyword in ['connect me with a remaleh guardian', 'connect me with remaleh guardian', 'remaleh guardian', 'human help', 'speak to someone', 'talk to someone', 'human assistance']):
+        return {
+            'response': "**Connecting you to a Remaleh Guardian...** 🔗\n\nI'm escalating your request to connect you with a Remaleh Guardian for direct human assistance. A Guardian will be in touch with you shortly to provide personalized cybersecurity guidance and support.\n\n**What to expect:**\n• A Remaleh Guardian will contact you within 24 hours\n• They'll review your specific situation and provide tailored advice\n• You'll receive ongoing support for your cybersecurity needs\n\n**In the meantime:** If you have an urgent security concern, please ensure you're safe and don't share any sensitive information. The Guardian will help you address any immediate threats when they connect.\n\nThank you for reaching out - we're here to help keep you safe online! 🛡️",
+            'source': 'expert_knowledge',
+            'category': 'guardian_escalation'
+        }
+    
+    # Check for Remaleh services questions (second priority)
+    if any(keyword in message_lower for keyword in ['what services', 'services do', 'remaleh offer', 'remaleh services', 'what does remaleh do', 'remaleh help']):
+        return {
+            'response': "Remaleh offers cybersecurity services including security assessments, training, and consulting. We help businesses and individuals protect against cyber threats and improve their digital security posture. For specific service details, please contact our team directly.",
+            'source': 'expert_knowledge',
+            'category': 'remaleh_services'
+        }
+    
+    # Check for scam reporting questions (second priority)
+    if any(keyword in message_lower for keyword in ['report scam', 'report fraud', 'report cybercrime', 'where to report', 'who to report']):
         return {
             'response': "I'd be happy to help you with scam reporting options! To give you the most accurate information, could you please let me know which country you're located in? This will help me provide specific reporting channels and resources for your area.",
             'source': 'expert_knowledge',
