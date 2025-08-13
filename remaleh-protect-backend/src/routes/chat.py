@@ -371,6 +371,9 @@ def get_openai_response(message):
         
         response_text = response.choices[0].message.content.strip()
         
+        # Create response_lower first for safety checks
+        response_lower = response_text.lower()
+        
         # Safety check: Filter out fake organization names
         fake_organizations = [
             'remaleh cybersecurity agency', 'rca', 'remaleh cyber agency',
@@ -393,7 +396,7 @@ def get_openai_response(message):
             logger.warning(f"AI response mentioned Remaleh in scam reporting context")
             return "I apologize, but I need to provide you with accurate information. For scam reporting, please let me know which country you're located in so I can give you legitimate reporting options for your area."
         
-        response_lower = response_text.lower()
+        # Check for fake organizations
         for fake_org in fake_organizations:
             if fake_org in response_lower:
                 logger.warning(f"AI response contained fake organization: {fake_org}")
