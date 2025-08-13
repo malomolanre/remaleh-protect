@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BookOpen, CheckCircle, ArrowLeft, Search } from 'lucide-react'
+import { BookOpen, CheckCircle, ArrowLeft, Search, Shield } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
@@ -71,8 +71,8 @@ export default function LearnHub({ setActiveTab }) {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Learn Hub</h1>
-          <p className="text-gray-600 text-sm">Master digital security skills</p>
+          <h1 className="text-2xl font-bold text-gray-900">Learning Hub</h1>
+          <p className="text-gray-600 text-sm">We understand learning is not enough and sometimes one has to be guided and this is why Remaleh exists. If there is anything you don't feel confident doing or implementing, reach out to us and a Remaleh Guardian will guide you and walk you through implementing it and leave you empowered and confident.</p>
         </div>
       </div>
 
@@ -96,10 +96,59 @@ export default function LearnHub({ setActiveTab }) {
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>{overallProgress.progress}% Complete</span>
             {nextLesson && (
-              <span className="text-[#21a1ce] font-medium">
+              <span className="text-sm text-[#21a1ce] font-medium">
                 Next: {nextLesson.lessonTitle}
               </span>
             )}
+          </div>
+        </MobileCardContent>
+      </MobileCard>
+
+      {/* Remaleh Guardian Support */}
+      <MobileCard className="mb-4">
+        <MobileCardHeader>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-[#21a1ce] rounded-lg flex items-center justify-center">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Need Help Implementing?</h3>
+              <p className="text-sm text-gray-600">Don't struggle alone - get expert guidance</p>
+            </div>
+          </div>
+        </MobileCardHeader>
+        <MobileCardContent>
+          <p className="text-gray-700 mb-4 text-sm">
+            Learning is just the first step. When you're ready to implement cybersecurity measures, our Remaleh Guardians are here to guide you through every step of the process.
+          </p>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-[#21a1ce] rounded-full mt-2"></div>
+              <div className="text-sm text-gray-700">
+                <span className="font-medium">Personal Guidance:</span> One-on-one support for your specific situation
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-[#21a1ce] rounded-full mt-2"></div>
+              <div className="text-sm text-gray-700">
+                <span className="font-medium">Step-by-Step Implementation:</span> We'll walk you through each process
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-[#21a1ce] rounded-full mt-2"></div>
+              <div className="text-sm text-gray-700">
+                <span className="font-medium">Ongoing Support:</span> We're here until you feel confident and empowered
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <MobileButton 
+              onClick={() => setActiveTab('chat')}
+              variant="primary"
+              className="w-full"
+            >
+              Connect with a Remaleh Guardian
+            </MobileButton>
           </div>
         </MobileCardContent>
       </MobileCard>
