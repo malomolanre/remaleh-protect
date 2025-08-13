@@ -29,8 +29,13 @@ export default function LearnHub({ setActiveTab }) {
   
   // Load data from backend APIs
   useEffect(() => {
-    loadData()
-  }, [])
+    if (isAuthenticated) {
+      loadData()
+    } else {
+      // Set loading to false for non-authenticated users
+      setLoading(false)
+    }
+  }, [isAuthenticated])
   
   const loadData = async () => {
     try {
@@ -91,6 +96,50 @@ export default function LearnHub({ setActiveTab }) {
   }
   
   const filteredModules = getFilteredModules()
+
+  // Show authentication required message for non-authenticated users
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6 p-4">
+        <div className="bg-gradient-to-r from-[#21a1ce] to-[#1a8bb8] rounded-2xl p-6 text-white shadow-lg">
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-white bg-opacity-20 p-3 rounded-full mr-3">
+                <BookOpen className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold">Learning Hub</h1>
+            </div>
+            
+            <div className="bg-white bg-opacity-10 rounded-xl p-4 mb-4 backdrop-blur-sm">
+              <p className="text-white text-base leading-relaxed font-medium">
+                Remaleh isn't just about learning it's about doing. Stuck or unsure? A Remaleh Guardian will guide you step-by-step until you're confident, capable, and ready to take action.
+              </p>
+            </div>
+            
+            <div className="bg-white bg-opacity-15 rounded-lg p-3 inline-block">
+              <p className="text-white text-sm italic font-medium">
+                🚗 No one ever learns driving by reading alone - they were guided by an expert. Let us be your guide! ✨
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <MobileCard>
+          <div className="text-center py-8">
+            <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">Please log in to access the Learning Hub and track your progress.</p>
+            <MobileButton 
+              onClick={() => setActiveTab('login')}
+              className="bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
+            >
+              Go to Login
+            </MobileButton>
+          </div>
+        </MobileCard>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4 p-4">

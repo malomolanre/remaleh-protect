@@ -69,19 +69,87 @@ def create_app():
                         'title': 'Phishing Awareness',
                         'description': 'Learn to identify and avoid phishing attempts',
                         'difficulty': 'BEGINNER',
-                        'estimated_time': 15
+                        'estimated_time': 15,
+                        'content': {
+                            'lessons': [
+                                {
+                                    'id': 1,
+                                    'title': 'What is Phishing?',
+                                    'content': 'Phishing is a cyber attack where attackers pretend to be legitimate organizations to steal sensitive information.',
+                                    'duration': 5,
+                                    'type': 'info'
+                                },
+                                {
+                                    'id': 2,
+                                    'title': 'Common Phishing Signs',
+                                    'content': 'Learn to spot urgent language, suspicious links, and requests for sensitive information.',
+                                    'duration': 5,
+                                    'type': 'info'
+                                },
+                                {
+                                    'id': 3,
+                                    'title': 'How to Protect Yourself',
+                                    'content': 'Never click suspicious links, verify sender addresses, and use multi-factor authentication.',
+                                    'duration': 5,
+                                    'type': 'info'
+                                }
+                            ]
+                        }
                     },
                     {
                         'title': 'Password Security',
                         'description': 'Best practices for creating and managing strong passwords',
                         'difficulty': 'BEGINNER',
-                        'estimated_time': 10
+                        'estimated_time': 10,
+                        'content': {
+                            'lessons': [
+                                {
+                                    'id': 1,
+                                    'title': 'Creating Strong Passwords',
+                                    'content': 'Use at least 12 characters with a mix of letters, numbers, and symbols.',
+                                    'duration': 5,
+                                    'type': 'info'
+                                },
+                                {
+                                    'id': 2,
+                                    'title': 'Password Managers',
+                                    'content': 'Use a password manager to generate and store unique passwords securely.',
+                                    'duration': 5,
+                                    'type': 'info'
+                                }
+                            ]
+                        }
                     },
                     {
                         'title': 'Social Engineering',
                         'description': 'Understanding and defending against social engineering attacks',
                         'difficulty': 'INTERMEDIATE',
-                        'estimated_time': 20
+                        'estimated_time': 20,
+                        'content': {
+                            'lessons': [
+                                {
+                                    'id': 1,
+                                    'title': 'Types of Social Engineering',
+                                    'content': 'Learn about pretexting, baiting, quid pro quo, and tailgating attacks.',
+                                    'duration': 8,
+                                    'type': 'info'
+                                },
+                                {
+                                    'id': 2,
+                                    'title': 'Defense Strategies',
+                                    'content': 'Verify identities, be suspicious of unsolicited requests, and train your team.',
+                                    'duration': 7,
+                                    'type': 'info'
+                                },
+                                {
+                                    'id': 3,
+                                    'title': 'Real-World Examples',
+                                    'content': 'Study actual social engineering attacks to understand the tactics used.',
+                                    'duration': 5,
+                                    'type': 'info'
+                                }
+                            ]
+                        }
                     }
                 ]
                 

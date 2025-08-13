@@ -47,7 +47,7 @@ def get_module(module_id):
             return jsonify({'error': 'Module not found'}), 404
             
         module_data = module.to_dict()
-        module_data['content'] = module.content  # Include full JSON content
+        # Content is already included in to_dict() method
         
         return jsonify(module_data), 200
     except Exception as e:

@@ -185,6 +185,7 @@ class LearningModule(db.Model):
             'id': self.id,
             'title': self.title,
             'description': self.description,
+            'content': self.content or {},
             'difficulty': self.difficulty,
             'estimated_time': self.estimated_time,
             'is_active': self.is_active
