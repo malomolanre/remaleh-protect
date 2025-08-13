@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
 import { apiPost, API_ENDPOINTS } from './lib/api'
+import PasswordGenerator from './components/PasswordGenerator'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
@@ -12,13 +13,8 @@ function App() {
   const [isChecking, setIsChecking] = useState(false)
   const [breachError, setBreachError] = useState('')
   
-  // Password generator state
-  const [passwordLength, setPasswordLength] = useState(16)
-  const [includeUppercase, setIncludeUppercase] = useState(true)
-  const [includeLowercase, setIncludeLowercase] = useState(true)
-  const [includeNumbers, setIncludeNumbers] = useState(true)
-  const [includeSymbols, setIncludeSymbols] = useState(true)
-  const [generatedPassword, setGeneratedPassword] = useState('')
+  // Password generator modal state
+  const [showPasswordGenerator, setShowPasswordGenerator] = useState(false)
 
   // Dynamic greeting based on time of day
   useEffect(() => {
@@ -110,41 +106,14 @@ function App() {
     }
   }
 
-  // Password generation function
-  const generatePassword = () => {
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
-    const numbers = '0123456789'
-    const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?'
-    
-    let chars = ''
-    if (includeUppercase) chars += uppercase
-    if (includeLowercase) chars += lowercase
-    if (includeNumbers) chars += numbers
-    if (includeSymbols) chars += symbols
-    
-    if (chars === '') {
-      setGeneratedPassword('')
-      return
-    }
-    
-    let password = ''
-    for (let i = 0; i < passwordLength; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    
-    setGeneratedPassword(password)
+  // Handle password generation modal
+  const handlePasswordUse = (password) => {
+    // You could store the generated password or show it in the breach results
+    console.log('Generated password:', password)
+    setShowPasswordGenerator(false)
   }
 
-  // Copy password to clipboard
-  const copyPassword = async () => {
-    try {
-      await navigator.clipboard.writeText(generatedPassword)
-      // You could add a toast notification here
-    } catch (err) {
-      console.error('Failed to copy password:', err)
-    }
-  }
+
 
   const renderContent = () => {
     switch (activeTab) {
@@ -553,7 +522,7 @@ function App() {
                           <h4 className="font-medium text-green-800 mb-1">Use Strong, Unique Passwords</h4>
                           <p className="text-green-700 text-sm mb-3">Generate secure passwords for each account to prevent credential stuffing attacks.</p>
                           <button 
-                            onClick={() => setActiveTab('password')}
+                            onClick={() => setShowPasswordGenerator(true)}
                             className="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -812,6 +781,28 @@ function App() {
       <main className="px-6 py-6 pb-24">
         {renderContent()}
       </main>
+
+      {/* Password Generator Modal */}
+      {showPasswordGenerator && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Password Generator</h2>
+                <button 
+                  onClick={() => setShowPasswordGenerator(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <PasswordGenerator onUse={handlePasswordUse} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4">
