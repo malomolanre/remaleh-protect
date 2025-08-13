@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Edit3, Save, X, Plus, Trash2, Eye, Search, RefreshCw, BookOpen } from 'lucide-react'
+import { Edit3, Save, X, Plus, Trash2, Eye, Search, RefreshCw, BookOpen, Shield, LogIn } from 'lucide-react'
 import { MobileCard, MobileCardHeader, MobileCardContent } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
 import { Textarea } from './ui/textarea'
+import { useAuth } from '../hooks/useAuth'
 import {
   getAllModules,
   createModule,
@@ -17,6 +18,7 @@ import {
 } from '../utils/contentManager'
 
 export default function ContentAdmin() {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [modules, setModules] = useState([])
   const [editingModule, setEditingModule] = useState(null)
   const [editingLesson, setEditingLesson] = useState(null)
@@ -247,10 +249,70 @@ export default function ContentAdmin() {
     }
   }
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#21a1ce]"></div>
+        <span className="ml-3 text-gray-600">Checking authentication...</span>
+      </div>
+    )
+  }
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6 p-4">
+        <div className="text-center py-8">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <Shield className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-yellow-800 mb-2">Authentication Required</h2>
+            <p className="text-yellow-700 mb-4">
+              You need to be logged in to access the Content Management system.
+            </p>
+            <MobileButton 
+              onClick={() => window.location.href = '/login'} 
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Go to Login
+            </MobileButton>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if user has admin privileges
+  if (!user?.is_admin && !user?.role === 'admin') {
+    return (
+      <div className="space-y-6 p-4">
+        <div className="text-center py-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <Shield className="w-12 h-12 text-red-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-red-800 mb-2">Access Denied</h2>
+            <p className="text-red-700 mb-4">
+              You don't have permission to access the Content Management system. 
+              Admin privileges are required.
+            </p>
+            <p className="text-sm text-red-600">
+              Contact your administrator if you believe this is an error.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Content Management</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Content Management</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Welcome, {user?.name || user?.email || 'Admin'} • Admin Access
+          </p>
+        </div>
         <div className="flex space-x-2">
           <MobileButton onClick={() => setShowAddModule(true)}>
             <Plus className="w-4 h-4 mr-2" />
