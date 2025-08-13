@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import './App.css'
 import { apiPost, API_ENDPOINTS, API } from './lib/api'
 import PasswordGenerator from './components/PasswordGenerator'
+import ChatAssistant from './components/ChatAssistant'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
@@ -15,6 +16,7 @@ function App() {
   
   // Password generator modal state
   const [showPasswordGenerator, setShowPasswordGenerator] = useState(false)
+  const [showChatAssistant, setShowChatAssistant] = useState(false)
 
   // Dynamic greeting based on time of day
   useEffect(() => {
@@ -1531,22 +1533,82 @@ function App() {
       case 'chat':
         return (
           <div className="space-y-6">
+            {/* Chat Header */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h1 className="text-2xl font-bold text-black mb-4">💬 Chat</h1>
-              <p className="text-gray-700 mb-6">Get instant help and answers to your security questions.</p>
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-[#21a1ce] bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-[#21a1ce]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <h1 className="text-3xl font-bold text-black mb-2">AI Security Assistant</h1>
+                <p className="text-gray-600">Get instant help with cybersecurity questions</p>
+              </div>
               
-              <div className="space-y-4">
-                <div className="bg-[#21a1ce] bg-opacity-10 p-4 rounded-xl border border-[#21a1ce] border-opacity-20">
-                  <h3 className="font-semibold text-black mb-2">Ask about:</h3>
-                  <ul className="text-gray-700 space-y-1">
-                    <li>• Password security</li>
-                    <li>• Two-factor authentication</li>
-                    <li>• Privacy protection</li>
-                  </ul>
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                  <div className="flex items-center mb-2">
+                    <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span className="font-semibold text-blue-800">Password Help</span>
+                  </div>
+                  <p className="text-blue-700 text-sm">Get advice on creating strong passwords and enabling 2FA</p>
                 </div>
                 
-                <button className="w-full bg-[#21a1ce] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-colors shadow-sm">
-                  Start Chat
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+                  <div className="flex items-center mb-2">
+                    <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-semibold text-green-800">Scam Detection</span>
+                  </div>
+                  <p className="text-green-700 text-sm">Learn how to spot phishing emails and suspicious links</p>
+                </div>
+              </div>
+              
+              {/* Topics Covered */}
+              <div className="bg-[#21a1ce] bg-opacity-5 p-4 rounded-xl border border-[#21a1ce] border-opacity-20">
+                <h3 className="text-lg font-semibold text-black mb-3">Topics I can help with:</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span className="w-2 h-2 bg-[#21a1ce] rounded-full mr-2"></span>
+                    Password security
+                  </div>
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span className="w-2 h-2 bg-[#21a1ce] rounded-full mr-2"></span>
+                    Phishing detection
+                  </div>
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span className="w-2 h-2 bg-[#21a1ce] rounded-full mr-2"></span>
+                    Malware protection
+                  </div>
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span className="w-2 h-2 bg-[#21a1ce] rounded-full mr-2"></span>
+                    Data breach response
+                  </div>
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span className="w-2 h-2 bg-[#21a1ce] rounded-full mr-2"></span>
+                    Social media security
+                  </div>
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span className="w-2 h-2 bg-[#21a1ce] rounded-full mr-2"></span>
+                    Network security
+                  </div>
+                </div>
+              </div>
+              
+              {/* Start Chat Button */}
+              <div className="mt-6">
+                <button 
+                  onClick={() => setShowChatAssistant(true)}
+                  className="w-full bg-[#21a1ce] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-all duration-200 shadow-sm flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Start Chat with AI Assistant
                 </button>
               </div>
             </div>
@@ -1650,6 +1712,28 @@ function App() {
                 </button>
               </div>
               <PasswordGenerator onUse={handlePasswordUse} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Assistant Modal */}
+      {showChatAssistant && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">AI Security Assistant</h2>
+                <button 
+                  onClick={() => setShowChatAssistant(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <ChatAssistant setActiveTab={setActiveTab} />
             </div>
           </div>
         </div>
