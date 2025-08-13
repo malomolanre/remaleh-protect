@@ -7,6 +7,31 @@ export default function MobileHeader({ setActiveTab }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAuthenticated } = useAuth();
 
+  // Function to generate user initials
+  const getUserInitials = (user) => {
+    if (!user || typeof user !== 'object') return 'U';
+    
+    try {
+      const firstName = user.first_name || '';
+      const lastName = user.last_name || '';
+      
+      if (firstName && lastName) {
+        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+      } else if (firstName) {
+        return firstName.charAt(0).toUpperCase();
+      } else if (lastName) {
+        return lastName.charAt(0).toUpperCase();
+      } else if (user.email) {
+        return user.email.charAt(0).toUpperCase();
+      }
+      
+      return 'U'; // Default fallback
+    } catch (error) {
+      console.error('Error generating user initials:', error);
+      return 'U'; // Safe fallback
+    }
+  };
+
   const menuItems = [
     { label: 'Breach Checker', tab: 'breach' },
     { label: 'Scam Analysis', tab: 'scam' },
@@ -14,10 +39,14 @@ export default function MobileHeader({ setActiveTab }) {
     { label: 'Risk Profile', tab: 'profile' },
     { label: 'Community', tab: 'community' },
     { label: 'AI Assistant', tab: 'chat' },
-    { label: 'Learn Hub', tab: 'learn' }
+    { label: 'Learn Hub', tab: 'learn' },
+    // Admin tab - only show if user is admin
+    ...(user?.is_admin || user?.role === 'admin' ? [{ label: 'Content Admin', tab: 'admin' }] : [])
   ];
 
   const handleProfileClick = () => {
+    if (!setActiveTab) return;
+    
     if (isAuthenticated) {
       setActiveTab('profile');
     } else {
@@ -26,9 +55,20 @@ export default function MobileHeader({ setActiveTab }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
-    window.location.reload();
+    try {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      // Close menu before reloading
+      setIsMenuOpen(false);
+      // Small delay to ensure menu closes before reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback: force reload even if there's an error
+      window.location.reload();
+    }
   };
 
   return (
@@ -60,7 +100,9 @@ export default function MobileHeader({ setActiveTab }) {
               title={isAuthenticated ? 'View Profile' : 'Login'}
             >
               {isAuthenticated ? (
-                <User className="w-5 h-5 text-blue-600" />
+                <div className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
+                  {getUserInitials(user)}
+                </div>
               ) : (
                 <LogIn className="w-5 h-5 text-gray-600" />
               )}
@@ -89,10 +131,15 @@ export default function MobileHeader({ setActiveTab }) {
                 <button
                   key={item.label}
                   onClick={() => {
-                    if (setActiveTab) {
-                      setActiveTab(item.tab);
+                    try {
+                      if (setActiveTab && item.tab) {
+                        setActiveTab(item.tab);
+                      }
+                      setIsMenuOpen(false);
+                    } catch (error) {
+                      console.error('Menu item click error:', error);
+                      setIsMenuOpen(false);
                     }
-                    setIsMenuOpen(false);
                   }}
                   className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
                 >
@@ -105,7 +152,7 @@ export default function MobileHeader({ setActiveTab }) {
                 {isAuthenticated ? (
                   <div className="px-3 py-2">
                     <div className="text-sm text-gray-600 mb-2">
-                      Welcome, {user?.first_name || 'User'}
+                      Welcome, {user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.first_name || user?.email || 'User'}
                     </div>
                     <button
                       onClick={() => {
