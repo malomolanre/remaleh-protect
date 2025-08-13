@@ -1423,21 +1423,6 @@ function App() {
                     </div>
                   </div>
                 )}
-                */}
-
-                {/* Link Analysis Details */}
-                {scamResult.linkDetails && (
-                  <div className="mb-4">
-                    <h3 className="font-semibold text-gray-800 mb-2">Link Analysis Details:</h3>
-                    <div className="space-y-2">
-                      {scamResult.linkDetails.indicators && scamResult.linkDetails.indicators.map((indicator, index) => (
-                        <div key={index} className="p-2 bg-yellow-50 rounded-lg border border-yellow-200">
-                          <span className="text-yellow-800 text-sm">{indicator}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Email Analysis Details */}
                 {scamResult.emailDetails && (
