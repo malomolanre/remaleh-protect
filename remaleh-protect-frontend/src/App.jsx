@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
-import { apiPost, API_ENDPOINTS } from './lib/api'
+import { apiPost, API_ENDPOINTS, API } from './lib/api'
 import PasswordGenerator from './components/PasswordGenerator'
 
 function App() {
@@ -132,18 +132,169 @@ function App() {
     setScamResult(null)
     
     try {
-      // Simulate API call - in real app, this would call your backend
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      let analysis
       
-      // Analyze the input for common scam indicators
-      const analysis = analyzeScamContent(scamInput, scamType)
+      // Route to appropriate API based on content type
+      if (scamType === 'link') {
+        // Use link analysis API
+        analysis = await analyzeLink(scamInput)
+      } else if (scamType === 'email') {
+        // Use enhanced scam API for email content
+        analysis = await analyzeEmail(scamInput)
+      } else {
+        // Use comprehensive scam API for general messages
+        analysis = await analyzeMessage(scamInput)
+      }
+      
       setScamResult(analysis)
     } catch (error) {
       console.error('Scam analysis error:', error)
-      setScamError('Analysis failed. Please try again.')
+      if (error.message.includes('Failed to fetch')) {
+        setScamError('Unable to connect to security APIs. Please check your internet connection and try again.')
+      } else if (error.message.includes('HTTP error')) {
+        setScamError('Security API temporarily unavailable. Please try again later.')
+      } else {
+        setScamError('Analysis failed. Please try again.')
+      }
     } finally {
       setIsAnalyzing(false)
     }
+  }
+
+  // Link analysis using link_analysis.py
+  const analyzeLink = async (url) => {
+    try {
+      const response = await fetch(`${API}/api/link/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      // Transform link analysis response to match our format
+      return {
+        riskLevel: data.risk_level?.toLowerCase() || 'medium',
+        riskScore: data.risk_score || 50,
+        indicators: data.indicators || {},
+        recommendations: data.recommendations || [
+          'Be cautious of this link',
+          'Verify the destination before clicking',
+          'Check for HTTPS and legitimate domain'
+        ],
+        analysis: url.substring(0, 100) + (url.length > 100 ? '...' : ''),
+        linkDetails: data
+      }
+    } catch (error) {
+      console.error('Link analysis error:', error)
+      // Fallback to local analysis
+      return analyzeScamContent(url, 'link')
+    }
+  }
+
+  // Email analysis using enhanced_scam.py
+  const analyzeEmail = async (emailContent) => {
+    try {
+      const response = await fetch(`${API}/api/enhanced-scam/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: emailContent })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      // Transform enhanced scam response to match our format
+      return {
+        riskLevel: data.risk_level?.toLowerCase() || 'medium',
+        riskScore: data.risk_score || 50,
+        indicators: data.indicators || {},
+        recommendations: data.recommendations || [
+          'Review this email carefully',
+          'Check sender authenticity',
+          'Avoid clicking suspicious links'
+        ],
+        analysis: emailContent.substring(0, 100) + (emailContent.length > 100 ? '...' : ''),
+        emailDetails: data
+      }
+    } catch (error) {
+      console.error('Email analysis error:', error)
+      // Fallback to local analysis
+      return analyzeScamContent(emailContent, 'email')
+    }
+  }
+
+  // Message analysis using scam.py
+  const analyzeMessage = async (messageContent) => {
+    try {
+      const response = await fetch(`${API}/api/scam/comprehensive`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          text: messageContent,
+          check_links: true 
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      // Transform comprehensive scam response to match our format
+      return {
+        riskLevel: data.overall_assessment?.risk_level?.toLowerCase() || 'medium',
+        riskScore: data.overall_assessment?.risk_score || 50,
+        indicators: data.threats_detected || [],
+        recommendations: generateRecommendationsFromThreats(data.threats_detected),
+        analysis: messageContent.substring(0, 100) + (messageContent.length > 100 ? '...' : ''),
+        messageDetails: data
+      }
+    } catch (error) {
+      console.error('Message analysis error:', error)
+      // Fallback to local analysis
+      return analyzeScamContent(messageContent, 'message')
+    }
+  }
+
+  // Generate recommendations from detected threats
+  const generateRecommendationsFromThreats = (threats) => {
+    const recommendations = []
+    
+    threats.forEach(threat => {
+      if (threat.includes('Urgency')) {
+        recommendations.push('Be cautious of urgent requests - legitimate organizations rarely pressure you')
+      }
+      if (threat.includes('Financial')) {
+        recommendations.push('Never send money to unknown sources or for urgent requests')
+      }
+      if (threat.includes('Personal')) {
+        recommendations.push('Never share passwords, SSN, or other sensitive information via message')
+      }
+      if (threat.includes('Suspicious')) {
+        recommendations.push('Avoid clicking suspicious links or responding to unknown contacts')
+      }
+    })
+    
+    if (recommendations.length === 0) {
+      recommendations.push('Review the content carefully before taking any action')
+    }
+    
+    return recommendations
   }
 
   // Scam content analysis logic
@@ -776,6 +927,12 @@ function App() {
               </div>
               
               <p className="text-gray-700 mb-6">Analyze suspicious messages, links, and emails for potential scams using advanced pattern recognition and threat intelligence.</p>
+              
+              {/* API Status Indicator */}
+              <div className="flex items-center space-x-2 text-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-gray-600">Connected to Remaleh Protect Security APIs</span>
+              </div>
             </div>
 
             {/* Input Section */}
@@ -887,7 +1044,7 @@ function App() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Analyzing...
+                      Analyzing with {scamType === 'link' ? 'Link Analysis' : scamType === 'email' ? 'Enhanced Scam Detection' : 'Comprehensive Scam Analysis'}...
                     </>
                   ) : (
                     <>
@@ -925,11 +1082,14 @@ function App() {
                     <p className="text-gray-600">
                       Risk Score: {scamResult.riskScore}/100
                     </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Analyzed with {scamType === 'link' ? 'Link Analysis API' : scamType === 'email' ? 'Enhanced Scam Detection API' : 'Comprehensive Scam Analysis API'}
+                    </p>
                   </div>
                 </div>
 
                 {/* Risk Indicators */}
-                {Object.keys(scamResult.indicators).length > 0 && (
+                {scamResult.indicators && Object.keys(scamResult.indicators).length > 0 && (
                   <div className="mb-4">
                     <h3 className="font-semibold text-gray-800 mb-2">Detected Indicators:</h3>
                     <div className="grid grid-cols-2 gap-2">
@@ -943,6 +1103,53 @@ function App() {
                               {count}
                             </span>
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Threats Detected (for message analysis) */}
+                {scamResult.indicators && Array.isArray(scamResult.indicators) && scamResult.indicators.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-800 mb-2">Threats Detected:</h3>
+                    <div className="space-y-2">
+                      {scamResult.indicators.map((threat, index) => (
+                        <div key={index} className="p-3 bg-red-50 rounded-lg border border-red-200">
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <span className="text-red-800 text-sm">{threat}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Link Analysis Details */}
+                {scamResult.linkDetails && (
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-800 mb-2">Link Analysis Details:</h3>
+                    <div className="space-y-2">
+                      {scamResult.linkDetails.indicators && scamResult.linkDetails.indicators.map((indicator, index) => (
+                        <div key={index} className="p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <span className="text-yellow-800 text-sm">{indicator}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Email Analysis Details */}
+                {scamResult.emailDetails && (
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-800 mb-2">Email Analysis Details:</h3>
+                    <div className="space-y-2">
+                      {scamResult.emailDetails.scam_categories && scamResult.emailDetails.scam_categories.map((category, index) => (
+                        <div key={index} className="p-2 bg-purple-50 rounded-lg border border-purple-200">
+                          <span className="text-purple-800 text-sm">{category}</span>
                         </div>
                       ))}
                     </div>
