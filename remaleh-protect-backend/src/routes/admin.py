@@ -26,7 +26,7 @@ def admin_required(f):
 @admin_bp.route('/users', methods=['GET'])
 @token_required
 @admin_required
-def get_users():
+def get_users(current_user):
     """Get all users with pagination and filtering"""
     try:
         page = request.args.get('page', 1, type=int)
@@ -83,7 +83,7 @@ def get_users():
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
 @token_required
 @admin_required
-def get_user(user_id):
+def get_user(current_user, user_id):
     """Get specific user details"""
     try:
         user = User.query.get(user_id)
@@ -124,7 +124,7 @@ def get_user(user_id):
 @admin_bp.route('/users/<int:user_id>/status', methods=['PUT'])
 @token_required
 @admin_required
-def update_user_status(user_id):
+def update_user_status(current_user, user_id):
     """Update user status (ACTIVE, SUSPENDED, BANNED)"""
     try:
         user = User.query.get(user_id)
@@ -156,7 +156,7 @@ def update_user_status(user_id):
 @admin_bp.route('/users/<int:user_id>/role', methods=['PUT'])
 @token_required
 @admin_required
-def update_user_role(user_id):
+def update_user_role(current_user, user_id):
     """Update user role (USER, MODERATOR, ADMIN)"""
     try:
         user = User.query.get(user_id)
@@ -195,7 +195,7 @@ def update_user_role(user_id):
 @admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
 @token_required
 @admin_required
-def delete_user(user_id):
+def delete_user(current_user, user_id):
     """Delete a user (soft delete by setting status to deleted)"""
     try:
         user = User.query.get(user_id)
@@ -228,7 +228,7 @@ def delete_user(user_id):
 @admin_bp.route('/reports', methods=['GET'])
 @token_required
 @admin_required
-def get_reports():
+def get_reports(current_user):
     """Get all community reports with pagination and filtering"""
     try:
         page = request.args.get('page', 1, type=int)
@@ -290,7 +290,7 @@ def get_reports():
 @admin_bp.route('/reports/<int:report_id>/moderate', methods=['PUT'])
 @token_required
 @admin_required
-def moderate_report(report_id):
+def moderate_report(current_user, report_id):
     """Moderate a community report (approve, reject, flag)"""
     try:
         report = CommunityReport.query.get(report_id)
@@ -306,7 +306,7 @@ def moderate_report(report_id):
         report.status = action
         db.session.commit()
         
-        logger.info(f"Admin {g.current_user.email} {action.lower()}ed report {report_id}")
+        logger.info(f"Admin {current_user.email} {action.lower()}ed report {report_id}")
         
         return jsonify({
             'message': f'Report {action.lower()}ed successfully',
@@ -322,7 +322,7 @@ def moderate_report(report_id):
 @admin_bp.route('/stats', methods=['GET'])
 @token_required
 @admin_required
-def get_admin_stats():
+def get_admin_stats(current_user):
     """Get admin dashboard statistics"""
     try:
         # User statistics
@@ -382,7 +382,7 @@ def get_admin_stats():
 @admin_bp.route('/system/health', methods=['GET'])
 @token_required
 @admin_required
-def system_health():
+def system_health(current_user):
     """Get system health information"""
     try:
         # Database health
