@@ -144,14 +144,36 @@ def create_app():
         from routes.admin import admin_bp
 
     # Register blueprints
-    app.register_blueprint(scam_bp, url_prefix="/api/scam")
-    app.register_blueprint(enhanced_scam_bp, url_prefix="/api/scam")
-    app.register_blueprint(link_analysis_bp, url_prefix="/api/link")
-    app.register_blueprint(breach_bp, url_prefix="/api/breach")
-    app.register_blueprint(chat_bp, url_prefix="/api/chat")
-    app.register_blueprint(auth_bp, url_prefix="/api/auth")
-    app.register_blueprint(community_bp, url_prefix="/api/community")
-    app.register_blueprint(admin_bp, url_prefix="/api/admin")
+    try:
+        app.register_blueprint(scam_bp, url_prefix="/api/scam")
+        logger.info("✓ Scam analysis blueprint registered at /api/scam")
+        
+        app.register_blueprint(enhanced_scam_bp, url_prefix="/api/enhanced-scam")
+        logger.info("✓ Enhanced scam detection blueprint registered at /api/enhanced-scam")
+        
+        app.register_blueprint(link_analysis_bp, url_prefix="/api/link")
+        logger.info("✓ Link analysis blueprint registered at /api/link")
+        
+        app.register_blueprint(breach_bp, url_prefix="/api/breach")
+        logger.info("✓ Breach checker blueprint registered at /api/breach")
+        
+        app.register_blueprint(chat_bp, url_prefix="/api/chat")
+        logger.info("✓ Chat assistant blueprint registered at /api/chat")
+        
+        app.register_blueprint(auth_bp, url_prefix="/api/auth")
+        logger.info("✓ Authentication blueprint registered at /api/auth")
+        
+        app.register_blueprint(community_bp, url_prefix="/api/community")
+        logger.info("✓ Community hub blueprint registered at /api/community")
+        
+        app.register_blueprint(admin_bp, url_prefix="/api/admin")
+        logger.info("✓ Admin panel blueprint registered at /api/admin")
+        
+        logger.info("✓ All security analysis blueprints registered successfully")
+        
+    except Exception as e:
+        logger.error(f"❌ Error registering blueprints: {e}")
+        raise
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
@@ -203,6 +225,34 @@ def create_app():
             "timestamp": datetime.now().isoformat(),
             "cache_enabled": cache.redis_client is not None,
             "monitoring_enabled": monitor.redis_client is not None
+        })
+
+    @app.get("/api/security/status")
+    @track_performance
+    def security_status():
+        """Security analysis services status endpoint."""
+        return jsonify({
+            "service": "remaleh-protect-security-engine",
+            "status": "operational",
+            "timestamp": datetime.now().isoformat(),
+            "available_services": {
+                "scam_analysis": "/api/scam/comprehensive",
+                "enhanced_scam_detection": "/api/enhanced-scam/analyze",
+                "link_analysis": "/api/link/analyze-url",
+                "breach_checker": "/api/breach/check",
+                "chat_assistant": "/api/chat/",
+                "community_hub": "/api/community/",
+                "admin_panel": "/api/admin/"
+            },
+            "capabilities": [
+                "Advanced text pattern analysis",
+                "ML-based scam detection",
+                "URL and link security analysis",
+                "Email breach checking",
+                "Real-time threat intelligence",
+                "Community-driven security reporting"
+            ],
+            "version": "2.0.0"
         })
 
     @app.get("/api/metrics")

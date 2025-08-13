@@ -164,7 +164,7 @@ function App() {
   // Link analysis using link_analysis.py
   const analyzeLink = async (url) => {
     try {
-      const response = await fetch(`${API}/api/link/analyze`, {
+      const response = await fetch(`${API}/api/link/analyze-url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -178,18 +178,24 @@ function App() {
       
       const data = await response.json()
       
+      if (!data.success) {
+        throw new Error(data.error || 'Link analysis failed')
+      }
+      
+      const result = data.result
+      
       // Transform link analysis response to match our format
       return {
-        riskLevel: data.risk_level?.toLowerCase() || 'medium',
-        riskScore: data.risk_score || 50,
-        indicators: data.indicators || {},
-        recommendations: data.recommendations || [
+        riskLevel: result.risk_level?.toLowerCase() || 'medium',
+        riskScore: result.risk_score || 50,
+        indicators: result.indicators || [],
+        recommendations: result.recommendations || [
           'Be cautious of this link',
           'Verify the destination before clicking',
           'Check for HTTPS and legitimate domain'
         ],
         analysis: url.substring(0, 100) + (url.length > 100 ? '...' : ''),
-        linkDetails: data
+        linkDetails: result
       }
     } catch (error) {
       console.error('Link analysis error:', error)
@@ -215,24 +221,55 @@ function App() {
       
       const data = await response.json()
       
+      if (!data.success) {
+        throw new Error(data.error || 'Email analysis failed')
+      }
+      
+      const result = data.result
+      
       // Transform enhanced scam response to match our format
       return {
-        riskLevel: data.risk_level?.toLowerCase() || 'medium',
-        riskScore: data.risk_score || 50,
-        indicators: data.indicators || {},
-        recommendations: data.recommendations || [
-          'Review this email carefully',
-          'Check sender authenticity',
-          'Avoid clicking suspicious links'
-        ],
+        riskLevel: result.risk_level?.toLowerCase() || 'medium',
+        riskScore: Math.round(result.risk_score * 100) || 50,
+        indicators: result.indicators || [],
+        recommendations: generateEmailRecommendations(result.risk_level, result.indicators),
         analysis: emailContent.substring(0, 100) + (emailContent.length > 100 ? '...' : ''),
-        emailDetails: data
+        emailDetails: result
       }
     } catch (error) {
       console.error('Email analysis error:', error)
       // Fallback to local analysis
       return analyzeScamContent(emailContent, 'email')
     }
+  }
+
+  // Generate email-specific recommendations
+  const generateEmailRecommendations = (riskLevel, indicators) => {
+    const recommendations = []
+    
+    if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
+      recommendations.push('Do not respond to this email')
+      recommendations.push('Delete immediately and report to IT security')
+      recommendations.push('Do not click any links or attachments')
+    } else if (riskLevel === 'MEDIUM') {
+      recommendations.push('Exercise extreme caution with this email')
+      recommendations.push('Verify sender authenticity before responding')
+      recommendations.push('Do not share personal information')
+    } else {
+      recommendations.push('Review this email carefully')
+      recommendations.push('Check sender authenticity')
+      recommendations.push('Avoid clicking suspicious links')
+    }
+    
+    // Add specific recommendations based on indicators
+    if (indicators.some(ind => ind.includes('financial'))) {
+      recommendations.push('Never send money or financial information via email')
+    }
+    if (indicators.some(ind => ind.includes('urgency'))) {
+      recommendations.push('Be cautious of urgent requests - legitimate organizations rarely pressure you')
+    }
+    
+    return recommendations
   }
 
   // Message analysis using scam.py
@@ -930,8 +967,26 @@ function App() {
               
               {/* API Status Indicator */}
               <div className="flex items-center space-x-2 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-gray-600">Connected to Remaleh Protect Security APIs</span>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-gray-600">Connected to Remaleh Protect Security Engine</span>
+                <button 
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`${API}/api/security/status`)
+                      if (response.ok) {
+                        const data = await response.json()
+                        console.log('Security Engine Status:', data)
+                        alert(`Security Engine Status: ${data.status}\nVersion: ${data.version}\nServices: ${Object.keys(data.available_services).length} available`)
+                      }
+                    } catch (error) {
+                      console.error('Status check failed:', error)
+                      alert('Unable to check Security Engine status')
+                    }
+                  }}
+                  className="ml-2 text-xs text-[#21a1ce] hover:text-[#1a8bb8] underline cursor-pointer"
+                >
+                  Check Status
+                </button>
               </div>
             </div>
 

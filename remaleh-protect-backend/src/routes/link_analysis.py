@@ -137,6 +137,39 @@ class LocalLinkAnalyzer:
                 'is_suspicious': True
             }
     
+    def get_domain_info(self, url):
+        """Get domain information and reputation"""
+        try:
+            parsed = urllib.parse.urlparse(url)
+            domain = parsed.netloc.lower()
+            
+            # Basic domain info
+            domain_info = {
+                'domain': domain,
+                'subdomain_count': domain.count('.'),
+                'length': len(domain),
+                'is_ip': bool(re.match(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', domain))
+            }
+            
+            # Check domain age (simplified - in real implementation you'd use WHOIS)
+            if len(domain) < 10:
+                domain_info['suspicion'] = 'Very short domain name'
+            elif domain_info['subdomain_count'] > 3:
+                domain_info['suspicion'] = 'Excessive subdomains'
+            elif domain_info['is_ip']:
+                domain_info['suspicion'] = 'Uses IP address instead of domain'
+            else:
+                domain_info['suspicion'] = 'Normal domain structure'
+            
+            return domain_info
+            
+        except Exception as e:
+            return {
+                'domain': 'unknown',
+                'error': str(e),
+                'suspicion': 'Unable to analyze domain'
+            }
+
     def check_ssl_certificate(self, url):
         """Check SSL certificate validity"""
         try:
@@ -362,13 +395,13 @@ def analyze_links_endpoint():
                 'error': 'No JSON data provided'
             }), 400
         
-        # Extract text from request
-        text = data.get('text', '')
+        # Extract text or URL from request
+        text = data.get('text', data.get('url', ''))
         if not text:
-            logger.warning("No text provided in request")
+            logger.warning("No text or URL provided in request")
             return jsonify({
                 'success': False,
-                'error': 'No text provided for analysis'
+                'error': 'No text or URL provided for analysis'
             }), 400
         
         logger.info(f"Analyzing text: {text[:100]}...")
@@ -410,6 +443,101 @@ def health_check():
             'Risk assessment'
         ]
     })
+
+@link_analysis_bp.route('/analyze-url', methods=['POST'])
+def analyze_single_url():
+    """API endpoint to analyze a single URL"""
+    try:
+        logger.info("=== SINGLE URL ANALYSIS REQUEST RECEIVED ===")
+        
+        # Get request data
+        data = request.get_json()
+        if not data:
+            logger.warning("No JSON data received")
+            return jsonify({
+                'success': False,
+                'error': 'No JSON data provided'
+            }), 400
+        
+        # Extract URL from request
+        url = data.get('url', '')
+        if not url:
+            logger.warning("No URL provided in request")
+            return jsonify({
+                'success': False,
+                'error': 'No URL provided for analysis'
+            }), 400
+        
+        logger.info(f"Analyzing single URL: {url}")
+        
+        # Create analyzer instance
+        analyzer = LocalLinkAnalyzer()
+        
+        # Analyze the single URL
+        url_analysis = analyzer.analyze_url_structure(url)
+        
+        # Get additional details
+        domain_info = analyzer.get_domain_info(url)
+        ssl_info = analyzer.check_ssl_certificate(url)
+        
+        # Calculate risk level
+        risk_score = url_analysis['risk_score']
+        if risk_score >= 70:
+            risk_level = 'HIGH'
+        elif risk_score >= 40:
+            risk_level = 'MEDIUM'
+        else:
+            risk_level = 'LOW'
+        
+        # Prepare response
+        result = {
+            'url': url,
+            'risk_level': risk_level,
+            'risk_score': risk_score,
+            'indicators': url_analysis['indicators'],
+            'domain_info': domain_info,
+            'ssl_info': ssl_info,
+            'recommendations': generate_url_recommendations(risk_score, url_analysis['indicators'])
+        }
+        
+        logger.info(f"Single URL analysis complete - Risk: {risk_level} ({risk_score})")
+        
+        return jsonify({
+            'success': True,
+            'result': result,
+            'timestamp': datetime.now().isoformat(),
+            'service': 'link_analysis'
+        })
+        
+    except Exception as e:
+        logger.error(f"Single URL analysis error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Analysis failed: {str(e)}',
+            'service': 'link_analysis'
+        }), 500
+
+def generate_url_recommendations(risk_score, indicators):
+    """Generate recommendations based on URL analysis"""
+    recommendations = []
+    
+    if risk_score >= 70:
+        recommendations.append("Do not click this link - high risk detected")
+        recommendations.append("Report this URL to security team if applicable")
+    elif risk_score >= 40:
+        recommendations.append("Exercise caution before clicking this link")
+        recommendations.append("Verify the destination domain")
+    
+    if any('suspicious' in indicator.lower() for indicator in indicators):
+        recommendations.append("Contains suspicious patterns - verify authenticity")
+    
+    if any('shortener' in indicator.lower() for indicator in indicators):
+        recommendations.append("Uses URL shortener - hover to see actual destination")
+    
+    if not recommendations:
+        recommendations.append("Link appears safe, but always verify before clicking")
+    
+    return recommendations
 
 @link_analysis_bp.route('/debug', methods=['GET'])
 def debug_info():
