@@ -164,6 +164,81 @@ def should_escalate_to_guardian(message):
     
     return None
 
+def needs_country_context(message):
+    """Check if message needs country-specific context"""
+    country_context_keywords = [
+        'in my country', 'in my area', 'in my region', 'in my state',
+        'in australia', 'in the us', 'in the uk', 'in canada',
+        'local police', 'local authorities', 'national', 'government',
+        'report to', 'report scam', 'report fraud', 'report cybercrime',
+        'consumer protection', 'cybercrime unit', 'police department'
+    ]
+    
+    message_lower = message.lower()
+    
+    for keyword in country_context_keywords:
+        if keyword in message_lower:
+            return True
+    
+    return False
+
+def get_country_specific_response(country):
+    """Get country-specific scam reporting information"""
+    country_responses = {
+        'australia': """**Scam Reporting in Australia:**
+
+• **Scamwatch**: Report to scamwatch.gov.au
+• **ACCC**: Australian Competition and Consumer Commission
+• **Local Police**: Contact your state/territory police
+• **Cyber.gov.au**: For cybercrime reporting
+• **Financial Institutions**: Report to your bank if money involved
+• **Document Everything**: Keep all evidence and communications
+
+**Important**: Never share personal information when reporting. If you need cybersecurity protection, Remaleh can assist with security assessments and training.""",
+        
+        'united states': """**Scam Reporting in the United States:**
+
+• **FTC**: Federal Trade Commission (ftc.gov)
+• **FBI IC3**: Internet Crime Complaint Center
+• **Local Police**: Contact your local police department
+• **State Attorney General**: Report to your state's AG office
+• **Financial Institutions**: Report to your bank if money involved
+• **Document Everything**: Keep all evidence and communications
+
+**Important**: Never share personal information when reporting. If you need cybersecurity protection, Remaleh can assist with security assessments and training.""",
+        
+        'united kingdom': """**Scam Reporting in the United Kingdom:**
+
+• **Action Fraud**: Report to actionfraud.police.uk
+• **Local Police**: Contact your local police force
+• **Trading Standards**: For consumer protection issues
+• **Financial Institutions**: Report to your bank if money involved
+• **Document Everything**: Keep all evidence and communications
+
+**Important**: Never share personal information when reporting. If you need cybersecurity protection, Remaleh can assist with security assessments and training.""",
+        
+        'canada': """**Scam Reporting in Canada:**
+
+• **Canadian Anti-Fraud Centre**: Report to antifraudcentre-centreantifraude.ca
+• **Local Police**: Contact your local police service
+• **Competition Bureau**: For consumer protection issues
+• **Financial Institutions**: Report to your bank if money involved
+• **Document Everything**: Keep all evidence and communications
+
+**Important**: Never share personal information when reporting. If you need cybersecurity protection, Remaleh can assist with security assessments and training."""
+    }
+    
+    return country_responses.get(country.lower(), """**General Scam Reporting Options:**
+
+• **Local Police**: Contact your local police department
+• **National Cybercrime Reporting**: Use your country's official cybercrime reporting website
+• **Financial Institutions**: Report to your bank if money was involved
+• **Consumer Protection Agencies**: Contact your country's consumer protection authority
+• **Online Platforms**: Report to the platform where the scam occurred
+• **Document Everything**: Keep records of communications, transactions, and evidence
+
+**Important**: Never share personal or financial information when reporting. If you need help with cybersecurity protection, Remaleh can assist with security assessments and training.""")
+
 def get_guardian_response(escalation_level, base_response=""):
     """Generate appropriate guardian escalation response"""
     if escalation_level == 'high':
@@ -248,6 +323,55 @@ def chat_message():
         
         # Check for Guardian escalation first
         escalation_level = should_escalate_to_guardian(message)
+        
+        # Check if user is providing their country
+        country_keywords = ['australia', 'united states', 'uk', 'canada', 'us', 'united kingdom', 'i am in', 'i live in', 'located in']
+        if any(keyword in message.lower() for keyword in country_keywords):
+            # Extract country from message
+            detected_country = None
+            if any(country in message.lower() for country in ['australia', 'australian']):
+                detected_country = 'australia'
+            elif any(country in message.lower() for country in ['united states', 'us', 'usa', 'american']):
+                detected_country = 'united states'
+            elif any(country in message.lower() for country in ['united kingdom', 'uk', 'british', 'england']):
+                detected_country = 'united kingdom'
+            elif any(country in message.lower() for country in ['canada', 'canadian']):
+                detected_country = 'canada'
+            
+            if detected_country:
+                country_response = get_country_specific_response(detected_country)
+                response_data = {
+                    'response': country_response,
+                    'source': 'country_specific_knowledge',
+                    'success': True,
+                    'escalation_level': escalation_level,
+                    'guardian_url': 'https://www.remaleh.com.au/contact-us' if escalation_level else None
+                }
+                
+                response = make_response(jsonify(response_data))
+                response.headers.add("Access-Control-Allow-Origin", "*")
+                response.headers.add('Access-Control-Allow-Headers', "*")
+                response.headers.add('Access-Control-Allow-Methods', "*")
+                return response
+        
+        # Check if message needs country context
+        if needs_country_context(message):
+            # Ask for country if not provided
+            if not any(country in message.lower() for country in ['australia', 'united states', 'uk', 'canada', 'us', 'united kingdom']):
+                response_data = {
+                    'response': "I'd be happy to help you with scam reporting options! To give you the most accurate information, could you please let me know which country you're located in? This will help me provide specific reporting channels and resources for your area.",
+                    'source': 'country_context_request',
+                    'success': True,
+                    'escalation_level': None,
+                    'guardian_url': None,
+                    'needs_country': True
+                }
+                
+                response = make_response(jsonify(response_data))
+                response.headers.add("Access-Control-Allow-Origin", "*")
+                response.headers.add('Access-Control-Allow-Headers', "*")
+                response.headers.add('Access-Control-Allow-Methods', "*")
+                return response
         
         # Try rule-based response first
         rule_response = get_rule_based_response(message)
