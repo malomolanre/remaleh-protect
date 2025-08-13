@@ -59,9 +59,20 @@ SCAM_INDICATORS = {
         'keywords': [
             'parcel', 'package', 'delivery', 'shipped', 'tracking', 'postal code',
             'held', 'suspended', 'customs', 'warehouse', 'courier', 'fedex', 'dhl',
-            'ups', 'auspost', 'australia post', 'postage', 'shipment'
+            'ups', 'auspost', 'australia post', 'postage', 'shipment', 'processed',
+            'invalid', 'cannot be delivered', 'temporarily held', 'verify', '24 hours',
+            'reply with', 'exit the message', 'reopen', 'activate the link', 'copy and paste',
+            'safari browser', 'best regards', 'team'
         ],
-        'weight': 17
+        'weight': 25  # Increased weight for delivery scams
+    },
+    'urgent_action_scam': {
+        'keywords': [
+            'reply with', 'exit the message', 'reopen', 'activate', 'copy and paste',
+            'safari browser', 'chrome', 'firefox', 'browser', 'click here', 'verify now',
+            'confirm immediately', 'act now', 'don\'t delay', 'time sensitive'
+        ],
+        'weight': 30  # High weight for urgent action scams
     }
 }
 
@@ -128,10 +139,25 @@ def extract_suspicious_patterns(text):
     if re.search(email_pattern, text):
         patterns.append('email_address')
     
-    # URLs
-    url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    # URLs - enhanced pattern to catch more malicious URLs
+    url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
     if re.search(url_pattern, text):
         patterns.append('url')
+        
+        # Additional URL analysis for suspicious patterns
+        urls = re.findall(url_pattern, text)
+        for url in urls:
+            url_lower = url.lower()
+            # Check for suspicious URL characteristics
+            if any(suspicious in url_lower for suspicious in [
+                '.buzz', '.tk', '.ml', '.ga', '.cf', '.pw', '.top', '.click', '.download',
+                '.work', '.party', '.trade', '.date', '.racing', '.review'
+            ]):
+                patterns.append('suspicious_domain')
+            if len(url) > 100:
+                patterns.append('very_long_url')
+            if url.count('.') > 3:
+                patterns.append('excessive_subdomains')
     
     # Money amounts
     money_pattern = r'\$[\d,]+(?:\.\d{2})?|\b\d+(?:,\d{3})*(?:\.\d{2})?\s*(?:dollars?|USD|AUD)\b'
@@ -185,8 +211,17 @@ def analyze_enhanced_scam(text):
     # Suspicious patterns
     patterns = extract_suspicious_patterns(text)
     if 'url' in patterns:
-        total_score += 20
+        total_score += 25
         indicators.append("Contains URLs")
+    if 'suspicious_domain' in patterns:
+        total_score += 35
+        indicators.append("Contains suspicious domain (.buzz, .tk, etc.)")
+    if 'very_long_url' in patterns:
+        total_score += 20
+        indicators.append("Contains very long URL")
+    if 'excessive_subdomains' in patterns:
+        total_score += 25
+        indicators.append("Contains excessive subdomains")
     if 'phone_number' in patterns:
         total_score += 15
         indicators.append("Contains phone numbers")

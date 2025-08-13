@@ -1186,12 +1186,12 @@ function App() {
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center mb-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 ${
-                    scamResult.riskLevel === 'high' ? 'bg-red-100' :
+                    scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? 'bg-red-100' :
                     scamResult.riskLevel === 'medium' ? 'bg-yellow-100' :
                     'bg-green-100'
                   }`}>
                     <svg className={`w-6 h-6 ${
-                      scamResult.riskLevel === 'high' ? 'text-red-600' :
+                      scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? 'text-red-600' :
                       scamResult.riskLevel === 'medium' ? 'text-yellow-600' :
                       'text-green-600'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1201,9 +1201,11 @@ function App() {
                   <div>
                     <h2 className="text-xl font-bold text-black">
                       Risk Level: {scamResult.riskLevel.charAt(0).toUpperCase() + scamResult.riskLevel.slice(1)}
+                      {scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' ? ' ⚠️ URGENT' : ''}
                     </h2>
                     <p className="text-gray-600">
                       Risk Score: {scamResult.riskScore}/100
+                      {scamResult.riskScore >= 70 ? ' - IMMEDIATE ACTION REQUIRED' : ''}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Analyzed with {scamType === 'link' ? 'Link Analysis Engine' : scamType === 'email' ? 'Enhanced Scam Detection Engine' : 'Comprehensive Scam Analysis Engine'}
@@ -1222,6 +1224,28 @@ function App() {
                     )}
                   </div>
                 </div>
+
+                {/* High Risk Warning */}
+                {(scamResult.riskLevel === 'high' || scamResult.riskLevel === 'critical' || scamResult.riskScore >= 70) && (
+                  <div className="mb-4 p-4 bg-red-50 border-2 border-red-300 rounded-xl">
+                    <div className="flex items-center mb-3">
+                      <svg className="w-6 h-6 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <h3 className="text-lg font-bold text-red-800">🚨 HIGH RISK CONTENT DETECTED</h3>
+                    </div>
+                    <div className="space-y-2 text-red-700">
+                      <p className="font-medium">This content shows multiple signs of being a scam:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        {scamResult.riskLevel === 'critical' && <li>Critical risk level - immediate action required</li>}
+                        {scamResult.riskScore >= 70 && <li>Very high risk score ({scamResult.riskScore}/100)</li>}
+                        {scamResult.indicators && scamResult.indicators.length > 0 && <li>Multiple suspicious indicators detected</li>}
+                        <li>Do NOT click any links or respond to this message</li>
+                        <li>Contact Remaleh Guardians via chat immediately</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
 
                 {/* Risk Indicators */}
                 {scamResult.indicators && Object.keys(scamResult.indicators).length > 0 && (

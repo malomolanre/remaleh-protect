@@ -31,7 +31,8 @@ KNOWN_MALICIOUS_DOMAINS = {
 # Suspicious TLDs commonly used in scams
 SUSPICIOUS_TLDS = {
     '.tk', '.ml', '.ga', '.cf', '.pw', '.top', '.click', '.download',
-    '.work', '.party', '.trade', '.date', '.racing', '.review'
+    '.work', '.party', '.trade', '.date', '.racing', '.review', '.buzz',
+    '.xyz', '.site', '.online', '.web', '.app', '.tech', '.space'
 }
 
 # URL shorteners (often used to hide malicious links)
@@ -44,7 +45,9 @@ URL_SHORTENERS = {
 SUSPICIOUS_URL_KEYWORDS = [
     'login', 'verify', 'account', 'secure', 'update', 'confirm',
     'suspended', 'limited', 'urgent', 'immediate', 'click',
-    'free', 'prize', 'winner', 'lottery', 'inheritance'
+    'free', 'prize', 'winner', 'lottery', 'inheritance',
+    'track', 'parcel', 'delivery', 'postal', 'held', 'customs',
+    'warehouse', 'courier', 'activate', 'reopen', 'exit'
 ]
 
 class LocalLinkAnalyzer:
