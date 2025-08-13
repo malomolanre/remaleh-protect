@@ -1600,7 +1600,7 @@ function App() {
       case 'learn':
         return <LearnHub setActiveTab={setActiveTab} />
       case 'admin':
-        return <ContentAdmin />
+        return <ContentAdmin setActiveTab={setActiveTab} />
       case 'community':
         return (
           <div className="space-y-6">

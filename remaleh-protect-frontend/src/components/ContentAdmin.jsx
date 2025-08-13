@@ -17,7 +17,7 @@ import {
   importContent
 } from '../utils/contentManager'
 
-export default function ContentAdmin() {
+export default function ContentAdmin({ setActiveTab }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [modules, setModules] = useState([])
   const [editingModule, setEditingModule] = useState(null)
@@ -271,7 +271,7 @@ export default function ContentAdmin() {
               You need to be logged in to access the Content Management system.
             </p>
             <MobileButton 
-              onClick={() => window.location.href = '/login'} 
+              onClick={() => setActiveTab && setActiveTab('login')} 
               className="bg-yellow-600 hover:bg-yellow-700 text-white"
             >
               <LogIn className="w-4 h-4 mr-2" />
