@@ -356,18 +356,19 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Profile Icon */}
-      <header className="bg-[#21a1ce] text-white px-6 py-8">
+      <header className="bg-white border-b border-gray-100 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex-1 text-center">
+          <div className="flex items-center space-x-3">
             <img 
               src="/Remaleh-logo-full-2.jpg" 
               alt="Remaleh" 
-              className="h-16 mx-auto mb-3"
+              className="h-8 w-auto"
             />
-            <p className="text-white text-base opacity-90">Your Security Companion</p>
+            <div className="h-6 w-px bg-gray-200"></div>
+            <span className="text-gray-600 text-sm font-medium">Security Companion</span>
           </div>
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-            <span className="text-[#21a1ce] font-semibold text-lg">LP</span>
+          <div className="w-8 h-8 bg-gradient-to-br from-[#21a1ce] to-[#1a8bb8] rounded-full flex items-center justify-center shadow-sm">
+            <span className="text-white font-semibold text-sm">LP</span>
           </div>
         </div>
       </header>
