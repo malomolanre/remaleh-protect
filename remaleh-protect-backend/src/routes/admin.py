@@ -241,6 +241,84 @@ def update_user_role(current_user, user_id):
         db.session.rollback()
         return jsonify({'error': 'Internal server error'}), 500
 
+@admin_bp.route('/users/<int:user_id>', methods=['PUT'])
+@token_required
+@admin_required
+def update_user(current_user, user_id):
+    """Update user information (first name, last name, email)"""
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        data = request.get_json()
+        
+        # Update fields if provided
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+        if 'email' in data and data['email'] != user.email:
+            # Check if email is already taken by another user
+            existing_user = User.query.filter_by(email=data['email']).first()
+            if existing_user and existing_user.id != user_id:
+                return jsonify({'error': 'Email already taken by another user'}), 400
+            user.email = data['email']
+        
+        db.session.commit()
+        
+        logger.info(f"Admin {current_user.email} updated user {user.email} information")
+        
+        return jsonify({
+            'message': 'User information updated successfully',
+            'user_id': user_id,
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+                'status': user.account_status
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error updating user information: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error'}), 500
+
+@admin_bp.route('/users/<int:user_id>/password', methods=['PUT'])
+@token_required
+@admin_required
+def update_user_password(current_user, user_id):
+    """Update user password"""
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        data = request.get_json()
+        new_password = data.get('password')
+        
+        if not new_password:
+            return jsonify({'error': 'Password is required'}), 400
+        
+        # Update password
+        user.set_password(new_password)
+        db.session.commit()
+        
+        logger.info(f"Admin {current_user.email} updated password for user {user.email}")
+        
+        return jsonify({
+            'message': 'User password updated successfully',
+            'user_id': user_id
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error updating user password: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error'}), 500
+
 @admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
 @token_required
 @admin_required

@@ -102,7 +102,7 @@ export const updateUserStatus = async (userId, newStatus) => {
 // Update user role
 export const updateUserRole = async (userId, newRole) => {
   try {
-    const response = await apiPut(USER_ENDPOINTS.UPDATE_ROLE(userId), {
+    const response = await apiPut(USER_ENDPOINTS.USER(userId), {
       role: newRole
     })
     
@@ -119,6 +119,57 @@ export const updateUserRole = async (userId, newRole) => {
     }
   } catch (error) {
     console.error('Error updating user role:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Update user information (first name, last name, email)
+export const updateUserInfo = async (userId, userData) => {
+  try {
+    const response = await apiPut(USER_ENDPOINTS.USER(userId), userData)
+    
+    if (response.ok) {
+      const data = await response.json()
+      return {
+        success: true,
+        message: data.message || 'User information updated successfully',
+        user: data.user
+      }
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+    }
+  } catch (error) {
+    console.error('Error updating user information:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Update user password
+export const updateUserPassword = async (userId, newPassword) => {
+  try {
+    const response = await apiPut(`${USER_ENDPOINTS.USER(userId)}/password`, {
+      password: newPassword
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      return {
+        success: true,
+        message: data.message || 'User password updated successfully'
+      }
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+    }
+  } catch (error) {
+    console.error('Error updating user password:', error)
     return {
       success: false,
       error: error.message

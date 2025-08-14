@@ -17,8 +17,8 @@ import { MobileCard } from '../ui/mobile-card'
 import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
-import { createModule, getAllModules } from '../../utils/contentManager'
-import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser } from '../../utils/userManager'
+import { createModule, getAllModules, updateModule } from '../../utils/contentManager'
+import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword } from '../../utils/userManager'
 
 export default function AdminDashboard({ setActiveTab }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
@@ -274,6 +274,109 @@ export default function AdminDashboard({ setActiveTab }) {
     } catch (error) {
       console.error('Failed to create user:', error)
       setError(error.message || 'Failed to create user')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+  
+  // Handle user update
+  const handleUpdateUser = async (userId) => {
+    try {
+      setActionLoading(true)
+      setError(null)
+      
+      // Find the user being edited
+      const userToUpdate = editingUser
+      
+      // Update user information
+      const updatePromises = []
+      
+      // Update basic user info if changed
+      const basicInfoChanged = 
+        userToUpdate.first_name !== users.find(u => u.id === userId)?.first_name ||
+        userToUpdate.last_name !== users.find(u => u.id === userId)?.last_name ||
+        userToUpdate.email !== users.find(u => u.id === userId)?.email
+      
+      if (basicInfoChanged) {
+        const basicInfo = {
+          first_name: userToUpdate.first_name,
+          last_name: userToUpdate.last_name,
+          email: userToUpdate.email
+        }
+        updatePromises.push(updateUserInfo(userId, basicInfo))
+      }
+      
+      // Update role if changed
+      if (userToUpdate.role && userToUpdate.role !== users.find(u => u.id === userId)?.role) {
+        updatePromises.push(updateUserRole(userId, userToUpdate.role))
+      }
+      
+      // Update status if changed
+      if (userToUpdate.status && userToUpdate.status !== users.find(u => u.id === userId)?.status) {
+        updatePromises.push(updateUserStatus(userId, userToUpdate.status))
+      }
+      
+      // Update password if changed
+      if (userToUpdate.newPassword) {
+        updatePromises.push(updateUserPassword(userId, userToUpdate.newPassword))
+      }
+      
+      // Execute all updates
+      if (updatePromises.length > 0) {
+        const results = await Promise.all(updatePromises)
+        const hasErrors = results.some(result => !result.success)
+        
+        if (hasErrors) {
+          const errors = results.filter(r => !r.success).map(r => r.error).join(', ')
+          setError(`Failed to update user: ${errors}`)
+          return
+        }
+      }
+      
+      alert('User updated successfully!')
+      
+      // Close modal and reload data
+      setEditingUser(null)
+      await loadUsers()
+      await loadUserStats()
+      
+    } catch (error) {
+      console.error('Failed to update user:', error)
+      setError(error.message || 'Failed to update user')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+  
+  // Handle module update
+  const handleUpdateModule = async (moduleId) => {
+    try {
+      setActionLoading(true)
+      setError(null)
+      
+      // Find the module being edited
+      const moduleToUpdate = editingModule
+      
+      // Prepare module data
+      const moduleData = {
+        title: moduleToUpdate.title,
+        description: moduleToUpdate.description,
+        difficulty: moduleToUpdate.difficulty,
+        estimated_time: moduleToUpdate.estimated_time
+      }
+      
+      // Update module using contentManager
+      await updateModule(moduleId, moduleData)
+      
+      alert('Module updated successfully!')
+      
+      // Close modal and reload data
+      setEditingModule(null)
+      await loadModules()
+      
+    } catch (error) {
+      console.error('Failed to update module:', error)
+      setError(error.message || 'Failed to update module')
     } finally {
       setActionLoading(false)
     }
@@ -994,6 +1097,202 @@ export default function AdminDashboard({ setActiveTab }) {
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                   >
                     {actionLoading ? 'Creating...' : 'Create User'}
+                  </MobileButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Edit User</h2>
+                <button 
+                  onClick={() => setEditingUser(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                  <MobileInput
+                    type="text"
+                    placeholder="Enter first name"
+                    value={editingUser.first_name || ''}
+                    onChange={(e) => setEditingUser(prev => ({ ...prev, first_name: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                  <MobileInput
+                    type="text"
+                    placeholder="Enter last name"
+                    value={editingUser.last_name || ''}
+                    onChange={(e) => setEditingUser(prev => ({ ...prev, last_name: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <MobileInput
+                    type="email"
+                    placeholder="Enter email address"
+                    value={editingUser.email || ''}
+                    onChange={(e) => setEditingUser(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                  <select 
+                    value={editingUser.role || 'USER'}
+                    onChange={(e) => setEditingUser(prev => ({ ...prev, role: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                  >
+                    <option value="USER">User</option>
+                    <option value="MODERATOR">Moderator</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select 
+                    value={editingUser.status || 'ACTIVE'}
+                    onChange={(e) => setEditingUser(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="SUSPENDED">Suspended</option>
+                    <option value="BANNED">Banned</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">New Password (leave blank to keep current)</label>
+                  <MobileInput
+                    type="password"
+                    placeholder="Enter new password"
+                    value={editingUser.newPassword || ''}
+                    onChange={(e) => setEditingUser(prev => ({ ...prev, newPassword: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <MobileButton
+                    onClick={() => setEditingUser(null)}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
+                  >
+                    Cancel
+                  </MobileButton>
+                  <MobileButton
+                    onClick={() => handleUpdateUser(editingUser.id)}
+                    disabled={actionLoading}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {actionLoading ? 'Updating...' : 'Update User'}
+                  </MobileButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Module Modal */}
+      {editingModule && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Edit Module</h2>
+                <button 
+                  onClick={() => setEditingModule(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <MobileInput
+                    type="text"
+                    placeholder="Enter module title"
+                    value={editingModule.title || ''}
+                    onChange={(e) => setEditingModule(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <Textarea
+                    placeholder="Enter module description"
+                    value={editingModule.description || ''}
+                    onChange={(e) => setEditingModule(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full"
+                    rows={3}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                  <select
+                    value={editingModule.difficulty || 'BEGINNER'}
+                    onChange={(e) => setEditingModule(prev => ({ ...prev, difficulty: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                  >
+                    <option value="BEGINNER">Beginner</option>
+                    <option value="INTERMEDIATE">Intermediate</option>
+                    <option value="ADVANCED">Advanced</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Time (minutes)</label>
+                  <MobileInput
+                    type="number"
+                    placeholder="10"
+                    value={editingModule.estimated_time || 10}
+                    onChange={(e) => setEditingModule(prev => ({ ...prev, estimated_time: parseInt(e.target.value) || 10 }))}
+                    min="1"
+                    max="120"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <MobileButton
+                    onClick={() => setEditingModule(null)}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
+                  >
+                    Cancel
+                  </MobileButton>
+                  <MobileButton
+                    onClick={() => handleUpdateModule(editingModule.id)}
+                    disabled={actionLoading}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {actionLoading ? 'Updating...' : 'Update Module'}
                   </MobileButton>
                 </div>
               </div>
