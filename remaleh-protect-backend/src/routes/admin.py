@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from functools import wraps
 from datetime import datetime
 import logging
+from sqlalchemy import text
 
 # Import production modules - try relative imports first, then absolute
 try:
@@ -15,16 +16,20 @@ logger = logging.getLogger(__name__)
 admin_bp = Blueprint('admin', __name__)
 
 def admin_required(f):
-    """Decorator to check if user is admin"""
+    """Decorator to check if user is admin - must be used AFTER token_required"""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(current_user, *args, **kwargs):
         try:
-            # Get current user from the request context
-            from flask import g
-            current_user = getattr(g, 'current_user', None)
+            logger.info(f"Admin check for user: {current_user.email if current_user else 'None'}")
+            logger.info(f"User is_admin: {current_user.is_admin if current_user else 'None'}")
+            logger.info(f"User role: {current_user.role if current_user else 'None'}")
             
+            # current_user is passed from token_required decorator
             if not current_user or not current_user.is_admin:
+                logger.warning(f"Admin access denied for user: {current_user.email if current_user else 'None'}")
                 return jsonify({'error': 'Admin access required'}), 403
+            
+            logger.info(f"Admin access granted for user: {current_user.email}")
             return f(current_user, *args, **kwargs)
         except Exception as e:
             logger.error(f"Error in admin_required decorator: {e}")
@@ -37,12 +42,22 @@ def admin_required(f):
 def get_users(current_user):
     """Get all users with pagination and filtering"""
     try:
+        # Debug logging
+        logger.info(f"Admin users endpoint called by user: {current_user.email if current_user else 'None'}")
+        logger.info(f"User is_admin: {current_user.is_admin if current_user else 'None'}")
+        logger.info(f"User role: {current_user.role if current_user else 'None'}")
+        
         # Check database connectivity
         try:
             db.session.execute('SELECT 1')
+            logger.info("Database connection test successful")
         except Exception as db_error:
             logger.error(f"Database connection error: {db_error}")
             return jsonify({'error': 'Database connection failed', 'details': str(db_error)}), 503
+        
+        # Check if users table has data
+        total_users = User.query.count()
+        logger.info(f"Total users in database: {total_users}")
         
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
@@ -61,6 +76,8 @@ def get_users(current_user):
             per_page=per_page, 
             error_out=False
         )
+        
+        logger.info(f"Query returned {len(users.items)} users for page {page}")
         
         user_list = []
         for user in users.items:
@@ -85,6 +102,8 @@ def get_users(current_user):
             }
             user_list.append(user_data)
         
+        logger.info(f"Returning {len(user_list)} users")
+        
         return jsonify({
             'users': user_list,
             'pagination': {
@@ -99,6 +118,8 @@ def get_users(current_user):
         
     except Exception as e:
         logger.error(f"Error getting users: {e}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
@@ -479,3 +500,137 @@ def system_health(current_user):
     except Exception as e:
         logger.error(f"Error getting system health: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@admin_bp.route('/debug/auth', methods=['GET'])
+@token_required
+def debug_auth(current_user):
+    """Debug endpoint to check authentication status - no admin required"""
+    try:
+        logger.info(f"Debug auth endpoint called by user: {current_user.email if current_user else 'None'}")
+        
+        user_info = {
+            'id': current_user.id if current_user else None,
+            'email': current_user.email if current_user else None,
+            'first_name': current_user.first_name if current_user else None,
+            'last_name': current_user.last_name if current_user else None,
+            'role': current_user.role if current_user else None,
+            'is_admin': current_user.is_admin if current_user else None,
+            'account_status': current_user.account_status if current_user else None,
+            'created_at': current_user.created_at.isoformat() if current_user and current_user.created_at else None
+        }
+        
+        # Check database connectivity
+        try:
+            db.session.execute(text('SELECT 1'))
+            db_status = 'connected'
+        except Exception as db_error:
+            db_status = f'error: {str(db_error)}'
+        
+        # Check total users
+        try:
+            total_users = User.query.count()
+            admin_users = User.query.filter_by(is_admin=True).count()
+            admin_role_users = User.query.filter_by(role='ADMIN').count()
+        except Exception as e:
+            total_users = f'error: {str(e)}'
+            admin_users = f'error: {str(e)}'
+            admin_role_users = f'error: {str(e)}'
+        
+        debug_info = {
+            'user': user_info,
+            'database': {
+                'status': db_status,
+                'total_users': total_users,
+                'admin_users': admin_users,
+                'admin_role_users': admin_role_users
+            },
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        
+        logger.info(f"Debug info: {debug_info}")
+        
+        return jsonify(debug_info), 200
+        
+    except Exception as e:
+        logger.error(f"Error in debug auth: {e}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'Debug endpoint error', 'details': str(e)}), 500
+
+@admin_bp.route('/debug/users', methods=['GET'])
+def debug_users():
+    """Public debug endpoint to check users in database - no auth required"""
+    try:
+        logger.info("Debug users endpoint called")
+        
+        # Check database connectivity
+        try:
+            db.session.execute(text('SELECT 1'))
+            db_status = 'connected'
+        except Exception as db_error:
+            db_status = f'error: {str(db_error)}'
+            return jsonify({'error': 'Database connection failed', 'details': str(db_error)}), 503
+        
+        # Check users table
+        try:
+            total_users = User.query.count()
+            
+            if total_users > 0:
+                # Get sample users (limit to 5 for security)
+                users = User.query.limit(5).all()
+                user_list = []
+                for user in users:
+                    user_data = {
+                        'id': user.id,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'role': user.role,
+                        'is_admin': user.is_admin,
+                        'account_status': user.account_status,
+                        'created_at': user.created_at.isoformat() if user.created_at else None
+                    }
+                    user_list.append(user_data)
+                
+                # Count admin users
+                admin_users = User.query.filter_by(is_admin=True).count()
+                admin_role_users = User.query.filter_by(role='ADMIN').count()
+                
+                debug_info = {
+                    'database': {
+                        'status': db_status,
+                        'total_users': total_users,
+                        'admin_users': admin_users,
+                        'admin_role_users': admin_role_users
+                    },
+                    'sample_users': user_list,
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+            else:
+                debug_info = {
+                    'database': {
+                        'status': db_status,
+                        'total_users': 0,
+                        'admin_users': 0,
+                        'admin_role_users': 0
+                    },
+                    'sample_users': [],
+                    'message': 'No users found in database',
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+            
+            logger.info(f"Debug users info: {debug_info}")
+            return jsonify(debug_info), 200
+            
+        except Exception as e:
+            logger.error(f"Error checking users: {e}")
+            return jsonify({
+                'error': 'Error checking users',
+                'details': str(e),
+                'database': {'status': db_status},
+                'timestamp': datetime.utcnow().isoformat()
+            }), 500
+        
+    except Exception as e:
+        logger.error(f"Error in debug users: {e}")
+        return jsonify({'error': 'Debug endpoint error', 'details': str(e)}), 500
