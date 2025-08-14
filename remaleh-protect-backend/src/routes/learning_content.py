@@ -253,14 +253,42 @@ def add_lesson(current_user, module_id):
         module.content = current_content
         logger.info(f"About to commit lesson to database. Module content: {module.content}")
         logger.info(f"Module content type: {type(module.content)}")
+        logger.info(f"Module content JSON serializable: {isinstance(module.content, (dict, list))}")
+        
+        # Ensure the module object is marked as modified
+        from sqlalchemy import inspect
+        inspect(module).flag_modified('content')
+        
+        # Log the module state before commit
+        logger.info(f"Module state before commit - content: {module.content}")
+        logger.info(f"Module state before commit - lessons count: {len(module.content.get('lessons', [])) if module.content else 0}")
         
         db.session.commit()
         logger.info(f"Database commit successful")
+        
+        # Refresh the module object to get the latest data
+        db.session.refresh(module)
+        logger.info(f"After refresh - module content: {module.content}")
+        logger.info(f"After refresh - lessons count: {len(module.content.get('lessons', [])) if module.content else 0}")
         
         # Test retrieving the module again to see if content persists
         test_module = LearningModule.query.get(module_id)
         logger.info(f"Test query - module content: {test_module.content}")
         logger.info(f"Test query - lessons count: {len(test_module.content.get('lessons', [])) if test_module.content else 0}")
+        
+        # Check if there are any database constraints or triggers affecting the content field
+        try:
+            # Get the table info to see if there are any constraints
+            from sqlalchemy import text
+            result = db.session.execute(text("""
+                SELECT column_name, data_type, is_nullable, column_default
+                FROM information_schema.columns 
+                WHERE table_name = 'learning_modules' AND column_name = 'content'
+            """))
+            column_info = result.fetchone()
+            logger.info(f"Database column info for 'content': {column_info}")
+        except Exception as schema_error:
+            logger.warning(f"Could not get schema info: {schema_error}")
         
         logger.info(f"Successfully added lesson '{new_lesson['title']}' (ID: {new_lesson_id}) to module '{module.title}'")
         logger.info(f"Module now has {len(lessons)} lessons")
