@@ -164,10 +164,15 @@ export const apiPost = (endpoint, data) => apiCall(endpoint, {
 });
 
 // Helper function for PUT requests
-export const apiPut = (endpoint, data) => apiCall(endpoint, {
-  method: 'PUT',
-  body: JSON.stringify(data)
-});
+export const apiPut = (endpoint, data) => {
+  console.log('🔧 apiPut called with:', { endpoint, data })
+  console.log('🔧 HTTP method will be: PUT')
+  
+  return apiCall(endpoint, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  })
+};
 
 // Helper function for DELETE requests
 export const apiDelete = (endpoint) => apiCall(endpoint, { method: 'DELETE' });

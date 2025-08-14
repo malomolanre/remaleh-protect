@@ -351,11 +351,15 @@ export default function AdminDashboard({ setActiveTab }) {
   // Handle module update
   const handleUpdateModule = async (moduleId) => {
     try {
+      console.log('🔄 handleUpdateModule called with moduleId:', moduleId)
+      console.log('🔄 editingModule state:', editingModule)
+      
       setActionLoading(true)
       setError(null)
       
       // Find the module being edited
       const moduleToUpdate = editingModule
+      console.log('🔄 moduleToUpdate:', moduleToUpdate)
       
       // Prepare module data
       const moduleData = {
@@ -364,8 +368,10 @@ export default function AdminDashboard({ setActiveTab }) {
         difficulty: moduleToUpdate.difficulty,
         estimated_time: moduleToUpdate.estimated_time
       }
+      console.log('🔄 moduleData to send:', moduleData)
       
       // Update module using contentManager
+      console.log('🔄 Calling updateModule from contentManager...')
       await updateModule(moduleId, moduleData)
       
       alert('Module updated successfully!')
@@ -375,7 +381,7 @@ export default function AdminDashboard({ setActiveTab }) {
       await loadModules()
       
     } catch (error) {
-      console.error('Failed to update module:', error)
+      console.error('❌ Failed to update module:', error)
       setError(error.message || 'Failed to update module')
     } finally {
       setActionLoading(false)

@@ -7,13 +7,50 @@ import json
 # Import production modules - try relative imports first, then absolute
 try:
     from ..models import db, LearningModule, LearningProgress, User
-    from ..auth import token_required, admin_required
+    from ..auth import token_required
 except ImportError:
     from models import db, LearningModule, LearningProgress, User
-    from auth import token_required, admin_required
+    from auth import token_required
 
 logger = logging.getLogger(__name__)
 learning_content_bp = Blueprint('learning_content', __name__)
+
+def admin_required_learning(f):
+    """Custom admin_required decorator for learning content routes"""
+    @wraps(f)
+    def decorated(current_user, *args, **kwargs):
+        try:
+            # Check if user is admin
+            if not getattr(current_user, 'is_admin', False) and getattr(current_user, 'role', '') != 'ADMIN':
+                logger.warning(f"Admin access denied for user: {current_user.email}")
+                return jsonify({'error': 'Admin privileges required'}), 403
+            
+            logger.info(f"Admin access granted for user: {current_user.email}")
+            return f(current_user, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in admin_required_learning decorator: {e}")
+            return jsonify({'error': 'Authentication error'}), 500
+    return decorated
+
+@learning_content_bp.route('/test-put', methods=['PUT'])
+def test_put():
+    """Test endpoint to verify PUT requests work"""
+    logger.info("PUT /test-put called")
+    logger.info(f"Request method: {request.method}")
+    logger.info(f"Request headers: {dict(request.headers)}")
+    
+    try:
+        data = request.get_json()
+        logger.info(f"Request data: {data}")
+        
+        return jsonify({
+            'message': 'PUT request successful',
+            'method': request.method,
+            'data': data
+        }), 200
+    except Exception as e:
+        logger.error(f"Error in test PUT: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @learning_content_bp.route('/modules', methods=['GET'])
 @token_required
@@ -47,7 +84,7 @@ def get_module(current_user, module_id):
 
 @learning_content_bp.route('/modules', methods=['POST'])
 @token_required
-@admin_required
+@admin_required_learning
 def create_module(current_user):
     """Create a new learning module"""
     try:
@@ -85,15 +122,21 @@ def create_module(current_user):
 
 @learning_content_bp.route('/modules/<int:module_id>', methods=['PUT'])
 @token_required
-@admin_required
+@admin_required_learning
 def update_module(current_user, module_id):
     """Update an existing learning module"""
     try:
+        logger.info(f"PUT /modules/{module_id} called by user: {current_user.email}")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Request headers: {dict(request.headers)}")
+        
         module = LearningModule.query.get(module_id)
         if not module:
+            logger.warning(f"Module {module_id} not found")
             return jsonify({'error': 'Module not found'}), 404
         
         data = request.get_json()
+        logger.info(f"Request data: {data}")
         
         # Update fields if provided
         if 'title' in data:
@@ -124,7 +167,7 @@ def update_module(current_user, module_id):
 
 @learning_content_bp.route('/modules/<int:module_id>', methods=['DELETE'])
 @token_required
-@admin_required
+@admin_required_learning
 def delete_module(current_user, module_id):
     """Delete a learning module (soft delete)"""
     try:
@@ -146,7 +189,7 @@ def delete_module(current_user, module_id):
 
 @learning_content_bp.route('/modules/<int:module_id>/lessons', methods=['POST'])
 @token_required
-@admin_required
+@admin_required_learning
 def add_lesson(current_user, module_id):
     """Add a lesson to a module"""
     try:
@@ -195,7 +238,7 @@ def add_lesson(current_user, module_id):
 
 @learning_content_bp.route('/modules/<int:module_id>/lessons/<int:lesson_id>', methods=['PUT'])
 @token_required
-@admin_required
+@admin_required_learning
 def update_lesson(current_user, module_id, lesson_id):
     """Update a lesson in a module"""
     try:
@@ -233,7 +276,7 @@ def update_lesson(current_user, module_id, lesson_id):
 
 @learning_content_bp.route('/modules/<int:module_id>/lessons/<int:lesson_id>', methods=['DELETE'])
 @token_required
-@admin_required
+@admin_required_learning
 def delete_lesson(current_user, module_id, lesson_id):
     """Delete a lesson from a module"""
     try:
@@ -363,7 +406,7 @@ def get_progress_overview(current_user):
 
 @learning_content_bp.route('/content/export', methods=['GET'])
 @token_required
-@admin_required
+@admin_required_learning
 def export_content(current_user):
     """Export all learning content as JSON"""
     try:
@@ -392,7 +435,7 @@ def export_content(current_user):
 
 @learning_content_bp.route('/content/import', methods=['POST'])
 @token_required
-@admin_required
+@admin_required_learning
 def import_content(current_user):
     """Import learning content from JSON"""
     try:

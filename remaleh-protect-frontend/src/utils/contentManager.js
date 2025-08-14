@@ -352,17 +352,26 @@ export const createModule = async (moduleData) => {
 
 export const updateModule = async (moduleId, moduleData) => {
   try {
+    console.log('🔄 updateModule called with:', { moduleId, moduleData })
+    console.log('🌐 API endpoint:', API_ENDPOINTS.MODULE(moduleId))
+    
     const response = await apiPut(API_ENDPOINTS.MODULE(moduleId), moduleData)
+    
+    console.log('🌐 Response status:', response.status)
+    console.log('🌐 Response ok:', response.ok)
+    
     if (response.ok) {
       const data = await response.json()
+      console.log('✅ Module updated successfully:', data)
       // Refresh local cache
       await getAllModules()
       return data
     } else {
+      console.error('❌ Failed to update module, status:', response.status)
       throw new Error('Failed to update module')
     }
   } catch (error) {
-    console.error('Error updating module:', error)
+    console.error('❌ Error in updateModule:', error)
     throw error
   }
 }
