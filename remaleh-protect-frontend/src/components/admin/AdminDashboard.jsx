@@ -82,6 +82,21 @@ export default function AdminDashboard({ setActiveTab }) {
   })
   const [editingLesson, setEditingLesson] = useState(null)
   
+  // Lesson operation loading states
+  const [lessonActionLoading, setLessonActionLoading] = useState(false)
+  const [lessonSuccessMessage, setLessonSuccessMessage] = useState('')
+  
+  // Auto-hide success messages
+  React.useEffect(() => {
+    if (lessonSuccessMessage) {
+      const timer = setTimeout(() => {
+        setLessonSuccessMessage('')
+      }, 3000) // Hide after 3 seconds
+      
+      return () => clearTimeout(timer)
+    }
+  }, [lessonSuccessMessage])
+  
   // Load modules from backend
   const loadModules = async () => {
     try {
@@ -403,6 +418,8 @@ export default function AdminDashboard({ setActiveTab }) {
   // Lesson management functions
   const handleAddLesson = async (moduleId) => {
     try {
+      setLessonActionLoading(true)
+      setLessonSuccessMessage('')
       const response = await addLesson(moduleId, newLessonData)
       
       if (response.success) {
@@ -414,31 +431,57 @@ export default function AdminDashboard({ setActiveTab }) {
           contentStyle: 'default',
           duration: 5
         })
-        loadModules() // Reload modules to show new lesson
-        setError(null)
+        
+        // Refresh both the modules list and the selected module data
+        await loadModules()
+        
+        // Update the selected module with fresh data
+        const updatedModules = await getAllModules()
+        const updatedModule = updatedModules.find(m => m.id === moduleId)
+        if (updatedModule) {
+          setSelectedModuleForLessons(updatedModule)
+        }
+        
+        setLessonSuccessMessage('Lesson added successfully!')
       } else {
         setError(response.error || 'Failed to add lesson')
       }
     } catch (error) {
       console.error('Error adding lesson:', error)
       setError('Failed to add lesson')
+    } finally {
+      setLessonActionLoading(false)
     }
   }
 
   const handleUpdateLesson = async (moduleId, lessonId, lessonData) => {
     try {
+      setLessonActionLoading(true)
+      setLessonSuccessMessage('')
       const response = await updateLesson(moduleId, lessonId, lessonData)
       
       if (response.success) {
         setEditingLesson(null)
-        loadModules() // Reload modules
-        setError(null)
+        
+        // Refresh both the modules list and the selected module data
+        await loadModules()
+        
+        // Update the selected module with fresh data
+        const updatedModules = await getAllModules()
+        const updatedModule = updatedModules.find(m => m.id === moduleId)
+        if (updatedModule) {
+          setSelectedModuleForLessons(updatedModule)
+        }
+        
+        setLessonSuccessMessage('Lesson updated successfully!')
       } else {
         setError(response.error || 'Failed to update lesson')
       }
     } catch (error) {
       console.error('Error updating lesson:', error)
       setError('Failed to update lesson')
+    } finally {
+      setLessonActionLoading(false)
     }
   }
 
@@ -448,17 +491,30 @@ export default function AdminDashboard({ setActiveTab }) {
     }
     
     try {
+      setLessonActionLoading(true)
+      setLessonSuccessMessage('')
       const response = await deleteLesson(moduleId, lessonId)
       
       if (response.success) {
-        loadModules() // Reload modules
-        setError(null)
+        // Refresh both the modules list and the selected module data
+        await loadModules()
+        
+        // Update the selected module with fresh data
+        const updatedModules = await getAllModules()
+        const updatedModule = updatedModules.find(m => m.id === moduleId)
+        if (updatedModule) {
+          setSelectedModuleForLessons(updatedModule)
+        }
+        
+        setLessonSuccessMessage('Lesson deleted successfully!')
       } else {
         setError(response.error || 'Failed to delete lesson')
       }
     } catch (error) {
       console.error('Error deleting lesson:', error)
       setError('Failed to delete lesson')
+    } finally {
+      setLessonActionLoading(false)
     }
   }
   
@@ -1479,17 +1535,35 @@ export default function AdminDashboard({ setActiveTab }) {
                 <div className="mt-4">
                   <MobileButton
                     onClick={() => handleAddLesson(selectedModuleForLessons.id)}
+                    disabled={lessonActionLoading}
                     className="bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Lesson
+                    {lessonActionLoading ? 'Adding...' : 'Add Lesson'}
                   </MobileButton>
+                  {lessonSuccessMessage && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-sm text-green-800 font-medium">{lessonSuccessMessage}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Existing Lessons List */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Existing Lessons</h3>
+                {lessonActionLoading && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center">
+                      <RefreshCw className="w-4 h-4 text-blue-600 mr-2 animate-spin" />
+                      <span className="text-sm text-blue-800">Updating lessons...</span>
+                    </div>
+                  </div>
+                )}
                 {selectedModuleForLessons.content?.lessons?.length > 0 ? (
                   <div className="space-y-3">
                     {selectedModuleForLessons.content.lessons.map((lesson) => (
@@ -1506,7 +1580,8 @@ export default function AdminDashboard({ setActiveTab }) {
                             </button>
                             <button
                               onClick={() => handleDeleteLesson(selectedModuleForLessons.id, lesson.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              disabled={lessonActionLoading}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                               title="Delete Lesson"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1618,9 +1693,10 @@ export default function AdminDashboard({ setActiveTab }) {
                   </MobileButton>
                   <MobileButton
                     onClick={() => handleUpdateLesson(selectedModuleForLessons.id, editingLesson.id, editingLesson)}
+                    disabled={lessonActionLoading}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   >
-                    Update Lesson
+                    {lessonActionLoading ? 'Updating...' : 'Update Lesson'}
                   </MobileButton>
                 </div>
               </div>
