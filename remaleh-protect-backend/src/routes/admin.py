@@ -202,7 +202,7 @@ def update_user_status(current_user, user_id):
         db.session.rollback()
         return jsonify({'error': 'Internal server error'}), 500
 
-
+@admin_bp.route('/users/<int:user_id>/role', methods=['PUT'])
 @token_required
 @admin_required
 def update_user_role(current_user, user_id):
