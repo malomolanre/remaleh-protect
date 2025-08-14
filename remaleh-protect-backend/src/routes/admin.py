@@ -202,7 +202,7 @@ def update_user_status(current_user, user_id):
         db.session.rollback()
         return jsonify({'error': 'Internal server error'}), 500
 
-@admin_bp.route('/users/<int:user_id>/role', methods=['PUT'])
+
 @token_required
 @admin_required
 def update_user_role(current_user, user_id):
@@ -264,6 +264,22 @@ def update_user(current_user, user_id):
             if existing_user and existing_user.id != user_id:
                 return jsonify({'error': 'Email already taken by another user'}), 400
             user.email = data['email']
+        
+        # Update role if provided
+        if 'role' in data:
+            new_role = data['role']
+            if new_role not in ['USER', 'ADMIN', 'MODERATOR']:
+                return jsonify({'error': 'Invalid role'}), 400
+            user.role = new_role
+            logger.info(f"Admin {current_user.email} updated user {user.email} role to {new_role}")
+        
+        # Update status if provided
+        if 'status' in data:
+            new_status = data['status']
+            if new_status not in ['ACTIVE', 'SUSPENDED', 'BANNED']:
+                return jsonify({'error': 'Invalid status'}), 400
+            user.account_status = new_status
+            logger.info(f"Admin {current_user.email} updated user {user.email} status to {new_status}")
         
         db.session.commit()
         

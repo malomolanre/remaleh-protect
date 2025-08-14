@@ -112,9 +112,9 @@ export const updateUserStatus = async (userId, newStatus) => {
 export const updateUserRole = async (userId, newRole) => {
   try {
     console.log('🔄 userManager.updateUserRole called with:', { userId, newRole })
-    console.log('🔄 API endpoint:', USER_ENDPOINTS.USER(userId))
+    console.log('🔄 API endpoint:', USER_ENDPOINTS.UPDATE_ROLE(userId))
     
-    const response = await apiPut(USER_ENDPOINTS.USER(userId), {
+    const response = await apiPut(USER_ENDPOINTS.UPDATE_ROLE(userId), {
       role: newRole
     })
     console.log('🔄 API response received:', response)
