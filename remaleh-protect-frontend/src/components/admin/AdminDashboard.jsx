@@ -465,8 +465,12 @@ export default function AdminDashboard({ setActiveTab }) {
         // Find the updated module
         const updatedModule = updatedModules.find(m => m.id === moduleId)
         console.log('🔄 Found updated module:', updatedModule)
+        console.log('🔄 Module content:', updatedModule?.content)
+        console.log('🔄 Module lessons:', updatedModule?.content?.lessons)
+        console.log('🔄 Lesson count:', updatedModule?.content?.lessons?.length || 0)
         
         if (updatedModule) {
+          console.log('🔄 Setting selectedModuleForLessons to:', updatedModule)
           setSelectedModuleForLessons(updatedModule)
           
           // Also update the modules state to ensure consistency

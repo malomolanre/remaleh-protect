@@ -57,7 +57,13 @@ def test_put():
 def get_modules(current_user):
     """Get all learning modules"""
     try:
+        logger.info(f"Getting modules for user: {current_user.email}")
         modules = LearningModule.query.filter_by(is_active=True).all()
+        
+        # Debug: Log each module's content
+        for module in modules:
+            logger.info(f"Module {module.id} ({module.title}): content={module.content}, lessons_count={len(module.content.get('lessons', [])) if module.content else 0}")
+        
         return jsonify({
             'modules': [module.to_dict() for module in modules]
         }), 200
@@ -245,6 +251,11 @@ def add_lesson(current_user, module_id):
         db.session.refresh(module)
         logger.info(f"After commit, module content: {module.content}")
         logger.info(f"After commit, lessons count: {len(module.content.get('lessons', [])) if module.content else 0}")
+        
+        # Test retrieving the module again to see if content persists
+        test_module = LearningModule.query.get(module_id)
+        logger.info(f"Test query - module content: {test_module.content}")
+        logger.info(f"Test query - lessons count: {len(test_module.content.get('lessons', [])) if test_module.content else 0}")
         
         logger.info(f"Successfully added lesson '{new_lesson['title']}' (ID: {new_lesson_id}) to module '{module.title}'")
         logger.info(f"Module now has {len(lessons)} lessons")
