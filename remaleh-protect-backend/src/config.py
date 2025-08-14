@@ -68,7 +68,9 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///remaleh_protect.db'
+    # Only use SQLite if DATABASE_URL is not set
+    if not os.getenv('DATABASE_URL'):
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///remaleh_protect.db'
     CACHE_TYPE = 'simple'
 
 class ProductionConfig(Config):
@@ -94,6 +96,10 @@ class ProductionConfig(Config):
         # Use Render's managed services more efficiently
         CACHE_REDIS_URL = os.getenv('REDIS_URL')
         RATE_LIMIT_STORAGE_URL = os.getenv('REDIS_URL', '').replace('/0', '/1') if os.getenv('REDIS_URL') else None
+        
+        # Ensure we're using the DATABASE_URL from environment
+        if os.getenv('DATABASE_URL'):
+            SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
 
 class TestingConfig(Config):
     """Testing configuration"""

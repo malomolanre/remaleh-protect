@@ -18,7 +18,7 @@ import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
 import { createModule, getAllModules } from '../../utils/contentManager'
-import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats } from '../../utils/userManager'
+import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser } from '../../utils/userManager'
 
 export default function AdminDashboard({ setActiveTab }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
@@ -38,6 +38,15 @@ export default function AdminDashboard({ setActiveTab }) {
     estimated_time: 10
   })
   
+  // Form state for new user
+  const [newUserData, setNewUserData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    role: 'USER',
+    password: ''
+  })
+  
   // Real data state
   const [modules, setModules] = useState([])
   const [users, setUsers] = useState([])
@@ -51,6 +60,10 @@ export default function AdminDashboard({ setActiveTab }) {
     regular: 0
   })
   
+  // Error state
+  const [error, setError] = useState(null)
+  const [dbConnectionStatus, setDbConnectionStatus] = useState('checking')
+  
   // Mock data for reports (can be enhanced later)
   const [reports] = useState([
     { id: 1, type: 'scam', description: 'Suspicious email', status: 'pending', reporter: 'user@example.com' },
@@ -60,10 +73,16 @@ export default function AdminDashboard({ setActiveTab }) {
   // Load modules from backend
   const loadModules = async () => {
     try {
+      setError(null)
       const modulesData = await getAllModules()
       setModules(modulesData)
     } catch (error) {
       console.error('Failed to load modules:', error)
+      setError(`Failed to load modules: ${error.message}`)
+      // Check if it's a connection issue
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        setDbConnectionStatus('disconnected')
+      }
     }
   }
   
@@ -71,14 +90,21 @@ export default function AdminDashboard({ setActiveTab }) {
   const loadUsers = async () => {
     try {
       setLoadingUsers(true)
+      setError(null)
       const usersData = await getAllUsers()
       if (usersData.success) {
         setUsers(usersData.users)
       } else {
         console.error('Failed to load users:', usersData.error)
+        setError(`Failed to load users: ${usersData.error}`)
       }
     } catch (error) {
       console.error('Failed to load users:', error)
+      setError(`Failed to load users: ${error.message}`)
+      // Check if it's a connection issue
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        setDbConnectionStatus('disconnected')
+      }
     } finally {
       setLoadingUsers(false)
     }
@@ -87,12 +113,21 @@ export default function AdminDashboard({ setActiveTab }) {
   // Load user statistics
   const loadUserStats = async () => {
     try {
+      setError(null)
       const statsData = await getUserStats()
       if (statsData.success) {
         setUserStats(statsData.stats)
+      } else {
+        console.error('Failed to load user stats:', statsData.error)
+        setError(`Failed to load user stats: ${statsData.error}`)
       }
     } catch (error) {
       console.error('Failed to load user stats:', error)
+      setError(`Failed to load user stats: ${error.message}`)
+      // Check if it's a connection issue
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        setDbConnectionStatus('disconnected')
+      }
     }
   }
   
@@ -204,11 +239,95 @@ export default function AdminDashboard({ setActiveTab }) {
     }
   }
   
+  // Handle user creation
+  const handleCreateUser = async () => {
+    if (!newUserData.first_name.trim() || !newUserData.last_name.trim() || !newUserData.email.trim() || !newUserData.password.trim()) {
+      alert('Please fill in all required fields')
+      return
+    }
+    
+    try {
+      setActionLoading(true)
+      setError(null)
+      
+      const result = await createUser(newUserData)
+      
+      if (result.success) {
+        alert('User created successfully!')
+        
+        // Reset form and close modal
+        setNewUserData({
+          first_name: '',
+          last_name: '',
+          email: '',
+          role: 'USER',
+          password: ''
+        })
+        setShowAddUser(false)
+        
+        // Reload users and stats
+        await loadUsers()
+        await loadUserStats()
+      } else {
+        setError(result.error || 'Failed to create user')
+      }
+    } catch (error) {
+      console.error('Failed to create user:', error)
+      setError(error.message || 'Failed to create user')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+  
+  // Check database connectivity
+  const checkDatabaseConnection = async () => {
+    try {
+      setDbConnectionStatus('checking')
+      const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
+      const response = await fetch(`${apiBase}/api/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add timeout for the request
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Health check response:', data)
+        setDbConnectionStatus(data.database === 'healthy' ? 'connected' : 'disconnected')
+        
+        if (data.database !== 'healthy') {
+          setError(`Database status: ${data.database}`)
+        } else {
+          setError(null)
+        }
+      } else {
+        console.error('Health check failed with status:', response.status)
+        setDbConnectionStatus('disconnected')
+        setError(`Backend health check failed: ${response.status}`)
+      }
+    } catch (error) {
+      console.error('Database connection check failed:', error)
+      setDbConnectionStatus('disconnected')
+      
+      if (error.name === 'AbortError') {
+        setError('Backend connection timeout - service may be unavailable')
+      } else if (error.message.includes('Failed to fetch')) {
+        setError('Cannot connect to backend - check if service is running')
+      } else {
+        setError(`Connection error: ${error.message}`)
+      }
+    }
+  }
+  
   // Load data on component mount
   React.useEffect(() => {
     loadModules()
     loadUsers()
     loadUserStats()
+    checkDatabaseConnection() // Check DB connection on mount
   }, [])
   
   // Authentication check
@@ -279,6 +398,46 @@ export default function AdminDashboard({ setActiveTab }) {
 
   const renderOverview = () => (
     <div className="space-y-6">
+      {/* Database Connection Status */}
+      <MobileCard>
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Database Status</h3>
+            <div className={`flex items-center space-x-2 ${
+              dbConnectionStatus === 'connected' ? 'text-green-600' : 
+              dbConnectionStatus === 'disconnected' ? 'text-red-600' : 'text-yellow-600'
+            }`}>
+              <div className={`w-3 h-3 rounded-full ${
+                dbConnectionStatus === 'connected' ? 'bg-green-500' : 
+                dbConnectionStatus === 'disconnected' ? 'bg-red-500' : 'bg-yellow-500'
+              }`}></div>
+              <span className="text-sm font-medium capitalize">
+                {dbConnectionStatus === 'connected' ? 'Connected' : 
+                 dbConnectionStatus === 'disconnected' ? 'Disconnected' : 'Checking...'}
+              </span>
+            </div>
+          </div>
+          {dbConnectionStatus === 'disconnected' && (
+            <div className="mt-2">
+              <p className="text-sm text-red-600 mb-2">
+                Warning: Database connection failed. Some features may not work properly.
+              </p>
+              {error && (
+                <p className="text-xs text-red-500 bg-red-50 p-2 rounded">
+                  Error: {error}
+                </p>
+              )}
+            </div>
+          )}
+          <button
+            onClick={checkDatabaseConnection}
+            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            Check Connection
+          </button>
+        </div>
+      </MobileCard>
+
       <MobileCard>
         <div className="p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">System Overview</h2>
@@ -594,6 +753,22 @@ export default function AdminDashboard({ setActiveTab }) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600">Welcome back, {user?.name || 'Admin'}</p>
+          <div className="flex items-center space-x-2 mt-1">
+            <span className="text-sm text-gray-500">Backend:</span>
+            <div className={`flex items-center space-x-1 ${
+              dbConnectionStatus === 'connected' ? 'text-green-600' : 
+              dbConnectionStatus === 'disconnected' ? 'text-red-600' : 'text-yellow-600'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                dbConnectionStatus === 'connected' ? 'bg-green-500' : 
+                dbConnectionStatus === 'disconnected' ? 'bg-red-500' : 'bg-yellow-500'
+              }`}></div>
+              <span className="text-xs font-medium capitalize">
+                {dbConnectionStatus === 'connected' ? 'Connected' : 
+                 dbConnectionStatus === 'disconnected' ? 'Disconnected' : 'Checking...'}
+              </span>
+            </div>
+          </div>
         </div>
         <button
           onClick={() => setActiveTab('home')}
@@ -765,6 +940,8 @@ export default function AdminDashboard({ setActiveTab }) {
                   <MobileInput
                     type="text"
                     placeholder="Enter full name"
+                    value={newUserData.first_name}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, first_name: e.target.value }))}
                     className="w-full"
                   />
                 </div>
@@ -774,17 +951,34 @@ export default function AdminDashboard({ setActiveTab }) {
                   <MobileInput
                     type="email"
                     placeholder="Enter email address"
+                    value={newUserData.email}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
                     className="w-full"
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent">
+                  <select 
+                    value={newUserData.role}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, role: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                  >
                     <option value="USER">User</option>
                     <option value="MODERATOR">Moderator</option>
                     <option value="ADMIN">Admin</option>
                   </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                  <MobileInput
+                    type="password"
+                    placeholder="Enter password"
+                    value={newUserData.password}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
+                    className="w-full"
+                  />
                 </div>
                 
                 <div className="flex space-x-3">
@@ -795,10 +989,11 @@ export default function AdminDashboard({ setActiveTab }) {
                     Cancel
                   </MobileButton>
                   <MobileButton
-                    onClick={() => {/* Handle save */}}
+                    onClick={handleCreateUser}
+                    disabled={actionLoading}
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                   >
-                    Create User
+                    {actionLoading ? 'Creating...' : 'Create User'}
                   </MobileButton>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from functools import wraps
 from datetime import datetime
 import logging
@@ -6,10 +6,10 @@ import logging
 # Import production modules - try relative imports first, then absolute
 try:
     from ..models import db, User, CommunityReport
-    from ..auth import token_required
+    from ..auth import token_required, admin_required
 except ImportError:
     from models import db, User, CommunityReport
-    from auth import token_required
+    from auth import token_required, admin_required
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint('admin', __name__)
@@ -18,9 +18,17 @@ def admin_required(f):
     """Decorator to check if user is admin"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user or not current_user.is_admin:
-            return jsonify({'error': 'Admin access required'}), 403
-        return f(*args, **kwargs)
+        try:
+            # Get current user from the request context
+            from flask import g
+            current_user = getattr(g, 'current_user', None)
+            
+            if not current_user or not current_user.is_admin:
+                return jsonify({'error': 'Admin access required'}), 403
+            return f(current_user, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in admin_required decorator: {e}")
+            return jsonify({'error': 'Authentication error'}), 500
     return decorated_function
 
 @admin_bp.route('/users', methods=['GET'])
@@ -29,6 +37,13 @@ def admin_required(f):
 def get_users(current_user):
     """Get all users with pagination and filtering"""
     try:
+        # Check database connectivity
+        try:
+            db.session.execute('SELECT 1')
+        except Exception as db_error:
+            logger.error(f"Database connection error: {db_error}")
+            return jsonify({'error': 'Database connection failed', 'details': str(db_error)}), 503
+        
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         status = request.args.get('status')
