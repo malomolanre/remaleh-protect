@@ -255,10 +255,6 @@ def add_lesson(current_user, module_id):
         logger.info(f"Module content type: {type(module.content)}")
         logger.info(f"Module content JSON serializable: {isinstance(module.content, (dict, list))}")
         
-        # Ensure the module object is marked as modified
-        from sqlalchemy import inspect
-        inspect(module).flag_modified('content')
-        
         # Log the module state before commit
         logger.info(f"Module state before commit - content: {module.content}")
         logger.info(f"Module state before commit - lessons count: {len(module.content.get('lessons', [])) if module.content else 0}")
@@ -276,6 +272,28 @@ def add_lesson(current_user, module_id):
         logger.info(f"Test query - module content: {test_module.content}")
         logger.info(f"Test query - lessons count: {len(test_module.content.get('lessons', [])) if test_module.content else 0}")
         
+        # Try a direct database update to see if the issue is with SQLAlchemy
+        try:
+            from sqlalchemy import text
+            direct_update_result = db.session.execute(text("""
+                UPDATE learning_modules 
+                SET content = :content 
+                WHERE id = :module_id
+            """), {
+                'content': current_content,
+                'module_id': module_id
+            })
+            db.session.commit()
+            logger.info(f"Direct database update result: {direct_update_result.rowcount} rows affected")
+            
+            # Check if the direct update worked
+            direct_test_module = LearningModule.query.get(module_id)
+            logger.info(f"After direct update - module content: {direct_test_module.content}")
+            logger.info(f"After direct update - lessons count: {len(direct_test_module.content.get('lessons', [])) if direct_test_module.content else 0}")
+            
+        except Exception as direct_update_error:
+            logger.error(f"Direct database update failed: {direct_update_error}")
+        
         # Check if there are any database constraints or triggers affecting the content field
         try:
             # Get the table info to see if there are any constraints
@@ -287,6 +305,16 @@ def add_lesson(current_user, module_id):
             """))
             column_info = result.fetchone()
             logger.info(f"Database column info for 'content': {column_info}")
+            
+            # Also check if there are any triggers on this table
+            trigger_result = db.session.execute(text("""
+                SELECT trigger_name, event_manipulation, action_statement
+                FROM information_schema.triggers 
+                WHERE event_object_table = 'learning_modules'
+            """))
+            triggers = trigger_result.fetchall()
+            logger.info(f"Database triggers on learning_modules: {triggers}")
+            
         except Exception as schema_error:
             logger.warning(f"Could not get schema info: {schema_error}")
         
