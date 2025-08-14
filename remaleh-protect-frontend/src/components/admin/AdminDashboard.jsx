@@ -17,7 +17,7 @@ import { MobileCard } from '../ui/mobile-card'
 import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
-import { createModule, getAllModules, updateModule } from '../../utils/contentManager'
+import { createModule, getAllModules, updateModule, addLesson, updateLesson, deleteLesson } from '../../utils/contentManager'
 import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword } from '../../utils/userManager'
 
 export default function AdminDashboard({ setActiveTab }) {
@@ -69,6 +69,18 @@ export default function AdminDashboard({ setActiveTab }) {
     { id: 1, type: 'scam', description: 'Suspicious email', status: 'pending', reporter: 'user@example.com' },
     { id: 2, type: 'phishing', description: 'Fake login page', status: 'investigating', reporter: 'admin@example.com' }
   ])
+  
+  // Lesson management state
+  const [selectedModuleForLessons, setSelectedModuleForLessons] = useState(null)
+  const [newLessonData, setNewLessonData] = useState({
+    title: '',
+    type: 'info',
+    content: '',
+    contentType: 'info',
+    contentStyle: 'default',
+    duration: 5
+  })
+  const [editingLesson, setEditingLesson] = useState(null)
   
   // Load modules from backend
   const loadModules = async () => {
@@ -387,6 +399,68 @@ export default function AdminDashboard({ setActiveTab }) {
       setActionLoading(false)
     }
   }
+
+  // Lesson management functions
+  const handleAddLesson = async (moduleId) => {
+    try {
+      const response = await addLesson(moduleId, newLessonData)
+      
+      if (response.success) {
+        setNewLessonData({
+          title: '',
+          type: 'info',
+          content: '',
+          contentType: 'info',
+          contentStyle: 'default',
+          duration: 5
+        })
+        loadModules() // Reload modules to show new lesson
+        setError(null)
+      } else {
+        setError(response.error || 'Failed to add lesson')
+      }
+    } catch (error) {
+      console.error('Error adding lesson:', error)
+      setError('Failed to add lesson')
+    }
+  }
+
+  const handleUpdateLesson = async (moduleId, lessonId, lessonData) => {
+    try {
+      const response = await updateLesson(moduleId, lessonId, lessonData)
+      
+      if (response.success) {
+        setEditingLesson(null)
+        loadModules() // Reload modules
+        setError(null)
+      } else {
+        setError(response.error || 'Failed to update lesson')
+      }
+    } catch (error) {
+      console.error('Error updating lesson:', error)
+      setError('Failed to update lesson')
+    }
+  }
+
+  const handleDeleteLesson = async (moduleId, lessonId) => {
+    if (!window.confirm('Are you sure you want to delete this lesson?')) {
+      return
+    }
+    
+    try {
+      const response = await deleteLesson(moduleId, lessonId)
+      
+      if (response.success) {
+        loadModules() // Reload modules
+        setError(null)
+      } else {
+        setError(response.error || 'Failed to delete lesson')
+      }
+    } catch (error) {
+      console.error('Error deleting lesson:', error)
+      setError('Failed to delete lesson')
+    }
+  }
   
   // Check database connectivity
   const checkDatabaseConnection = async () => {
@@ -651,14 +725,23 @@ export default function AdminDashboard({ setActiveTab }) {
                   <h3 className="font-semibold text-gray-900">{module.title}</h3>
                   <div className="flex space-x-2">
                     <button
+                      onClick={() => setSelectedModuleForLessons(module)}
+                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Manage Lessons"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => setEditingModule(module)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit Module"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => {/* Handle delete */}}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete Module"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1299,6 +1382,245 @@ export default function AdminDashboard({ setActiveTab }) {
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {actionLoading ? 'Updating...' : 'Update Module'}
+                  </MobileButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lesson Management Modal */}
+      {selectedModuleForLessons && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Manage Lessons: {selectedModuleForLessons.title}
+                </h2>
+                <button 
+                  onClick={() => setSelectedModuleForLessons(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Add New Lesson Form */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Lesson</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                    <MobileInput
+                      type="text"
+                      placeholder="Enter lesson title"
+                      value={newLessonData.title}
+                      onChange={(e) => setNewLessonData(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                    <select
+                      value={newLessonData.type}
+                      onChange={(e) => setNewLessonData(prev => ({ ...prev, type: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                    >
+                      <option value="info">Information</option>
+                      <option value="quiz">Quiz</option>
+                      <option value="video">Video</option>
+                      <option value="interactive">Interactive</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
+                    <select
+                      value={newLessonData.contentType}
+                      onChange={(e) => setNewLessonData(prev => ({ ...prev, contentType: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                    >
+                      <option value="info">Text</option>
+                      <option value="html">HTML</option>
+                      <option value="markdown">Markdown</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                    <MobileInput
+                      type="number"
+                      placeholder="5"
+                      value={newLessonData.duration}
+                      onChange={(e) => setNewLessonData(prev => ({ ...prev, duration: parseInt(e.target.value) || 5 }))}
+                      min="1"
+                      max="60"
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                    <Textarea
+                      placeholder="Enter lesson content"
+                      value={newLessonData.content}
+                      onChange={(e) => setNewLessonData(prev => ({ ...prev, content: e.target.value }))}
+                      className="w-full"
+                      rows={4}
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <MobileButton
+                    onClick={() => handleAddLesson(selectedModuleForLessons.id)}
+                    className="bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Lesson
+                  </MobileButton>
+                </div>
+              </div>
+
+              {/* Existing Lessons List */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Existing Lessons</h3>
+                {selectedModuleForLessons.content?.lessons?.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedModuleForLessons.content.lessons.map((lesson) => (
+                      <div key={lesson.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900">{lesson.title}</h4>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => setEditingLesson(lesson)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit Lesson"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLesson(selectedModuleForLessons.id, lesson.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete Lesson"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 mr-2">
+                            {lesson.type}
+                          </span>
+                          <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 mr-2">
+                            {lesson.duration} min
+                          </span>
+                          <span className="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                            {lesson.contentType}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 text-sm line-clamp-2">{lesson.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p>No lessons yet. Add your first lesson above!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Lesson Modal */}
+      {editingLesson && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Edit Lesson</h2>
+                <button 
+                  onClick={() => setEditingLesson(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <MobileInput
+                    type="text"
+                    placeholder="Enter lesson title"
+                    value={editingLesson.title || ''}
+                    onChange={(e) => setEditingLesson(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                    <select
+                      value={editingLesson.type || 'info'}
+                      onChange={(e) => setEditingLesson(prev => ({ ...prev, type: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                    >
+                      <option value="info">Information</option>
+                      <option value="quiz">Quiz</option>
+                      <option value="video">Video</option>
+                      <option value="interactive">Interactive</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                    <MobileInput
+                      type="number"
+                      placeholder="5"
+                      value={editingLesson.duration || 5}
+                      onChange={(e) => setEditingLesson(prev => ({ ...prev, duration: parseInt(e.target.value) || 5 }))}
+                      min="1"
+                      max="60"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                  <Textarea
+                    placeholder="Enter lesson content"
+                    value={editingLesson.content || ''}
+                    onChange={(e) => setEditingLesson(prev => ({ ...prev, content: e.target.value }))}
+                    className="w-full"
+                    rows={6}
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <MobileButton
+                    onClick={() => setEditingLesson(null)}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
+                  >
+                    Cancel
+                  </MobileButton>
+                  <MobileButton
+                    onClick={() => handleUpdateLesson(selectedModuleForLessons.id, editingLesson.id, editingLesson)}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Update Lesson
                   </MobileButton>
                 </div>
               </div>
