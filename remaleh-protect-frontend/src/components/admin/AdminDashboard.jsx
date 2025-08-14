@@ -420,9 +420,13 @@ export default function AdminDashboard({ setActiveTab }) {
     try {
       setLessonActionLoading(true)
       setLessonSuccessMessage('')
-      const response = await addLesson(moduleId, newLessonData)
+      console.log('🔄 Adding lesson with data:', { moduleId, newLessonData })
       
-      if (response.success) {
+      const response = await addLesson(moduleId, newLessonData)
+      console.log('🔄 addLesson response:', response)
+      
+      if (response && response.message) {
+        console.log('✅ Lesson added successfully, response:', response)
         setNewLessonData({
           title: '',
           type: 'info',
@@ -444,10 +448,11 @@ export default function AdminDashboard({ setActiveTab }) {
         
         setLessonSuccessMessage('Lesson added successfully!')
       } else {
-        setError(response.error || 'Failed to add lesson')
+        console.log('❌ Lesson add failed, response:', response)
+        setError(response?.error || 'Failed to add lesson')
       }
     } catch (error) {
-      console.error('Error adding lesson:', error)
+      console.error('❌ Error adding lesson:', error)
       setError('Failed to add lesson')
     } finally {
       setLessonActionLoading(false)
@@ -460,7 +465,7 @@ export default function AdminDashboard({ setActiveTab }) {
       setLessonSuccessMessage('')
       const response = await updateLesson(moduleId, lessonId, lessonData)
       
-      if (response.success) {
+      if (response && response.message) {
         setEditingLesson(null)
         
         // Refresh both the modules list and the selected module data
@@ -475,7 +480,7 @@ export default function AdminDashboard({ setActiveTab }) {
         
         setLessonSuccessMessage('Lesson updated successfully!')
       } else {
-        setError(response.error || 'Failed to update lesson')
+        setError(response?.error || 'Failed to update lesson')
       }
     } catch (error) {
       console.error('Error updating lesson:', error)
@@ -495,7 +500,7 @@ export default function AdminDashboard({ setActiveTab }) {
       setLessonSuccessMessage('')
       const response = await deleteLesson(moduleId, lessonId)
       
-      if (response.success) {
+      if (response && response.message) {
         // Refresh both the modules list and the selected module data
         await loadModules()
         
@@ -508,7 +513,7 @@ export default function AdminDashboard({ setActiveTab }) {
         
         setLessonSuccessMessage('Lesson deleted successfully!')
       } else {
-        setError(response.error || 'Failed to delete lesson')
+        setError(response?.error || 'Failed to delete lesson')
       }
     } catch (error) {
       console.error('Error deleting lesson:', error)

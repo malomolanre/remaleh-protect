@@ -394,17 +394,28 @@ export const deleteModule = async (moduleId) => {
 
 export const addLesson = async (moduleId, lessonData) => {
   try {
+    console.log('🔄 contentManager.addLesson called with:', { moduleId, lessonData })
+    console.log('🔄 API endpoint:', API_ENDPOINTS.LESSONS(moduleId))
+    
     const response = await apiPost(API_ENDPOINTS.LESSONS(moduleId), lessonData)
+    console.log('🔄 API response received:', response)
+    console.log('🔄 Response status:', response.status)
+    console.log('🔄 Response ok:', response.ok)
+    
     if (response.ok) {
       const data = await response.json()
+      console.log('🔄 Response data:', data)
       // Refresh local cache
       await getAllModules()
       return data
     } else {
-      throw new Error('Failed to add lesson')
+      console.log('❌ Response not ok, status:', response.status)
+      const errorData = await response.text()
+      console.log('❌ Error response body:', errorData)
+      throw new Error(`Failed to add lesson: ${response.status}`)
     }
   } catch (error) {
-    console.error('Error adding lesson:', error)
+    console.error('❌ Error in addLesson:', error)
     throw error
   }
 }

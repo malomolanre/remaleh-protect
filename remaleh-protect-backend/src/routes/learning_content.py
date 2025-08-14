@@ -193,23 +193,35 @@ def delete_module(current_user, module_id):
 def add_lesson(current_user, module_id):
     """Add a lesson to a module"""
     try:
+        logger.info(f"Adding lesson to module {module_id} by user {current_user.email}")
+        logger.info(f"Request data: {request.get_json()}")
+        
         module = LearningModule.query.get(module_id)
         if not module:
+            logger.warning(f"Module {module_id} not found")
             return jsonify({'error': 'Module not found'}), 404
         
         data = request.get_json()
+        logger.info(f"Lesson data received: {data}")
         
         # Validate required fields
         if 'title' not in data or 'content' not in data:
+            logger.warning(f"Missing required fields in lesson data: {data}")
             return jsonify({'error': 'Missing required fields: title and content'}), 400
         
         # Get current content or initialize
         current_content = module.content or {}
         lessons = current_content.get('lessons', [])
+        logger.info(f"Current lessons count: {len(lessons)}")
+        
+        # Generate unique lesson ID (find the highest existing ID and add 1)
+        max_lesson_id = max([l.get('id', 0) for l in lessons]) if lessons else 0
+        new_lesson_id = max_lesson_id + 1
+        logger.info(f"Generated lesson ID: {new_lesson_id}")
         
         # Create new lesson
         new_lesson = {
-            'id': len(lessons) + 1,
+            'id': new_lesson_id,
             'title': data['title'],
             'type': data.get('type', 'info'),
             'content': data['content'],
@@ -217,15 +229,26 @@ def add_lesson(current_user, module_id):
             'contentStyle': data.get('contentStyle', 'default'),
             'duration': data.get('duration', 5)
         }
+        logger.info(f"Created lesson object: {new_lesson}")
         
         lessons.append(new_lesson)
         current_content['lessons'] = lessons
         
         # Update module content
         module.content = current_content
-        db.session.commit()
+        logger.info(f"About to commit lesson to database. Module content: {module.content}")
         
-        logger.info(f"Added lesson '{new_lesson['title']}' to module '{module.title}'")
+        db.session.commit()
+        logger.info(f"Database commit successful")
+        
+        # Verify the data was saved by re-querying
+        db.session.refresh(module)
+        logger.info(f"After commit, module content: {module.content}")
+        logger.info(f"After commit, lessons count: {len(module.content.get('lessons', [])) if module.content else 0}")
+        
+        logger.info(f"Successfully added lesson '{new_lesson['title']}' (ID: {new_lesson_id}) to module '{module.title}'")
+        logger.info(f"Module now has {len(lessons)} lessons")
+        
         return jsonify({
             'message': 'Lesson added successfully',
             'lesson': new_lesson
