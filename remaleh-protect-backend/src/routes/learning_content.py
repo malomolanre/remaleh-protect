@@ -209,16 +209,22 @@ def add_lesson(current_user, module_id):
         
         data = request.get_json()
         logger.info(f"Lesson data received: {data}")
+        logger.info(f"Data type: {type(data)}")
+        logger.info(f"Data keys: {list(data.keys()) if data else 'None'}")
         
         # Validate required fields
         if 'title' not in data or 'content' not in data:
             logger.warning(f"Missing required fields in lesson data: {data}")
+            logger.warning(f"Title present: {'title' in data}")
+            logger.warning(f"Content present: {'content' in data}")
             return jsonify({'error': 'Missing required fields: title and content'}), 400
         
         # Get current content or initialize
         current_content = module.content or {}
         lessons = current_content.get('lessons', [])
         logger.info(f"Current lessons count: {len(lessons)}")
+        logger.info(f"Current content type: {type(current_content)}")
+        logger.info(f"Current lessons type: {type(lessons)}")
         
         # Generate unique lesson ID (find the highest existing ID and add 1)
         max_lesson_id = max([l.get('id', 0) for l in lessons]) if lessons else 0
@@ -236,33 +242,25 @@ def add_lesson(current_user, module_id):
             'duration': data.get('duration', 5)
         }
         logger.info(f"Created lesson object: {new_lesson}")
+        logger.info(f"Lesson object type: {type(new_lesson)}")
         
         lessons.append(new_lesson)
         current_content['lessons'] = lessons
+        logger.info(f"Updated content: {current_content}")
+        logger.info(f"Updated content type: {type(current_content)}")
         
         # Update module content
         module.content = current_content
         logger.info(f"About to commit lesson to database. Module content: {module.content}")
+        logger.info(f"Module content type: {type(module.content)}")
         
         db.session.commit()
         logger.info(f"Database commit successful")
-        
-        # Verify the data was saved by re-querying
-        db.session.refresh(module)
-        logger.info(f"After commit, module content: {module.content}")
-        logger.info(f"After commit, lessons count: {len(module.content.get('lessons', [])) if module.content else 0}")
         
         # Test retrieving the module again to see if content persists
         test_module = LearningModule.query.get(module_id)
         logger.info(f"Test query - module content: {test_module.content}")
         logger.info(f"Test query - lessons count: {len(test_module.content.get('lessons', [])) if test_module.content else 0}")
-        
-        # Also test with a fresh database session to ensure no caching issues
-        db.session.close()
-        db.session = db.create_scoped_session()
-        fresh_module = LearningModule.query.get(module_id)
-        logger.info(f"Fresh session query - module content: {fresh_module.content}")
-        logger.info(f"Fresh session query - lessons count: {len(fresh_module.content.get('lessons', [])) if fresh_module.content else 0}")
         
         logger.info(f"Successfully added lesson '{new_lesson['title']}' (ID: {new_lesson_id}) to module '{module.title}'")
         logger.info(f"Module now has {len(lessons)} lessons")
@@ -275,6 +273,10 @@ def add_lesson(current_user, module_id):
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error adding lesson to module {module_id}: {e}")
+        logger.error(f"Exception type: {type(e).__name__}")
+        logger.error(f"Exception details: {str(e)}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @learning_content_bp.route('/modules/<int:module_id>/lessons/<int:lesson_id>', methods=['PUT'])
