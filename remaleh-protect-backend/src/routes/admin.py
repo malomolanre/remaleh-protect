@@ -122,6 +122,50 @@ def get_users(current_user):
         logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@admin_bp.route('/users/deleted', methods=['GET'])
+@token_required
+@admin_required
+def get_deleted_users(current_user):
+    """Get all deleted users"""
+    try:
+        # Get only deleted users
+        deleted_users = User.query.filter(User.account_status == 'DELETED').all()
+        
+        user_list = []
+        for user in deleted_users:
+            # Safely get report count, handle case where table might not exist
+            try:
+                report_count = CommunityReport.query.filter_by(user_id=user.id).count()
+            except Exception:
+                report_count = 0  # Default to 0 if table doesn't exist
+                
+            user_data = {
+                'id': user.id,
+                'username': user.email.split('@')[0] if user.email else 'Unknown',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+                'status': user.account_status,
+                'is_admin': user.is_admin,
+                'created_at': user.created_at.isoformat() if user.created_at else None,
+                'last_login': user.last_login.isoformat() if user.last_login else None,
+                'report_count': report_count
+            }
+            user_list.append(user_data)
+        
+        logger.info(f"Returning {len(user_list)} deleted users")
+        
+        return jsonify({
+            'users': user_list
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting deleted users: {e}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
 @token_required
 @admin_required

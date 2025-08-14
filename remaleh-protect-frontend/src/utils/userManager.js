@@ -12,6 +12,7 @@ const USER_ENDPOINTS = {
   UPDATE_STATUS: (id) => `/api/admin/users/${id}/status`,
   UPDATE_ROLE: (id) => `/api/admin/users/${id}/role`,
   DELETE_USER: (id) => `/api/admin/users/${id}`,
+  DELETED_USERS: '/api/admin/users/deleted',
 }
 
 // Get all users with optional filtering
@@ -42,6 +43,30 @@ export const getAllUsers = async (filters = {}) => {
     return {
       users: [],
       pagination: {},
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Get deleted users
+export const getDeletedUsers = async () => {
+  try {
+    const response = await apiGet(USER_ENDPOINTS.DELETED_USERS)
+    
+    if (response.ok) {
+      const data = await response.json()
+      return {
+        users: data.users || [],
+        success: true
+      }
+    } else {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+  } catch (error) {
+    console.error('Error fetching deleted users:', error)
+    return {
+      users: [],
       success: false,
       error: error.message
     }

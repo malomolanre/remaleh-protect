@@ -18,7 +18,7 @@ import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
 import { createModule, getAllModules, updateModule, addLesson, updateLesson, deleteLesson } from '../../utils/contentManager'
-import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword, restoreUser } from '../../utils/userManager'
+import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword, restoreUser, getDeletedUsers } from '../../utils/userManager'
 
 export default function AdminDashboard({ setActiveTab }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
@@ -50,6 +50,7 @@ export default function AdminDashboard({ setActiveTab }) {
   // Real data state
   const [modules, setModules] = useState([])
   const [users, setUsers] = useState([])
+  const [deletedUsers, setDeletedUsers] = useState([])
   const [userStats, setUserStats] = useState({
     total: 0,
     active: 0,
@@ -151,6 +152,25 @@ export default function AdminDashboard({ setActiveTab }) {
       }
     } finally {
       setLoadingUsers(false)
+    }
+  }
+
+  // Load deleted users from backend
+  const loadDeletedUsers = async () => {
+    try {
+      console.log('🔄 loadDeletedUsers called')
+      
+      const deletedUsersData = await getDeletedUsers()
+      console.log('🔄 getDeletedUsers result:', deletedUsersData)
+      
+      if (deletedUsersData.success) {
+        console.log('✅ Setting deletedUsers state with:', deletedUsersData.users)
+        setDeletedUsers(deletedUsersData.users)
+      } else {
+        console.error('❌ Failed to load deleted users:', deletedUsersData.error)
+      }
+    } catch (error) {
+      console.error('❌ Error in loadDeletedUsers:', error)
     }
   }
   
@@ -281,6 +301,7 @@ export default function AdminDashboard({ setActiveTab }) {
       if (result.success) {
         alert('User deleted successfully!')
         await loadUsers() // Reload users
+        await loadDeletedUsers() // Reload deleted users
         await loadUserStats() // Reload stats
       } else {
         alert(`Failed to delete user: ${result.error}`)
@@ -306,6 +327,7 @@ export default function AdminDashboard({ setActiveTab }) {
       if (result.success) {
         alert('User restored successfully!')
         await loadUsers() // Reload users
+        await loadDeletedUsers() // Reload deleted users
         await loadUserStats() // Reload stats
       } else {
         alert(`Failed to restore user: ${result.error}`)
@@ -668,6 +690,7 @@ export default function AdminDashboard({ setActiveTab }) {
   React.useEffect(() => {
     loadModules()
     loadUsers()
+    loadDeletedUsers()
     loadUserStats()
     checkDatabaseConnection() // Check DB connection on mount
   }, [])
@@ -1062,7 +1085,7 @@ export default function AdminDashboard({ setActiveTab }) {
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-900">Deleted Users</h2>
       <div className="space-y-4">
-        {users.filter(user => user.status === 'DELETED').map((user) => (
+        {deletedUsers.map((user) => (
           <MobileCard key={user.id}>
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
@@ -1104,7 +1127,7 @@ export default function AdminDashboard({ setActiveTab }) {
           </MobileCard>
         ))}
         
-        {users.filter(user => user.status === 'DELETED').length === 0 && (
+        {deletedUsers.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <p>No deleted users</p>
           </div>
