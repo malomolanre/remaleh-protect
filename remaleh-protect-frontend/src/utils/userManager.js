@@ -75,23 +75,32 @@ export const getUserById = async (userId) => {
 // Update user status
 export const updateUserStatus = async (userId, newStatus) => {
   try {
+    console.log('🔄 userManager.updateUserStatus called with:', { userId, newStatus })
+    console.log('🔄 API endpoint:', USER_ENDPOINTS.UPDATE_STATUS(userId))
+    
     const response = await apiPut(USER_ENDPOINTS.UPDATE_STATUS(userId), {
       status: newStatus
     })
+    console.log('🔄 API response received:', response)
+    console.log('🔄 Response status:', response.status)
+    console.log('🔄 Response ok:', response.ok)
     
     if (response.ok) {
       const data = await response.json()
+      console.log('🔄 Response data:', data)
       return {
         success: true,
         message: data.message || 'User status updated successfully',
         user: data.user
       }
     } else {
+      console.log('❌ Response not ok, status:', response.status)
       const errorData = await response.json()
+      console.log('❌ Error response body:', errorData)
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
     }
   } catch (error) {
-    console.error('Error updating user status:', error)
+    console.error('❌ Error in updateUserStatus:', error)
     return {
       success: false,
       error: error.message
@@ -102,23 +111,32 @@ export const updateUserStatus = async (userId, newStatus) => {
 // Update user role
 export const updateUserRole = async (userId, newRole) => {
   try {
+    console.log('🔄 userManager.updateUserRole called with:', { userId, newRole })
+    console.log('🔄 API endpoint:', USER_ENDPOINTS.USER(userId))
+    
     const response = await apiPut(USER_ENDPOINTS.USER(userId), {
       role: newRole
     })
+    console.log('🔄 API response received:', response)
+    console.log('🔄 Response status:', response.status)
+    console.log('🔄 Response ok:', response.ok)
     
     if (response.ok) {
       const data = await response.json()
+      console.log('🔄 Response data:', data)
       return {
         success: true,
         message: data.message || 'User role updated successfully',
         user: data.user
       }
     } else {
+      console.log('❌ Response not ok, status:', response.status)
       const errorData = await response.json()
+      console.log('❌ Error response body:', errorData)
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
     }
   } catch (error) {
-    console.error('Error updating user role:', error)
+    console.error('❌ Error in updateUserRole:', error)
     return {
       success: false,
       error: error.message

@@ -121,15 +121,20 @@ export default function AdminDashboard({ setActiveTab }) {
     try {
       setLoadingUsers(true)
       setError(null)
+      console.log('🔄 loadUsers called')
+      
       const usersData = await getAllUsers()
+      console.log('🔄 getAllUsers result:', usersData)
+      
       if (usersData.success) {
+        console.log('✅ Setting users state with:', usersData.users)
         setUsers(usersData.users)
       } else {
-        console.error('Failed to load users:', usersData.error)
+        console.error('❌ Failed to load users:', usersData.error)
         setError(`Failed to load users: ${usersData.error}`)
       }
     } catch (error) {
-      console.error('Failed to load users:', error)
+      console.error('❌ Error in loadUsers:', error)
       setError(`Failed to load users: ${error.message}`)
       // Check if it's a connection issue
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
@@ -206,17 +211,22 @@ export default function AdminDashboard({ setActiveTab }) {
   const handleUpdateUserStatus = async (userId, newStatus) => {
     try {
       setActionLoading(true)
+      console.log('🔄 Updating user status:', { userId, newStatus })
+      
       const result = await updateUserStatus(userId, newStatus)
+      console.log('🔄 updateUserStatus result:', result)
       
       if (result.success) {
+        console.log('✅ User status updated successfully')
         alert('User status updated successfully!')
         await loadUsers() // Reload users
         await loadUserStats() // Reload stats
       } else {
+        console.log('❌ User status update failed:', result.error)
         alert(`Failed to update user status: ${result.error}`)
       }
     } catch (error) {
-      console.error('Failed to update user status:', error)
+      console.error('❌ Error updating user status:', error)
       alert(`Failed to update user status: ${error.message}`)
     } finally {
       setActionLoading(false)
@@ -227,17 +237,22 @@ export default function AdminDashboard({ setActiveTab }) {
   const handleUpdateUserRole = async (userId, newRole) => {
     try {
       setActionLoading(true)
+      console.log('🔄 Updating user role:', { userId, newRole })
+      
       const result = await updateUserRole(userId, newRole)
+      console.log('🔄 updateUserRole result:', result)
       
       if (result.success) {
+        console.log('✅ User role updated successfully')
         alert('User role updated successfully!')
         await loadUsers() // Reload users
         await loadUserStats() // Reload stats
       } else {
+        console.log('❌ User role update failed:', result.error)
         alert(`Failed to update user role: ${result.error}`)
       }
     } catch (error) {
-      console.error('Failed to update user role:', error)
+      console.error('❌ Error updating user role:', error)
       alert(`Failed to update user role: ${error.message}`)
     } finally {
       setActionLoading(false)
