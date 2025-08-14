@@ -249,8 +249,26 @@ def add_lesson(current_user, module_id):
         logger.info(f"Updated content: {current_content}")
         logger.info(f"Updated content type: {type(current_content)}")
         
-        # Update module content
+        # Update module content - Force SQLAlchemy to recognize the change
+        # The issue is that SQLAlchemy doesn't detect changes in nested JSON objects
+        # So we need to explicitly mark the field as modified
+        try:
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(module, "content")
+            logger.info("Using flag_modified to mark content field as changed")
+        except ImportError:
+            # Fallback for older SQLAlchemy versions
+            try:
+                # Try to force a change by setting a temporary value and then the real value
+                module.content = None
+                module.content = current_content
+                logger.info("Using fallback method to force content field change")
+            except Exception as fallback_error:
+                logger.warning(f"Fallback method failed: {fallback_error}")
+        
+        # Also try setting the content again to ensure it's marked as changed
         module.content = current_content
+        
         logger.info(f"About to commit lesson to database. Module content: {module.content}")
         logger.info(f"Module content type: {type(module.content)}")
         logger.info(f"Module content JSON serializable: {isinstance(module.content, (dict, list))}")
