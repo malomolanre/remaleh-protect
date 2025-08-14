@@ -200,7 +200,6 @@ def add_lesson(current_user, module_id):
     """Add a lesson to a module"""
     try:
         logger.info(f"Adding lesson to module {module_id} by user {current_user.email}")
-        logger.info(f"Request data: {request.get_json()}")
         
         module = LearningModule.query.get(module_id)
         if not module:
@@ -208,28 +207,20 @@ def add_lesson(current_user, module_id):
             return jsonify({'error': 'Module not found'}), 404
         
         data = request.get_json()
-        logger.info(f"Lesson data received: {data}")
-        logger.info(f"Data type: {type(data)}")
-        logger.info(f"Data keys: {list(data.keys()) if data else 'None'}")
         
         # Validate required fields
         if 'title' not in data or 'content' not in data:
-            logger.warning(f"Missing required fields in lesson data: {data}")
-            logger.warning(f"Title present: {'title' in data}")
-            logger.warning(f"Content present: {'content' in data}")
+            logger.warning(f"Missing required fields in lesson data")
             return jsonify({'error': 'Missing required fields: title and content'}), 400
         
         # Get current content or initialize
         current_content = module.content or {}
         lessons = current_content.get('lessons', [])
         logger.info(f"Current lessons count: {len(lessons)}")
-        logger.info(f"Current content type: {type(current_content)}")
-        logger.info(f"Current lessons type: {type(lessons)}")
         
         # Generate unique lesson ID (find the highest existing ID and add 1)
         max_lesson_id = max([l.get('id', 0) for l in lessons]) if lessons else 0
         new_lesson_id = max_lesson_id + 1
-        logger.info(f"Generated lesson ID: {new_lesson_id}")
         
         # Create new lesson
         new_lesson = {
@@ -241,100 +232,27 @@ def add_lesson(current_user, module_id):
             'contentStyle': data.get('contentStyle', 'default'),
             'duration': data.get('duration', 5)
         }
-        logger.info(f"Created lesson object: {new_lesson}")
-        logger.info(f"Lesson object type: {type(new_lesson)}")
         
         lessons.append(new_lesson)
         current_content['lessons'] = lessons
-        logger.info(f"Updated content: {current_content}")
-        logger.info(f"Updated content type: {type(current_content)}")
         
         # Update module content - Force SQLAlchemy to recognize the change
         # The issue is that SQLAlchemy doesn't detect changes in nested JSON objects
         # So we need to explicitly mark the field as modified
-        try:
-            from sqlalchemy.orm.attributes import flag_modified
-            flag_modified(module, "content")
-            logger.info("Using flag_modified to mark content field as changed")
-        except ImportError:
-            # Fallback for older SQLAlchemy versions
-            try:
-                # Try to force a change by setting a temporary value and then the real value
-                module.content = None
-                module.content = current_content
-                logger.info("Using fallback method to force content field change")
-            except Exception as fallback_error:
-                logger.warning(f"Fallback method failed: {fallback_error}")
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(module, "content")
+        logger.info("Using flag_modified to mark content field as changed")
         
-        # Also try setting the content again to ensure it's marked as changed
+        # Set the content
         module.content = current_content
         
-        logger.info(f"About to commit lesson to database. Module content: {module.content}")
-        logger.info(f"Module content type: {type(module.content)}")
-        logger.info(f"Module content JSON serializable: {isinstance(module.content, (dict, list))}")
-        
-        # Log the module state before commit
-        logger.info(f"Module state before commit - content: {module.content}")
-        logger.info(f"Module state before commit - lessons count: {len(module.content.get('lessons', [])) if module.content else 0}")
-        
+        # Commit to database
         db.session.commit()
         logger.info(f"Database commit successful")
         
         # Refresh the module object to get the latest data
         db.session.refresh(module)
-        logger.info(f"After refresh - module content: {module.content}")
         logger.info(f"After refresh - lessons count: {len(module.content.get('lessons', [])) if module.content else 0}")
-        
-        # Test retrieving the module again to see if content persists
-        test_module = LearningModule.query.get(module_id)
-        logger.info(f"Test query - module content: {test_module.content}")
-        logger.info(f"Test query - lessons count: {len(test_module.content.get('lessons', [])) if test_module.content else 0}")
-        
-        # Try a direct database update to see if the issue is with SQLAlchemy
-        try:
-            from sqlalchemy import text
-            direct_update_result = db.session.execute(text("""
-                UPDATE learning_modules 
-                SET content = :content 
-                WHERE id = :module_id
-            """), {
-                'content': current_content,
-                'module_id': module_id
-            })
-            db.session.commit()
-            logger.info(f"Direct database update result: {direct_update_result.rowcount} rows affected")
-            
-            # Check if the direct update worked
-            direct_test_module = LearningModule.query.get(module_id)
-            logger.info(f"After direct update - module content: {direct_test_module.content}")
-            logger.info(f"After direct update - lessons count: {len(direct_test_module.content.get('lessons', [])) if direct_test_module.content else 0}")
-            
-        except Exception as direct_update_error:
-            logger.error(f"Direct database update failed: {direct_update_error}")
-        
-        # Check if there are any database constraints or triggers affecting the content field
-        try:
-            # Get the table info to see if there are any constraints
-            from sqlalchemy import text
-            result = db.session.execute(text("""
-                SELECT column_name, data_type, is_nullable, column_default
-                FROM information_schema.columns 
-                WHERE table_name = 'learning_modules' AND column_name = 'content'
-            """))
-            column_info = result.fetchone()
-            logger.info(f"Database column info for 'content': {column_info}")
-            
-            # Also check if there are any triggers on this table
-            trigger_result = db.session.execute(text("""
-                SELECT trigger_name, event_manipulation, action_statement
-                FROM information_schema.triggers 
-                WHERE event_object_table = 'learning_modules'
-            """))
-            triggers = trigger_result.fetchall()
-            logger.info(f"Database triggers on learning_modules: {triggers}")
-            
-        except Exception as schema_error:
-            logger.warning(f"Could not get schema info: {schema_error}")
         
         logger.info(f"Successfully added lesson '{new_lesson['title']}' (ID: {new_lesson_id}) to module '{module.title}'")
         logger.info(f"Module now has {len(lessons)} lessons")
