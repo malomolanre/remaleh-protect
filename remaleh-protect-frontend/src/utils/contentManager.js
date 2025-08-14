@@ -3,7 +3,7 @@
  * This makes it easy to update learning content without code changes
  */
 
-import { apiPost, apiGet } from '../lib/api'
+import { apiPost, apiGet, apiPut, apiDelete } from '../lib/api'
 
 // Backend API endpoints
 const API_ENDPOINTS = {
@@ -352,7 +352,7 @@ export const createModule = async (moduleData) => {
 
 export const updateModule = async (moduleId, moduleData) => {
   try {
-    const response = await apiPost(API_ENDPOINTS.MODULE(moduleId), moduleData, 'PUT')
+    const response = await apiPut(API_ENDPOINTS.MODULE(moduleId), moduleData)
     if (response.ok) {
       const data = await response.json()
       // Refresh local cache
@@ -369,7 +369,7 @@ export const updateModule = async (moduleId, moduleData) => {
 
 export const deleteModule = async (moduleId) => {
   try {
-    const response = await apiPost(API_ENDPOINTS.MODULE(moduleId), {}, 'DELETE')
+    const response = await apiDelete(API_ENDPOINTS.MODULE(moduleId))
     if (response.ok) {
       // Refresh local cache
       await getAllModules()
@@ -402,7 +402,7 @@ export const addLesson = async (moduleId, lessonData) => {
 
 export const updateLesson = async (moduleId, lessonId, lessonData) => {
   try {
-    const response = await apiPost(API_ENDPOINTS.LESSON(moduleId, lessonId), lessonData, 'PUT')
+    const response = await apiPut(API_ENDPOINTS.LESSON(moduleId, lessonId), lessonData)
     if (response.ok) {
       const data = await response.json()
       // Refresh local cache
@@ -419,7 +419,7 @@ export const updateLesson = async (moduleId, lessonId, lessonData) => {
 
 export const deleteLesson = async (moduleId, lessonId) => {
   try {
-    const response = await apiPost(API_ENDPOINTS.LESSON(moduleId, lessonId), {}, 'DELETE')
+    const response = await apiDelete(API_ENDPOINTS.LESSON(moduleId, lessonId))
     if (response.ok) {
       // Refresh local cache
       await getAllModules()
