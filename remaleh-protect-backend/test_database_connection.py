@@ -85,19 +85,20 @@ def test_database_connection():
         with app.app_context():
             try:
                 # Test basic connection
-                result = db_manager.engine.execute("SELECT 1 as test")
+                from sqlalchemy import text
+                result = db_manager.engine.execute(text("SELECT 1 as test"))
                 row = result.fetchone()
                 if row and row[0] == 1:
                     print("✅ Database connection successful!")
                     
                     # Test if tables exist
                     print("\n📋 Checking database tables...")
-                    tables_result = db_manager.engine.execute("""
+                    tables_result = db_manager.engine.execute(text("""
                         SELECT table_name 
                         FROM information_schema.tables 
                         WHERE table_schema = 'public'
                         ORDER BY table_name
-                    """)
+                    """))
                     
                     tables = [row[0] for row in tables_result]
                     if tables:

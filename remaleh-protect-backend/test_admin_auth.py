@@ -38,7 +38,8 @@ def test_admin_user_exists():
         with app.app_context():
             try:
                 # Test basic connection
-                result = db.session.execute('SELECT 1 as test')
+                from sqlalchemy import text
+                result = db.session.execute(text('SELECT 1 as test'))
                 row = result.fetchone()
                 if row and row[0] == 1:
                     print("✅ Database connection successful!")

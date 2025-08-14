@@ -49,7 +49,7 @@ def get_users(current_user):
         
         # Check database connectivity
         try:
-            db.session.execute('SELECT 1')
+            db.session.execute(text('SELECT 1'))
             logger.info("Database connection test successful")
         except Exception as db_error:
             logger.error(f"Database connection error: {db_error}")
@@ -468,7 +468,7 @@ def system_health(current_user):
     try:
         # Database health
         try:
-            db.session.execute('SELECT 1')
+            db.session.execute(text('SELECT 1'))
             db_status = 'healthy'
         except Exception:
             db_status = 'unhealthy'
