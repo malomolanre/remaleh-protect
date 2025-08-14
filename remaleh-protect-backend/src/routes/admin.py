@@ -49,6 +49,12 @@ def get_users(current_user):
         
         user_list = []
         for user in users.items:
+            # Safely get report count, handle case where table might not exist
+            try:
+                report_count = CommunityReport.query.filter_by(user_id=user.id).count()
+            except Exception:
+                report_count = 0  # Default to 0 if table doesn't exist
+                
             user_data = {
                 'id': user.id,
                 'username': user.email.split('@')[0] if user.email else 'Unknown',
@@ -60,7 +66,7 @@ def get_users(current_user):
                 'is_admin': user.is_admin,
                 'created_at': user.created_at.isoformat() if user.created_at else None,
                 'last_login': user.last_login.isoformat() if user.last_login else None,
-                'report_count': CommunityReport.query.filter_by(user_id=user.id).count()
+                'report_count': report_count
             }
             user_list.append(user_data)
         
@@ -90,6 +96,23 @@ def get_user(current_user, user_id):
         if not user:
             return jsonify({'error': 'User not found'}), 404
             
+        # Safely get report count and reports, handle case where table might not exist
+        try:
+            report_count = CommunityReport.query.filter_by(user_id=user.id).count()
+            # Get user's recent reports
+            reports = CommunityReport.query.filter_by(user_id=user.id).order_by(CommunityReport.created_at.desc()).limit(10).all()
+            report_list = []
+            for report in reports:
+                report_list.append({
+                    'id': report.id,
+                    'threat_type': report.threat_type,
+                    'status': report.status,
+                    'created_at': report.created_at.isoformat() if report.created_at else None
+                })
+        except Exception:
+            report_count = 0
+            report_list = []
+            
         user_data = {
             'id': user.id,
             'username': user.email.split('@')[0] if user.email else 'Unknown',
@@ -101,19 +124,9 @@ def get_user(current_user, user_id):
             'is_admin': user.is_admin,
             'created_at': user.created_at.isoformat() if user.created_at else None,
             'last_login': user.last_login.isoformat() if user.last_login else None,
-            'report_count': CommunityReport.query.filter_by(user_id=user.id).count(),
-            'reports': []
+            'report_count': report_count,
+            'reports': report_list
         }
-        
-        # Get user's recent reports
-        reports = CommunityReport.query.filter_by(user_id=user.id).order_by(CommunityReport.created_at.desc()).limit(10).all()
-        for report in reports:
-            user_data['reports'].append({
-                'id': report.id,
-                'threat_type': report.threat_type,
-                'status': report.status,
-                'created_at': report.created_at.isoformat() if report.created_at else None
-            })
         
         return jsonify(user_data), 200
         
@@ -231,6 +244,23 @@ def delete_user(current_user, user_id):
 def get_reports(current_user):
     """Get all community reports with pagination and filtering"""
     try:
+        # Check if CommunityReport table exists
+        try:
+            CommunityReport.query.first()
+        except Exception:
+            # Table doesn't exist, return empty results
+            return jsonify({
+                'reports': [],
+                'pagination': {
+                    'page': 1,
+                    'per_page': 20,
+                    'total': 0,
+                    'pages': 0,
+                    'has_next': False,
+                    'has_prev': False
+                }
+            }), 200
+        
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         status = request.args.get('status')
@@ -293,7 +323,12 @@ def get_reports(current_user):
 def moderate_report(current_user, report_id):
     """Moderate a community report (approve, reject, flag)"""
     try:
-        report = CommunityReport.query.get(report_id)
+        # Check if CommunityReport table exists
+        try:
+            report = CommunityReport.query.get(report_id)
+        except Exception:
+            return jsonify({'error': 'Community reports table not available'}), 503
+            
         if not report:
             return jsonify({'error': 'Report not found'}), 404
             
@@ -331,15 +366,25 @@ def get_admin_stats(current_user):
         suspended_users = User.query.filter_by(account_status='SUSPENDED').count()
         admin_users = User.query.filter_by(role='ADMIN').count()
         
-        # Report statistics
-        total_reports = CommunityReport.query.count()
-        pending_reports = CommunityReport.query.filter_by(status='PENDING').count()
-        approved_reports = CommunityReport.query.filter_by(status='APPROVED').count()
-        rejected_reports = CommunityReport.query.filter_by(status='REJECTED').count()
+        # Report statistics - safely handle case where table might not exist
+        try:
+            total_reports = CommunityReport.query.count()
+            pending_reports = CommunityReport.query.filter_by(status='PENDING').count()
+            approved_reports = CommunityReport.query.filter_by(status='APPROVED').count()
+            rejected_reports = CommunityReport.query.filter_by(status='REJECTED').count()
+        except Exception:
+            total_reports = 0
+            pending_reports = 0
+            approved_reports = 0
+            rejected_reports = 0
         
         # Recent activity
         recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
-        recent_reports = CommunityReport.query.order_by(CommunityReport.created_at.desc()).limit(5).all()
+        
+        try:
+            recent_reports = CommunityReport.query.order_by(CommunityReport.created_at.desc()).limit(5).all()
+        except Exception:
+            recent_reports = []
         
         stats = {
             'users': {
