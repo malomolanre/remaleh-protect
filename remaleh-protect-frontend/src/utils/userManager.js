@@ -288,6 +288,40 @@ export const getUserStats = async () => {
   }
 }
 
+// Restore deleted user
+export const restoreUser = async (userId) => {
+  try {
+    console.log('🔄 userManager.restoreUser called with:', { userId })
+    console.log('🔄 API endpoint:', USER_ENDPOINTS.USER(userId) + '/restore')
+    
+    const response = await apiPut(`${USER_ENDPOINTS.USER(userId)}/restore`, {})
+    console.log('🔄 API response received:', response)
+    console.log('🔄 Response status:', response.status)
+    console.log('🔄 Response ok:', response.ok)
+    
+    if (response.ok) {
+      const data = await response.json()
+      console.log('🔄 Response data:', data)
+      return {
+        success: true,
+        message: data.message || 'User restored successfully',
+        user: data.user
+      }
+    } else {
+      console.log('❌ Response not ok, status:', response.status)
+      const errorData = await response.json()
+      console.log('❌ Error response body:', errorData)
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+    }
+  } catch (error) {
+    console.error('❌ Error in restoreUser:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
 // Search users
 export const searchUsers = async (searchTerm, filters = {}) => {
   try {

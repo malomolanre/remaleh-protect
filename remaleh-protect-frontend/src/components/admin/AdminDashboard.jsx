@@ -18,7 +18,7 @@ import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
 import { createModule, getAllModules, updateModule, addLesson, updateLesson, deleteLesson } from '../../utils/contentManager'
-import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword } from '../../utils/userManager'
+import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword, restoreUser } from '../../utils/userManager'
 
 export default function AdminDashboard({ setActiveTab }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
@@ -288,6 +288,31 @@ export default function AdminDashboard({ setActiveTab }) {
     } catch (error) {
       console.error('Failed to delete user:', error)
       alert(`Failed to delete user: ${error.message}`)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Handle user restoration
+  const handleRestoreUser = async (userId) => {
+    if (!confirm('Are you sure you want to restore this user? They will be able to access the system again.')) {
+      return
+    }
+    
+    try {
+      setActionLoading(true)
+      const result = await restoreUser(userId)
+      
+      if (result.success) {
+        alert('User restored successfully!')
+        await loadUsers() // Reload users
+        await loadUserStats() // Reload stats
+      } else {
+        alert(`Failed to restore user: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Failed to restore user:', error)
+      alert(`Failed to restore user: ${error.message}`)
     } finally {
       setActionLoading(false)
     }
@@ -1033,6 +1058,61 @@ export default function AdminDashboard({ setActiveTab }) {
     </div>
   )
 
+  const renderDeletedUsers = () => (
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold text-gray-900">Deleted Users</h2>
+      <div className="space-y-4">
+        {users.filter(user => user.status === 'DELETED').map((user) => (
+          <MobileCard key={user.id}>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h4 className="font-medium text-gray-900">
+                    {user.first_name && user.last_name 
+                      ? `${user.first_name} ${user.last_name}`
+                      : user.email?.split('@')[0] || 'Unknown User'
+                    }
+                  </h4>
+                  <p className="text-sm text-gray-600">{user.email}</p>
+                  {user.created_at && (
+                    <p className="text-xs text-gray-500">
+                      Joined: {new Date(user.created_at).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleRestoreUser(user.id)}
+                    disabled={actionLoading}
+                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Restore User"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4 text-sm">
+                <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                  {user.role || 'USER'}
+                </span>
+                <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                  DELETED
+                </span>
+              </div>
+            </div>
+          </MobileCard>
+        ))}
+        
+        {users.filter(user => user.status === 'DELETED').length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p>No deleted users</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
   const renderCommunityReports = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1153,7 +1233,12 @@ export default function AdminDashboard({ setActiveTab }) {
       {/* Content Sections */}
       {activeSection === 'overview' && renderOverview()}
       {activeSection === 'content' && renderContentManagement()}
-      {activeSection === 'users' && renderUserManagement()}
+      {activeSection === 'users' && (
+        <>
+          {renderUserManagement()}
+          {renderDeletedUsers()}
+        </>
+      )}
       {activeSection === 'reports' && renderCommunityReports()}
 
       {/* Add Module Modal */}

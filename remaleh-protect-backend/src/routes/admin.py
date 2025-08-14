@@ -64,7 +64,7 @@ def get_users(current_user):
         status = request.args.get('status')
         role = request.args.get('role')
         
-        query = User.query
+        query = User.query.filter(User.account_status != 'DELETED')  # Exclude deleted users
         
         if status:
             query = query.filter(User.account_status == status)
@@ -352,7 +352,7 @@ def delete_user(current_user, user_id):
                 return jsonify({'error': 'Cannot delete the last admin user'}), 400
         
         # Soft delete by setting status to deleted
-        user.account_status = 'BANNED'  # Use BANNED as closest to deleted
+        user.account_status = 'DELETED'  # Use DELETED status
         user.email = f"deleted_{user.id}_{int(datetime.now().timestamp())}@deleted.com"
         db.session.commit()
         
@@ -365,6 +365,38 @@ def delete_user(current_user, user_id):
         
     except Exception as e:
         logger.error(f"Error deleting user: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error'}), 500
+
+@admin_bp.route('/users/<int:user_id>/restore', methods=['PUT'])
+@token_required
+@admin_required
+def restore_user(current_user, user_id):
+    """Restore a deleted user"""
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        if user.account_status != 'DELETED':
+            return jsonify({'error': 'User is not deleted'}), 400
+            
+        # Restore user by setting status back to ACTIVE
+        user.account_status = 'ACTIVE'
+        # Restore original email (remove the deleted_ prefix)
+        original_email = user.email.replace(f"deleted_{user.id}_", "").replace("@deleted.com", "")
+        user.email = original_email
+        db.session.commit()
+        
+        logger.info(f"Admin {current_user.email} restored user {user.email}")
+        
+        return jsonify({
+            'message': 'User restored successfully',
+            'user_id': user_id
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error restoring user: {e}")
         db.session.rollback()
         return jsonify({'error': 'Internal server error'}), 500
 
