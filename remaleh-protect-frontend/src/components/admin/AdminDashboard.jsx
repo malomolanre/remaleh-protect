@@ -100,6 +100,15 @@ export default function AdminDashboard({ setActiveTab }) {
     }
   }, [lessonSuccessMessage])
   
+  // Debug: Monitor selectedModuleForLessons state changes
+  React.useEffect(() => {
+    console.log('🔄 selectedModuleForLessons state changed:', selectedModuleForLessons)
+    if (selectedModuleForLessons) {
+      console.log('🔄 New selectedModuleForLessons lessons:', selectedModuleForLessons.content?.lessons)
+      console.log('🔄 New selectedModuleForLessons lesson count:', selectedModuleForLessons.content?.lessons?.length || 0)
+    }
+  }, [selectedModuleForLessons])
+  
   // Load modules from backend
   const loadModules = async () => {
     try {
@@ -461,6 +470,7 @@ export default function AdminDashboard({ setActiveTab }) {
         // Refresh the modules data
         const updatedModules = await getAllModules(true) // Force refresh to get latest data
         console.log('🔄 getAllModules result:', updatedModules)
+        console.log('🔄 All modules content:', updatedModules.map(m => ({ id: m.id, title: m.title, content: m.content, lessons: m.content?.lessons })))
         
         // Find the updated module
         const updatedModule = updatedModules.find(m => m.id === moduleId)
@@ -469,8 +479,16 @@ export default function AdminDashboard({ setActiveTab }) {
         console.log('🔄 Module lessons:', updatedModule?.content?.lessons)
         console.log('🔄 Lesson count:', updatedModule?.content?.lessons?.length || 0)
         
+        // Also check the current selectedModuleForLessons state
+        console.log('🔄 Current selectedModuleForLessons state:', selectedModuleForLessons)
+        console.log('🔄 Current selectedModuleForLessons lessons:', selectedModuleForLessons?.content?.lessons)
+        console.log('🔄 Current selectedModuleForLessons lesson count:', selectedModuleForLessons?.content?.lessons?.length || 0)
+        
         if (updatedModule) {
           console.log('🔄 Setting selectedModuleForLessons to:', updatedModule)
+          console.log('🔄 Current lesson count before update:', selectedModuleForLessons?.content?.lessons?.length || 0)
+          console.log('🔄 New lesson count after update:', updatedModule?.content?.lessons?.length || 0)
+          
           setSelectedModuleForLessons(updatedModule)
           
           // Also update the modules state to ensure consistency
@@ -478,6 +496,13 @@ export default function AdminDashboard({ setActiveTab }) {
           
           // Force a re-render to ensure UI updates
           setForceUpdate(prev => prev + 1)
+          
+          // Debug: Check state after setting
+          setTimeout(() => {
+            console.log('🔄 After state update - selectedModuleForLessons:', selectedModuleForLessons)
+            console.log('🔄 After state update - modules state:', modules)
+            console.log('🔄 After state update - forceUpdate value:', forceUpdate)
+          }, 100)
         } else {
           console.log('❌ Could not find updated module with ID:', moduleId)
         }
@@ -1508,6 +1533,9 @@ export default function AdminDashboard({ setActiveTab }) {
                 <h2 className="text-xl font-bold text-gray-900">
                   Manage Lessons: {selectedModuleForLessons.title}
                 </h2>
+                <div className="text-sm text-gray-500">
+                  Last updated: {new Date().toLocaleTimeString()} (Render: {forceUpdate})
+                </div>
                 <button 
                   onClick={() => setSelectedModuleForLessons(null)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"

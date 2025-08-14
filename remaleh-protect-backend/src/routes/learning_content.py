@@ -257,6 +257,13 @@ def add_lesson(current_user, module_id):
         logger.info(f"Test query - module content: {test_module.content}")
         logger.info(f"Test query - lessons count: {len(test_module.content.get('lessons', [])) if test_module.content else 0}")
         
+        # Also test with a fresh database session to ensure no caching issues
+        db.session.close()
+        db.session = db.create_scoped_session()
+        fresh_module = LearningModule.query.get(module_id)
+        logger.info(f"Fresh session query - module content: {fresh_module.content}")
+        logger.info(f"Fresh session query - lessons count: {len(fresh_module.content.get('lessons', [])) if fresh_module.content else 0}")
+        
         logger.info(f"Successfully added lesson '{new_lesson['title']}' (ID: {new_lesson_id}) to module '{module.title}'")
         logger.info(f"Module now has {len(lessons)} lessons")
         
