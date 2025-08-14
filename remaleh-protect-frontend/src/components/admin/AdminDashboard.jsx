@@ -86,6 +86,9 @@ export default function AdminDashboard({ setActiveTab }) {
   const [lessonActionLoading, setLessonActionLoading] = useState(false)
   const [lessonSuccessMessage, setLessonSuccessMessage] = useState('')
   
+  // Force re-render mechanism
+  const [forceUpdate, setForceUpdate] = useState(0)
+  
   // Auto-hide success messages
   React.useEffect(() => {
     if (lessonSuccessMessage) {
@@ -438,12 +441,26 @@ export default function AdminDashboard({ setActiveTab }) {
         
         // Refresh both the modules list and the selected module data
         await loadModules()
+        console.log('🔄 After loadModules, modules state:', modules)
         
-        // Update the selected module with fresh data
-        const updatedModules = await getAllModules()
+        // Refresh the modules data
+        const updatedModules = await getAllModules(true) // Force refresh to get latest data
+        console.log('🔄 getAllModules result:', updatedModules)
+        
+        // Find the updated module
         const updatedModule = updatedModules.find(m => m.id === moduleId)
+        console.log('🔄 Found updated module:', updatedModule)
+        
         if (updatedModule) {
           setSelectedModuleForLessons(updatedModule)
+          
+          // Also update the modules state to ensure consistency
+          setModules(updatedModules)
+          
+          // Force a re-render to ensure UI updates
+          setForceUpdate(prev => prev + 1)
+        } else {
+          console.log('❌ Could not find updated module with ID:', moduleId)
         }
         
         setLessonSuccessMessage('Lesson added successfully!')
@@ -472,10 +489,16 @@ export default function AdminDashboard({ setActiveTab }) {
         await loadModules()
         
         // Update the selected module with fresh data
-        const updatedModules = await getAllModules()
+        const updatedModules = await getAllModules(true) // Force refresh to get latest data
         const updatedModule = updatedModules.find(m => m.id === moduleId)
         if (updatedModule) {
           setSelectedModuleForLessons(updatedModule)
+          
+          // Also update the modules state to ensure consistency
+          setModules(updatedModules)
+          
+          // Force a re-render to ensure UI updates
+          setForceUpdate(prev => prev + 1)
         }
         
         setLessonSuccessMessage('Lesson updated successfully!')
@@ -505,10 +528,16 @@ export default function AdminDashboard({ setActiveTab }) {
         await loadModules()
         
         // Update the selected module with fresh data
-        const updatedModules = await getAllModules()
+        const updatedModules = await getAllModules(true) // Force refresh to get latest data
         const updatedModule = updatedModules.find(m => m.id === moduleId)
         if (updatedModule) {
           setSelectedModuleForLessons(updatedModule)
+          
+          // Also update the modules state to ensure consistency
+          setModules(updatedModules)
+          
+          // Force a re-render to ensure UI updates
+          setForceUpdate(prev => prev + 1)
         }
         
         setLessonSuccessMessage('Lesson deleted successfully!')

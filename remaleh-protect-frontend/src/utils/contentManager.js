@@ -21,11 +21,16 @@ const API_ENDPOINTS = {
 const FALLBACK_STORAGE_KEY = 'learning_content_fallback'
 
 // Get all learning modules from backend
-export const getAllModules = async () => {
+export const getAllModules = async (forceRefresh = false) => {
   try {
-    const response = await apiGet(API_ENDPOINTS.MODULES)
+    // Add cache-busting parameter if forceRefresh is true
+    const endpoint = forceRefresh ? `${API_ENDPOINTS.MODULES}?t=${Date.now()}` : API_ENDPOINTS.MODULES
+    console.log('🔄 getAllModules called with forceRefresh:', forceRefresh, 'endpoint:', endpoint)
+    
+    const response = await apiGet(endpoint)
     if (response.ok) {
       const data = await response.json()
+      console.log('🔄 getAllModules fresh data received:', data)
       // Store in fallback storage
       localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(data))
       return data.modules || []
@@ -34,14 +39,17 @@ export const getAllModules = async () => {
     console.warn('Backend unavailable, using fallback data:', error)
   }
   
-  // Fallback to local storage or default content
-  try {
-    const fallbackData = localStorage.getItem(FALLBACK_STORAGE_KEY)
-    if (fallbackData) {
-      return JSON.parse(fallbackData).modules || []
+  // Only use fallback if not forcing refresh
+  if (!forceRefresh) {
+    try {
+      const fallbackData = localStorage.getItem(FALLBACK_STORAGE_KEY)
+      if (fallbackData) {
+        console.log('🔄 getAllModules using fallback data')
+        return JSON.parse(fallbackData).modules || []
+      }
+    } catch (error) {
+      console.warn('Fallback data unavailable:', error)
     }
-  } catch (error) {
-    console.warn('Fallback data unavailable:', error)
   }
   
   // Return empty array if no data available
