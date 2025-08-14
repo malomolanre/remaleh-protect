@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify
 from functools import wraps
 from datetime import datetime
 import logging

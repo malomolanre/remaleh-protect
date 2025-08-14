@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify
 from functools import wraps
 from datetime import datetime
 import logging
@@ -7,22 +7,13 @@ import json
 # Import production modules - try relative imports first, then absolute
 try:
     from ..models import db, LearningModule, LearningProgress, User
-    from ..auth import token_required
+    from ..auth import token_required, admin_required
 except ImportError:
     from models import db, LearningModule, LearningProgress, User
-    from auth import token_required
+    from auth import token_required, admin_required
 
 logger = logging.getLogger(__name__)
 learning_content_bp = Blueprint('learning_content', __name__)
-
-def admin_required(f):
-    """Decorator to check if user is admin"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not g.current_user or not g.current_user.is_admin:
-            return jsonify({'error': 'Admin access required'}), 403
-        return f(*args, **kwargs)
-    return decorated_function
 
 @learning_content_bp.route('/modules', methods=['GET'])
 @token_required
