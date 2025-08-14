@@ -17,7 +17,7 @@ import { MobileCard } from '../ui/mobile-card'
 import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
-import { createModule, getAllModules, updateModule, addLesson, updateLesson, deleteLesson } from '../../utils/contentManager'
+import { createModule, getAllModules, updateModule, deleteModule, addLesson, updateLesson, deleteLesson } from '../../utils/contentManager'
 import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword, restoreUser, getDeletedUsers } from '../../utils/userManager'
 
 export default function AdminDashboard({ setActiveTab }) {
@@ -231,6 +231,30 @@ export default function AdminDashboard({ setActiveTab }) {
     } catch (error) {
       console.error('Failed to create module:', error)
       alert(`Failed to create module: ${error.message}`)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Handle module deletion
+  const handleDeleteModule = async (moduleId) => {
+    if (!confirm('Are you sure you want to delete this module? This will also delete all lessons within it. This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      setActionLoading(true)
+      
+      await deleteModule(moduleId)
+      
+      alert('Module deleted successfully!')
+      
+      // Reload modules
+      await loadModules()
+      
+    } catch (error) {
+      console.error('Failed to delete module:', error)
+      alert(`Failed to delete module: ${error.message}`)
     } finally {
       setActionLoading(false)
     }
@@ -612,9 +636,14 @@ export default function AdminDashboard({ setActiveTab }) {
     try {
       setLessonActionLoading(true)
       setLessonSuccessMessage('')
+      console.log('🔄 handleDeleteLesson called with:', { moduleId, lessonId })
+      
       const response = await deleteLesson(moduleId, lessonId)
+      console.log('🔄 deleteLesson response:', response)
       
       if (response && response.message) {
+        console.log('✅ Lesson deleted successfully, refreshing data...')
+        
         // Refresh both the modules list and the selected module data
         await loadModules()
         
@@ -622,6 +651,10 @@ export default function AdminDashboard({ setActiveTab }) {
         const updatedModules = await getAllModules(true) // Force refresh to get latest data
         const updatedModule = updatedModules.find(m => m.id === moduleId)
         if (updatedModule) {
+          console.log('🔄 Found updated module:', updatedModule)
+          console.log('🔄 Module content:', updatedModule.content)
+          console.log('🔄 Module lessons:', updatedModule.content?.lessons)
+          console.log('🔄 Lesson count:', updatedModule.content?.lessons?.length || 0)
           setSelectedModuleForLessons(updatedModule)
           
           // Also update the modules state to ensure consistency
@@ -633,10 +666,11 @@ export default function AdminDashboard({ setActiveTab }) {
         
         setLessonSuccessMessage('Lesson deleted successfully!')
       } else {
+        console.log('❌ Failed to delete lesson:', response?.error)
         setError(response?.error || 'Failed to delete lesson')
       }
     } catch (error) {
-      console.error('Error deleting lesson:', error)
+      console.error('❌ Error deleting lesson:', error)
       setError('Failed to delete lesson')
     } finally {
       setLessonActionLoading(false)
@@ -921,8 +955,9 @@ export default function AdminDashboard({ setActiveTab }) {
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => {/* Handle delete */}}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      onClick={() => handleDeleteModule(module.id)}
+                      disabled={actionLoading}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                       title="Delete Module"
                     >
                       <Trash2 className="w-4 h-4" />

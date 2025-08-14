@@ -447,16 +447,27 @@ export const updateLesson = async (moduleId, lessonId, lessonData) => {
 
 export const deleteLesson = async (moduleId, lessonId) => {
   try {
+    console.log('🔄 contentManager.deleteLesson called with:', { moduleId, lessonId })
+    console.log('🔄 API endpoint:', API_ENDPOINTS.LESSON(moduleId, lessonId))
+    
     const response = await apiDelete(API_ENDPOINTS.LESSON(moduleId, lessonId))
+    console.log('🔄 API response received:', response)
+    console.log('🔄 Response status:', response.status)
+    console.log('🔄 Response ok:', response.ok)
+    
     if (response.ok) {
+      console.log('✅ Lesson deleted successfully from API')
       // Refresh local cache
       await getAllModules()
       return { message: 'Lesson deleted successfully' }
     } else {
-      throw new Error('Failed to delete lesson')
+      console.log('❌ API response not ok, status:', response.status)
+      const errorData = await response.json()
+      console.log('❌ Error response body:', errorData)
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
     }
   } catch (error) {
-    console.error('Error deleting lesson:', error)
+    console.error('❌ Error in deleteLesson:', error)
     throw error
   }
 }

@@ -296,7 +296,20 @@ def update_lesson(current_user, module_id, lesson_id):
                 lesson[field] = data[field]
         
         module.content = current_content
+        
+        # Mark the content field as modified so SQLAlchemy detects the change
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(module, "content")
+        
+        logger.info(f"Module state before commit - lessons count: {len(lessons)}")
         db.session.commit()
+        logger.info(f"After commit - module content: {module.content}")
+        logger.info(f"After commit - lessons count: {len(module.content.get('lessons', []))}")
+        
+        # Test query to verify the change was saved
+        db.session.refresh(module)
+        logger.info(f"After refresh - module content: {module.content}")
+        logger.info(f"After refresh - lessons count: {len(module.content.get('lessons', []))}")
         
         logger.info(f"Updated lesson '{lesson['title']}' in module '{module.title}'")
         return jsonify({
@@ -332,7 +345,20 @@ def delete_lesson(current_user, module_id, lesson_id):
         
         # Update module content
         module.content = current_content
+        
+        # Mark the content field as modified so SQLAlchemy detects the change
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(module, "content")
+        
+        logger.info(f"Module state before commit - lessons count: {len(lessons)}")
         db.session.commit()
+        logger.info(f"After commit - module content: {module.content}")
+        logger.info(f"After commit - lessons count: {len(module.content.get('lessons', []))}")
+        
+        # Test query to verify the change was saved
+        db.session.refresh(module)
+        logger.info(f"After refresh - module content: {module.content}")
+        logger.info(f"After refresh - lessons count: {len(module.content.get('lessons', []))}")
         
         logger.info(f"Deleted lesson '{lesson['title']}' from module '{module.title}'")
         return jsonify({'message': 'Lesson deleted successfully'}), 200
