@@ -53,6 +53,23 @@ export default function LearnHub({ setActiveTab }) {
       setOverallProgress(progressData)
       setNextLesson(nextLessonData)
       
+      // Load individual lesson progress for each module
+      if (modulesData.length > 0) {
+        const lessonProgressPromises = modulesData.map(async (module) => {
+          try {
+            const { getModuleProgress } = await import('../utils/contentManager')
+            const moduleProgress = await getModuleProgress(module.id)
+            return { moduleId: module.id, progress: moduleProgress }
+          } catch (error) {
+            console.warn(`Failed to load progress for module ${module.id}:`, error)
+            return { moduleId: module.id, progress: null }
+          }
+        })
+        
+        const lessonProgressResults = await Promise.all(lessonProgressPromises)
+        console.log('📊 Lesson progress loaded:', lessonProgressResults)
+      }
+      
     } catch (err) {
       console.error('Error loading learning data:', err)
       setError('Failed to load learning content. Please try again.')
@@ -61,19 +78,62 @@ export default function LearnHub({ setActiveTab }) {
     }
   }
   
-  // Load completed lessons from localStorage (in production, this would come from your backend)
+  // Load completed lessons from backend progress data
   useEffect(() => {
-    const saved = localStorage.getItem('remaleh-completed-lessons')
-    if (saved) {
-      setCompletedLessons(JSON.parse(saved))
+    if (overallProgress.progress_records && overallProgress.progress_records.length > 0) {
+      // Extract completed lesson IDs from progress records
+      const completedLessonIds = []
+      overallProgress.progress_records.forEach(record => {
+        if (record.completed) {
+          // Find the module and get its lessons
+          const module = modules.find(m => m.id === record.module_id)
+          if (module && module.content && module.content.lessons) {
+            module.content.lessons.forEach(lesson => {
+              completedLessonIds.push(lesson.id)
+            })
+          }
+        }
+      })
+      setCompletedLessons(completedLessonIds)
     }
-  }, [])
+  }, [overallProgress, modules])
   
-  // Save completed lessons to localStorage
-  const markLessonComplete = (lessonId) => {
-    const newCompleted = [...new Set([...completedLessons, lessonId])]
-    setCompletedLessons(newCompleted)
-    localStorage.setItem('remaleh-completed-lessons', JSON.stringify(newCompleted))
+  // Mark lesson as complete and update backend progress
+  const markLessonComplete = async (lessonId) => {
+    try {
+      // Find the module this lesson belongs to
+      const module = modules.find(m => m.content?.lessons?.some(l => l.id === lessonId))
+      if (!module) {
+        console.error('Module not found for lesson:', lessonId)
+        return
+      }
+
+      // Update backend progress
+      const progressData = {
+        completed: true,
+        score: 100, // Full score for completing lesson
+        completed_at: new Date().toISOString()
+      }
+
+      // Import updateProgress function
+      const { updateProgress } = await import('../utils/contentManager')
+      await updateProgress(module.id, progressData)
+
+      // Update local state
+      const newCompleted = [...new Set([...completedLessons, lessonId])]
+      setCompletedLessons(newCompleted)
+      
+      // Refresh progress data
+      await loadData()
+      
+      console.log('✅ Lesson marked as complete:', lessonId)
+    } catch (error) {
+      console.error('❌ Failed to mark lesson complete:', error)
+      // Fallback to local storage if backend fails
+      const newCompleted = [...new Set([...completedLessons, lessonId])]
+      setCompletedLessons(newCompleted)
+      localStorage.setItem('remaleh-completed-lessons', JSON.stringify(newCompleted))
+    }
   }
   
   // Get filtered modules based on search and difficulty
@@ -324,8 +384,10 @@ export default function LearnHub({ setActiveTab }) {
           ) : (
             filteredModules.map(module => {
               const lessonCount = module.content?.lessons?.length || 0
-              const isCompleted = completedLessons.includes(module.id)
-              const progressPercent = isCompleted ? 100 : 0
+              const completedLessonsInModule = module.content?.lessons?.filter(lesson => 
+                completedLessons.includes(lesson.id)
+              ).length || 0
+              const progressPercent = lessonCount > 0 ? (completedLessonsInModule / lessonCount) * 100 : 0
               
               return (
                 <MobileCard key={module.id} className="cursor-pointer hover:shadow-md transition-shadow" 
@@ -348,8 +410,8 @@ export default function LearnHub({ setActiveTab }) {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-medium text-[#21a1ce]">{progressPercent}%</div>
-                        <div className="text-xs text-gray-500">{isCompleted ? 1 : 0}/1</div>
+                        <div className="text-sm font-medium text-[#21a1ce]">{Math.round(progressPercent)}%</div>
+                        <div className="text-xs text-gray-500">{completedLessonsInModule}/{lessonCount}</div>
                       </div>
                     </div>
                   </MobileCardHeader>
@@ -387,9 +449,31 @@ export default function LearnHub({ setActiveTab }) {
                      style={{ backgroundColor: selectedModule.color }}>
                   <BookOpen className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h2 className="text-xl font-bold text-gray-900">{selectedModule.title}</h2>
                   <p className="text-gray-600">{selectedModule.description}</p>
+                  
+                  {/* Module Progress Bar */}
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+                      <span>Progress</span>
+                      <span>{selectedModule.content?.lessons?.filter(lesson => 
+                        completedLessons.includes(lesson.id)
+                      ).length || 0}/{selectedModule.content?.lessons?.length || 0} lessons</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-[#21a1ce] h-2 rounded-full transition-all duration-300" 
+                        style={{ 
+                          width: `${selectedModule.content?.lessons?.length > 0 ? 
+                            (selectedModule.content.lessons.filter(lesson => 
+                              completedLessons.includes(lesson.id)
+                            ).length / selectedModule.content.lessons.length) * 100 : 0
+                          }%` 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </MobileCardHeader>
