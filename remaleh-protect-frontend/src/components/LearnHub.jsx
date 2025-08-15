@@ -96,6 +96,20 @@ export default function LearnHub({ setActiveTab }) {
       console.log('📊 Backend completed lesson keys:', backendCompletedKeys)
       console.log('📊 Current local completedLessons:', completedLessons)
       
+      // Debug: Check for any mismatches between backend and frontend
+      const backendCompletedSet = new Set(backendCompletedKeys)
+      const frontendCompletedSet = new Set(completedLessons)
+      
+      const missingInFrontend = backendCompletedKeys.filter(key => !frontendCompletedSet.has(key))
+      const extraInFrontend = completedLessons.filter(key => !backendCompletedSet.has(key))
+      
+      if (missingInFrontend.length > 0) {
+        console.log('⚠️ Lessons completed in backend but missing in frontend:', missingInFrontend)
+      }
+      if (extraInFrontend.length > 0) {
+        console.log('⚠️ Lessons marked complete in frontend but not in backend:', extraInFrontend)
+      }
+      
       // Only update if backend has more completed lessons than local state
       // This prevents overwriting local progress with stale backend data
       if (backendCompletedKeys.length > completedLessons.length) {
@@ -333,6 +347,14 @@ export default function LearnHub({ setActiveTab }) {
               <div>Total Lessons: {overallProgress.total_lessons || 0}</div>
               <div>Completed Lessons: {overallProgress.completed_lessons || 0}</div>
               <div>Raw Percentage: {overallProgress.completion_percentage || 0}%</div>
+              <div>Frontend State: {completedLessons.length} keys</div>
+              <div>Backend Records: {overallProgress.lesson_progress_records?.length || 0}</div>
+              <div className="mt-1 font-medium">Backend Progress Records:</div>
+              {overallProgress.lesson_progress_records?.map((record, index) => (
+                <div key={index} className="text-xs">
+                  Module {record.module_id}, Lesson {record.lesson_id}: {record.completed ? '✅' : '❌'}
+                </div>
+              ))}
             </div>
           )}
         </MobileCardContent>
@@ -545,7 +567,18 @@ export default function LearnHub({ setActiveTab }) {
             <MobileCardContent>
               <div className="space-y-3">
                 {selectedModule.content?.lessons?.map(lesson => {
-                  const isCompleted = completedLessons.includes(`${selectedModule.id}_${lesson.id}`)
+                  const lessonKey = `${selectedModule.id}_${lesson.id}`
+                  const isCompleted = completedLessons.includes(lessonKey)
+                  
+                  // Debug logging for each lesson
+                  console.log(`📊 Lesson ${lesson.id} in Module ${selectedModule.id}:`, {
+                    lessonKey,
+                    isCompleted,
+                    title: lesson.title,
+                    inCompletedLessons: completedLessons.includes(lessonKey),
+                    allCompletedKeys: completedLessons
+                  })
+                  
                   return (
                     <div 
                       key={lesson.id} 
@@ -568,9 +601,13 @@ export default function LearnHub({ setActiveTab }) {
                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                         )}
                         {lesson.contentType === 'example' && (
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <div className="w-2 w-2 bg-yellow-500 rounded-full"></div>
                         )}
                         <ArrowLeft className="w-4 h-4 text-gray-400 transform rotate-180" />
+                      </div>
+                      {/* Debug info for each lesson */}
+                      <div className="text-xs text-gray-400 ml-2">
+                        {lessonKey}
                       </div>
                     </div>
                   )
