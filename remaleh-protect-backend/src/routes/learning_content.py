@@ -529,13 +529,29 @@ def get_progress_overview(current_user):
         
         # Get all lesson progress records for the user
         lesson_progress_records = LessonProgress.query.filter_by(user_id=user_id).all()
+        logger.info(f"Progress overview for user {user_id}: {len(lesson_progress_records)} lesson progress records")
         
         # Get all active modules
         active_modules = LearningModule.query.filter_by(is_active=True).all()
+        logger.info(f"Found {len(active_modules)} active modules")
         
         # Calculate statistics based on lesson completion
-        total_lessons = sum(len(m.content.get('lessons', [])) if m.content else 0 for m in active_modules)
-        completed_lessons = len([p for p in lesson_progress_records if p.completed])
+        total_lessons = 0
+        completed_lessons = 0
+        
+        for module in active_modules:
+            module_lessons = module.content.get('lessons', []) if module.content else []
+            module_total = len(module_lessons)
+            total_lessons += module_total
+            
+            # Count completed lessons for this specific module
+            module_completed = len([p for p in lesson_progress_records 
+                                  if p.module_id == module.id and p.completed])
+            completed_lessons += module_completed
+            
+            logger.info(f"Module {module.id} ({module.title}): {module_completed}/{module_total} lessons completed")
+        
+        logger.info(f"Total lessons: {total_lessons}, Completed lessons: {completed_lessons}")
         
         # Calculate module completion (module is complete if all its lessons are complete)
         completed_modules = 0
@@ -546,23 +562,32 @@ def get_progress_overview(current_user):
                                              if p.module_id == module.id and p.completed])
                 if module_completed_lessons == len(module_lessons):
                     completed_modules += 1
+                    logger.info(f"Module {module.id} ({module.title}) is COMPLETE")
+        
+        # Calculate completion percentage
+        completion_percentage = (completed_lessons / total_lessons * 100) if total_lessons > 0 else 0
         
         total_score = sum(p.score for p in lesson_progress_records)
         average_score = total_score / len(lesson_progress_records) if lesson_progress_records else 0
         
-        return jsonify({
+        result = {
             'total_modules': len(active_modules),
             'completed_modules': completed_modules,
             'total_lessons': total_lessons,
             'completed_lessons': completed_lessons,
-            'completion_percentage': (completed_lessons / total_lessons * 100) if total_lessons > 0 else 0,
+            'completion_percentage': round(completion_percentage, 2),
             'total_score': total_score,
             'average_score': round(average_score, 2),
             'lesson_progress_records': [p.to_dict() for p in lesson_progress_records]
-        }), 200
+        }
+        
+        logger.info(f"Progress overview result: {result}")
+        return jsonify(result), 200
         
     except Exception as e:
         logger.error(f"Error getting progress overview: {e}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @learning_content_bp.route('/content/export', methods=['GET'])

@@ -475,12 +475,24 @@ export const deleteLesson = async (moduleId, lessonId) => {
 // Update lesson progress (new function for lesson-level tracking)
 export const updateLessonProgress = async (moduleId, lessonId, progressData) => {
   try {
-    const response = await apiPost(`/api/learning/modules/${moduleId}/lessons/${lessonId}/progress`, progressData)
+    console.log('🔄 contentManager.updateLessonProgress called with:', { moduleId, lessonId, progressData })
+    const endpoint = `/api/learning/modules/${moduleId}/lessons/${lessonId}/progress`
+    console.log('🔄 API endpoint:', endpoint)
+    
+    const response = await apiPost(endpoint, progressData)
+    console.log('🔄 API response received:', response)
+    console.log('🔄 Response status:', response.status)
+    console.log('🔄 Response ok:', response.ok)
+    
     if (response.ok) {
       const data = await response.json()
+      console.log('✅ Lesson progress updated successfully:', data)
       return data
     } else {
-      throw new Error('Failed to update lesson progress')
+      console.log('❌ API response not ok, status:', response.status)
+      const errorData = await response.json()
+      console.log('❌ Error response body:', errorData)
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
     }
   } catch (error) {
     console.warn('Backend unavailable, storing progress locally:', error)

@@ -80,26 +80,46 @@ export default function LearnHub({ setActiveTab }) {
   
   // Load completed lessons from backend lesson progress data
   useEffect(() => {
+    console.log('🔄 Progress loading useEffect triggered')
+    console.log('🔄 overallProgress:', overallProgress)
+    
     if (overallProgress.lesson_progress_records && overallProgress.lesson_progress_records.length > 0) {
       // Extract completed lesson IDs from lesson progress records
-      const completedLessonIds = overallProgress.lesson_progress_records
+      // IMPORTANT: We need to create unique identifiers that combine module_id and lesson_id
+      // because lesson IDs are not globally unique across modules
+      const completedLessonKeys = overallProgress.lesson_progress_records
         .filter(record => record.completed)
-        .map(record => record.lesson_id)
+        .map(record => `${record.module_id}_${record.lesson_id}`)
       
-      setCompletedLessons(completedLessonIds)
-      console.log('📊 Loaded completed lessons from backend:', completedLessonIds)
+      console.log('📊 Raw lesson progress records:', overallProgress.lesson_progress_records)
+      console.log('📊 Filtered completed lesson keys (module_lesson):', completedLessonKeys)
+      
+      setCompletedLessons(completedLessonKeys)
+      console.log('📊 Loaded completed lessons from backend:', completedLessonKeys)
+    } else {
+      console.log('📊 No lesson progress records found or empty')
     }
   }, [overallProgress])
   
   // Mark lesson as complete and update backend progress
   const markLessonComplete = async (lessonId) => {
     try {
+      console.log('🔄 markLessonComplete called with lessonId:', lessonId)
+      console.log('🔄 Current modules:', modules)
+      
       // Find the module this lesson belongs to
       const module = modules.find(m => m.content?.lessons?.some(l => l.id === lessonId))
       if (!module) {
-        console.error('Module not found for lesson:', lessonId)
+        console.error('❌ Module not found for lesson:', lessonId)
         return
       }
+
+      console.log('🔄 Found module for lesson:', {
+        moduleId: module.id,
+        moduleTitle: module.title,
+        lessonId: lessonId,
+        allLessonsInModule: module.content?.lessons?.map(l => ({ id: l.id, title: l.title }))
+      })
 
       // Update backend lesson progress
       const progressData = {
@@ -108,13 +128,25 @@ export default function LearnHub({ setActiveTab }) {
         completed_at: new Date().toISOString()
       }
 
+      console.log('🔄 Calling updateLessonProgress with:', {
+        moduleId: module.id,
+        lessonId: lessonId,
+        progressData
+      })
+
       // Import updateLessonProgress function for lesson-level tracking
       const { updateLessonProgress } = await import('../utils/contentManager')
-      await updateLessonProgress(module.id, lessonId, progressData)
+      const result = await updateLessonProgress(module.id, lessonId, progressData)
+      
+      console.log('🔄 updateLessonProgress result:', result)
 
-      // Update local state
-      const newCompleted = [...new Set([...completedLessons, lessonId])]
+      // Update local state - use module_lesson key format for uniqueness
+      const lessonKey = `${module.id}_${lessonId}`
+      const newCompleted = [...new Set([...completedLessons, lessonKey])]
       setCompletedLessons(newCompleted)
+      
+      console.log('🔄 Updated completedLessons state with key:', lessonKey)
+      console.log('🔄 New completed lessons array:', newCompleted)
       
       // Refresh progress data
       await loadData()
@@ -269,6 +301,14 @@ export default function LearnHub({ setActiveTab }) {
               </span>
             )}
           </div>
+          {/* Debug Progress Info */}
+          {!loading && (
+            <div className="mt-2 text-xs text-gray-500 border-t pt-2">
+              <div>Total Lessons: {overallProgress.total_lessons || 0}</div>
+              <div>Completed Lessons: {overallProgress.completed_lessons || 0}</div>
+              <div>Raw Percentage: {overallProgress.completion_percentage || 0}%</div>
+            </div>
+          )}
         </MobileCardContent>
       </MobileCard>
 
@@ -378,7 +418,7 @@ export default function LearnHub({ setActiveTab }) {
             filteredModules.map(module => {
               const lessonCount = module.content?.lessons?.length || 0
               const completedLessonsInModule = module.content?.lessons?.filter(lesson => 
-                completedLessons.includes(lesson.id)
+                completedLessons.includes(`${module.id}_${lesson.id}`)
               ).length || 0
               const progressPercent = lessonCount > 0 ? (completedLessonsInModule / lessonCount) * 100 : 0
               
@@ -451,7 +491,7 @@ export default function LearnHub({ setActiveTab }) {
                     <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
                       <span>Progress</span>
                       <span>{selectedModule.content?.lessons?.filter(lesson => 
-                        completedLessons.includes(lesson.id)
+                        completedLessons.includes(`${selectedModule.id}_${lesson.id}`)
                       ).length || 0}/{selectedModule.content?.lessons?.length || 0} lessons</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -460,7 +500,7 @@ export default function LearnHub({ setActiveTab }) {
                         style={{ 
                           width: `${selectedModule.content?.lessons?.length > 0 ? 
                             (selectedModule.content.lessons.filter(lesson => 
-                              completedLessons.includes(lesson.id)
+                              completedLessons.includes(`${selectedModule.id}_${lesson.id}`)
                             ).length / selectedModule.content.lessons.length) * 100 : 0
                           }%` 
                         }}
@@ -474,7 +514,7 @@ export default function LearnHub({ setActiveTab }) {
             <MobileCardContent>
               <div className="space-y-3">
                 {selectedModule.content?.lessons?.map(lesson => {
-                  const isCompleted = completedLessons.includes(lesson.id)
+                  const isCompleted = completedLessons.includes(`${selectedModule.id}_${lesson.id}`)
                   return (
                     <div 
                       key={lesson.id} 
@@ -519,7 +559,7 @@ export default function LearnHub({ setActiveTab }) {
               <ArrowLeft className="w-4 h-4 mr-1" />
               Back to lessons
             </button>
-            {!completedLessons.includes(selectedLesson.id) && (
+            {!completedLessons.includes(`${selectedModule.id}_${selectedLesson.id}`) && (
               <MobileButton 
                 onClick={() => markLessonComplete(selectedLesson.id)}
                 variant="primary"
