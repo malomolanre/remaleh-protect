@@ -6,10 +6,10 @@ import json
 
 # Import production modules - try relative imports first, then absolute
 try:
-    from ..models import db, LearningModule, LearningProgress, User
+    from ..models import db, LearningModule, LearningProgress, LessonProgress, User
     from ..auth import token_required
 except ImportError:
-    from models import db, LearningModule, LearningProgress, User
+    from models import db, LearningModule, LearningProgress, LessonProgress, User
     from auth import token_required
 
 logger = logging.getLogger(__name__)
