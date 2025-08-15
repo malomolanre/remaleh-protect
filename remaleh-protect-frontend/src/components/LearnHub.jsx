@@ -88,16 +88,33 @@ export default function LearnHub({ setActiveTab }) {
       // Extract completed lesson IDs from lesson progress records
       // IMPORTANT: We need to create unique identifiers that combine module_id and lesson_id
       // because lesson IDs are not globally unique across modules
-      const completedLessonKeys = overallProgress.lesson_progress_records
+      const backendCompletedKeys = overallProgress.lesson_progress_records
         .filter(record => record.completed)
         .map(record => `${record.module_id}_${record.lesson_id}`)
       
       console.log('📊 Raw lesson progress records:', overallProgress.lesson_progress_records)
-      console.log('📊 Filtered completed lesson keys (module_lesson):', completedLessonKeys)
+      console.log('📊 Backend completed lesson keys:', backendCompletedKeys)
+      console.log('📊 Current local completedLessons:', completedLessons)
       
-      setCompletedLessons(completedLessonKeys)
-      console.log('📊 Updated completedLessons state from backend:', completedLessonKeys)
-      console.log('📊 Previous state was overwritten with backend data')
+      // Only update if backend has more completed lessons than local state
+      // This prevents overwriting local progress with stale backend data
+      if (backendCompletedKeys.length > completedLessons.length) {
+        console.log('📊 Backend has more completed lessons, updating local state')
+        setCompletedLessons(backendCompletedKeys)
+      } else if (backendCompletedKeys.length === completedLessons.length) {
+        console.log('📊 Backend and local state have same count, checking for new keys')
+        // Check if there are any new keys in backend that aren't in local state
+        const newKeys = backendCompletedKeys.filter(key => !completedLessons.includes(key))
+        if (newKeys.length > 0) {
+          console.log('📊 Found new keys in backend:', newKeys)
+          const updatedKeys = [...new Set([...completedLessons, ...newKeys])]
+          setCompletedLessons(updatedKeys)
+        } else {
+          console.log('📊 No new keys found, keeping local state unchanged')
+        }
+      } else {
+        console.log('📊 Backend has fewer completed lessons, keeping local state unchanged')
+      }
     } else {
       console.log('📊 No lesson progress records found or empty')
     }
@@ -150,12 +167,10 @@ export default function LearnHub({ setActiveTab }) {
       console.log('🔄 Updated completedLessons state with key:', lessonKey)
       console.log('🔄 New completed lessons array:', newCompleted)
       
-      // Wait a moment for backend to update, then refresh progress data
-      console.log('🔄 Waiting for backend to update...')
-      setTimeout(async () => {
-        await loadData()
-        console.log('🔄 Progress data refreshed after backend update')
-      }, 1000)
+      // Refresh progress data to sync with backend
+      console.log('🔄 Refreshing progress data...')
+      await loadData()
+      console.log('🔄 Progress data refreshed')
       
       console.log('✅ Lesson marked as complete:', lessonId)
     } catch (error) {
