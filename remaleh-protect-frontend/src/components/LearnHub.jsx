@@ -422,6 +422,11 @@ export default function LearnHub({ setActiveTab }) {
               ).length || 0
               const progressPercent = lessonCount > 0 ? (completedLessonsInModule / lessonCount) * 100 : 0
               
+              // Debug logging for module progress
+              console.log(`📊 Module ${module.id} (${module.title}): ${completedLessonsInModule}/${lessonCount} = ${Math.round(progressPercent)}%`)
+              console.log(`📊 Module ${module.id} lessons:`, module.content?.lessons?.map(l => ({ id: l.id, title: l.title })))
+              console.log(`📊 Module ${module.id} completed keys:`, completedLessons.filter(key => key.startsWith(`${module.id}_`)))
+              
               return (
                 <MobileCard key={module.id} className="cursor-pointer hover:shadow-md transition-shadow" 
                            onClick={() => setSelectedModule(module)}>
