@@ -82,6 +82,7 @@ export default function LearnHub({ setActiveTab }) {
   useEffect(() => {
     console.log('🔄 Progress loading useEffect triggered')
     console.log('🔄 overallProgress:', overallProgress)
+    console.log('🔄 Current completedLessons state before update:', completedLessons)
     
     if (overallProgress.lesson_progress_records && overallProgress.lesson_progress_records.length > 0) {
       // Extract completed lesson IDs from lesson progress records
@@ -95,7 +96,8 @@ export default function LearnHub({ setActiveTab }) {
       console.log('📊 Filtered completed lesson keys (module_lesson):', completedLessonKeys)
       
       setCompletedLessons(completedLessonKeys)
-      console.log('📊 Loaded completed lessons from backend:', completedLessonKeys)
+      console.log('📊 Updated completedLessons state from backend:', completedLessonKeys)
+      console.log('📊 Previous state was overwritten with backend data')
     } else {
       console.log('📊 No lesson progress records found or empty')
     }
@@ -148,8 +150,12 @@ export default function LearnHub({ setActiveTab }) {
       console.log('🔄 Updated completedLessons state with key:', lessonKey)
       console.log('🔄 New completed lessons array:', newCompleted)
       
-      // Refresh progress data
-      await loadData()
+      // Wait a moment for backend to update, then refresh progress data
+      console.log('🔄 Waiting for backend to update...')
+      setTimeout(async () => {
+        await loadData()
+        console.log('🔄 Progress data refreshed after backend update')
+      }, 1000)
       
       console.log('✅ Lesson marked as complete:', lessonId)
     } catch (error) {
@@ -295,6 +301,11 @@ export default function LearnHub({ setActiveTab }) {
           </div>
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>{loading ? 'Loading...' : `${Math.round(overallProgress.completion_percentage || 0)}% Complete`}</span>
+            
+            {/* Debug Progress Bar Values */}
+            <div className="text-xs text-gray-500">
+              Debug: {overallProgress.completion_percentage || 0}% width
+            </div>
             {nextLesson && (
               <span className="text-sm text-[#21a1ce] font-medium">
                 Next: {nextLesson.lesson_title}
