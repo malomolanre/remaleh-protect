@@ -68,10 +68,9 @@ export default function LearnHub({ setActiveTab }) {
         .filter(record => record.completed)
         .map(record => `${record.module_id}_${record.lesson_id}`)
       
-      // Debug: Check for any mismatches between backend and frontend
+      // Optional: detect mismatches between backend and frontend (no UI/log output)
       const backendCompletedSet = new Set(backendCompletedKeys)
       const frontendCompletedSet = new Set(completedLessons)
-      
       const missingInFrontend = backendCompletedKeys.filter(key => !frontendCompletedSet.has(key))
       const extraInFrontend = completedLessons.filter(key => !backendCompletedSet.has(key))
       
@@ -331,31 +330,14 @@ export default function LearnHub({ setActiveTab }) {
             <span>{loading ? 'Loading...' : `${Math.round(overallProgress.completion_percentage || 0)}% Complete`}</span>
             
             {/* Debug Progress Bar Values */}
-            <div className="text-xs text-gray-500">
-              Debug: {overallProgress.completion_percentage || 0}% width
-            </div>
+            
             {nextLesson && (
               <span className="text-sm text-[#21a1ce] font-medium">
                 Next: {nextLesson.lesson_title}
               </span>
             )}
           </div>
-          {/* Debug Progress Info */}
-          {!loading && (
-            <div className="mt-2 text-xs text-gray-500 border-t pt-2">
-              <div>Total Lessons: {overallProgress.total_lessons || 0}</div>
-              <div>Completed Lessons: {overallProgress.completed_lessons || 0}</div>
-              <div>Raw Percentage: {overallProgress.completion_percentage || 0}%</div>
-              <div>Frontend State: {completedLessons.length} keys</div>
-              <div>Backend Records: {overallProgress.lesson_progress_records?.length || 0}</div>
-              <div className="mt-1 font-medium">Backend Progress Records:</div>
-              {overallProgress.lesson_progress_records?.map((record, index) => (
-                <div key={index} className="text-xs">
-                  Module {record.module_id}, Lesson {record.lesson_id}: {record.completed ? '✅' : '❌'}
-                </div>
-              ))}
-            </div>
-          )}
+          
         </MobileCardContent>
       </MobileCard>
 
