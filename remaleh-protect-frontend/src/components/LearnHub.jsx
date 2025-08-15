@@ -122,7 +122,7 @@ export default function LearnHub({ setActiveTab }) {
       console.log('🔄 Current modules:', modules)
       
       // Find the module this lesson belongs to
-      const module = modules.find(m => m.content?.lessons?.some(l => l.id === lessonId))
+      const module = modules.find(m => m.content?.lessons?.some(l => String(l.id) === String(lessonId)))
       if (!module) {
         console.error('❌ Module not found for lesson:', lessonId)
         return
@@ -134,6 +134,13 @@ export default function LearnHub({ setActiveTab }) {
         lessonId: lessonId,
         allLessonsInModule: module.content?.lessons?.map(l => ({ id: l.id, title: l.title }))
       })
+
+      // If already completed, skip backend call
+      const lessonKeyPre = `${String(module.id)}_${String(lessonId)}`
+      if (completedLessons.includes(lessonKeyPre)) {
+        console.log('ℹ️ Lesson already completed, skipping update:', lessonKeyPre)
+        return
+      }
 
       // Update backend lesson progress
       const progressData = {
@@ -151,11 +158,14 @@ export default function LearnHub({ setActiveTab }) {
       // Import updateLessonProgress function for lesson-level tracking
       const { updateLessonProgress } = await import('../utils/contentManager')
       const result = await updateLessonProgress(module.id, lessonId, progressData)
+      // Normalize backend response and ensure completed flag is true
+      const backendKey = `${String(result?.progress?.module_id ?? module.id)}_${String(result?.progress?.lesson_id ?? lessonId)}`
+      const backendCompleted = Boolean(result?.progress?.completed ?? true)
       
       console.log('🔄 updateLessonProgress result:', result)
 
-      // Update local state - use module_lesson key format for uniqueness (functional update to avoid stale state)
-      const lessonKey = `${module.id}_${lessonId}`
+      // Update local state - prefer backend key if present
+      const lessonKey = backendCompleted ? backendKey : `${String(module.id)}_${String(lessonId)}`
       setCompletedLessons(prev => {
         const updated = [...new Set([...prev, lessonKey])]
         return updated
@@ -166,11 +176,13 @@ export default function LearnHub({ setActiveTab }) {
       setOverallProgress(prev => {
         const prevRecords = Array.isArray(prev?.lesson_progress_records) ? prev.lesson_progress_records : []
         const updatedRecords = [...prevRecords]
-        const existingIndex = updatedRecords.findIndex(r => r.module_id === module.id && r.lesson_id === lessonId)
+        const targetModuleId = result?.progress?.module_id || module.id
+        const targetLessonId = result?.progress?.lesson_id || lessonId
+        const existingIndex = updatedRecords.findIndex(r => r.module_id === targetModuleId && r.lesson_id === targetLessonId)
         if (existingIndex >= 0) {
           updatedRecords[existingIndex] = { ...updatedRecords[existingIndex], completed: true, score: 100 }
         } else {
-          updatedRecords.push({ module_id: module.id, lesson_id: lessonId, completed: true, score: 100 })
+          updatedRecords.push({ module_id: targetModuleId, lesson_id: targetLessonId, completed: true, score: 100 })
         }
         const completedCount = updatedRecords.filter(r => r.completed).length
         const totalLessons = prev?.total_lessons || (modules.reduce((acc, m) => acc + (m.content?.lessons?.length || 0), 0))
