@@ -368,74 +368,7 @@ def delete_lesson(current_user, module_id, lesson_id):
         logger.error(f"Error deleting lesson {lesson_id} from module {module_id}: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
-@learning_content_bp.route('/modules/<int:module_id>/progress', methods=['GET'])
-@token_required
-def get_module_progress(current_user, module_id):
-    """Get user's progress for a specific module"""
-    try:
-        user_id = current_user.id
-        
-        progress = LearningProgress.query.filter_by(
-            user_id=user_id,
-            module_id=module_id
-        ).first()
-        
-        if not progress:
-            return jsonify({
-                'module_id': module_id,
-                'completed': False,
-                'score': 0,
-                'started_at': None,
-                'completed_at': None
-            }), 200
-        
-        return jsonify(progress.to_dict()), 200
-        
-    except Exception as e:
-        logger.error(f"Error getting module progress: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
-
-@learning_content_bp.route('/modules/<int:module_id>/progress', methods=['POST'])
-@token_required
-def update_module_progress(current_user, module_id):
-    """Update user's progress for a module"""
-    try:
-        user_id = current_user.id
-        data = request.get_json()
-        
-        progress = LearningProgress.query.filter_by(
-            user_id=user_id,
-            module_id=module_id
-        ).first()
-        
-        if not progress:
-            # Create new progress record
-            progress = LearningProgress(
-                user_id=user_id,
-                module_id=module_id,
-                completed=data.get('completed', False),
-                score=data.get('score', 0)
-            )
-            db.session.add(progress)
-        else:
-            # Update existing progress
-            progress.completed = data.get('completed', progress.completed)
-            progress.score = data.get('score', progress.score)
-            if data.get('completed') and not progress.completed:
-                progress.completed_at = datetime.utcnow()
-        
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'Progress updated successfully',
-            'progress': progress.to_dict()
-        }), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error updating module progress: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
-
+# LESSON-LEVEL PROGRESS ROUTES (MUST COME FIRST - more specific)
 @learning_content_bp.route('/modules/<int:module_id>/lessons/<int:lesson_id>/progress', methods=['GET'])
 @token_required
 def get_lesson_progress(current_user, module_id, lesson_id):
@@ -534,6 +467,75 @@ def update_lesson_progress(current_user, module_id, lesson_id):
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error updating lesson progress: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+# MODULE-LEVEL PROGRESS ROUTES (MUST COME AFTER - more general)
+@learning_content_bp.route('/modules/<int:module_id>/progress', methods=['GET'])
+@token_required
+def get_module_progress(current_user, module_id):
+    """Get user's progress for a specific module"""
+    try:
+        user_id = current_user.id
+        
+        progress = LearningProgress.query.filter_by(
+            user_id=user_id,
+            module_id=module_id
+        ).first()
+        
+        if not progress:
+            return jsonify({
+                'module_id': module_id,
+                'completed': False,
+                'score': 0,
+                'started_at': None,
+                'completed_at': None
+            }), 200
+        
+        return jsonify(progress.to_dict()), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting module progress: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@learning_content_bp.route('/modules/<int:module_id>/progress', methods=['POST'])
+@token_required
+def update_module_progress(current_user, module_id):
+    """Update user's progress for a module"""
+    try:
+        user_id = current_user.id
+        data = request.get_json()
+        
+        progress = LearningProgress.query.filter_by(
+            user_id=user_id,
+            module_id=module_id
+        ).first()
+        
+        if not progress:
+            # Create new progress record
+            progress = LearningProgress(
+                user_id=user_id,
+                module_id=module_id,
+                completed=data.get('completed', False),
+                score=data.get('score', 0)
+            )
+            db.session.add(progress)
+        else:
+            # Update existing progress
+            progress.completed = data.get('completed', progress.completed)
+            progress.score = data.get('score', progress.score)
+            if data.get('completed') and not progress.completed:
+                progress.completed_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Progress updated successfully',
+            'progress': progress.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating module progress: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @learning_content_bp.route('/progress/overview', methods=['GET'])
