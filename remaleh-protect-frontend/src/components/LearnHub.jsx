@@ -52,7 +52,6 @@ export default function LearnHub({ setActiveTab }) {
       // Avoid extra per-module progress calls; compute view state locally from overallProgress
       
     } catch (err) {
-      console.error('Error loading learning data:', err)
       setError('Failed to load learning content. Please try again.')
     } finally {
       setLoading(false)
@@ -61,10 +60,6 @@ export default function LearnHub({ setActiveTab }) {
   
   // Load completed lessons from backend lesson progress data
   useEffect(() => {
-    console.log('🔄 Progress loading useEffect triggered')
-    console.log('🔄 overallProgress:', overallProgress)
-    console.log('🔄 Current completedLessons state before update:', completedLessons)
-    
     if (overallProgress.lesson_progress_records && overallProgress.lesson_progress_records.length > 0) {
       // Extract completed lesson IDs from lesson progress records
       // IMPORTANT: We need to create unique identifiers that combine module_id and lesson_id
@@ -73,10 +68,6 @@ export default function LearnHub({ setActiveTab }) {
         .filter(record => record.completed)
         .map(record => `${record.module_id}_${record.lesson_id}`)
       
-      console.log('📊 Raw lesson progress records:', overallProgress.lesson_progress_records)
-      console.log('📊 Backend completed lesson keys:', backendCompletedKeys)
-      console.log('📊 Current local completedLessons:', completedLessons)
-      
       // Debug: Check for any mismatches between backend and frontend
       const backendCompletedSet = new Set(backendCompletedKeys)
       const frontendCompletedSet = new Set(completedLessons)
@@ -84,61 +75,33 @@ export default function LearnHub({ setActiveTab }) {
       const missingInFrontend = backendCompletedKeys.filter(key => !frontendCompletedSet.has(key))
       const extraInFrontend = completedLessons.filter(key => !backendCompletedSet.has(key))
       
-      if (missingInFrontend.length > 0) {
-        console.log('⚠️ Lessons completed in backend but missing in frontend:', missingInFrontend)
-      }
-      if (extraInFrontend.length > 0) {
-        console.log('⚠️ Lessons marked complete in frontend but not in backend:', extraInFrontend)
-      }
-      
       // Only update if backend has more completed lessons than local state
       // This prevents overwriting local progress with stale backend data
       if (backendCompletedKeys.length > completedLessons.length) {
-        console.log('📊 Backend has more completed lessons, updating local state')
         setCompletedLessons(backendCompletedKeys)
       } else if (backendCompletedKeys.length === completedLessons.length) {
-        console.log('📊 Backend and local state have same count, checking for new keys')
         // Check if there are any new keys in backend that aren't in local state
         const newKeys = backendCompletedKeys.filter(key => !completedLessons.includes(key))
         if (newKeys.length > 0) {
-          console.log('📊 Found new keys in backend:', newKeys)
           const updatedKeys = [...new Set([...completedLessons, ...newKeys])]
           setCompletedLessons(updatedKeys)
-        } else {
-          console.log('📊 No new keys found, keeping local state unchanged')
         }
-      } else {
-        console.log('📊 Backend has fewer completed lessons, keeping local state unchanged')
       }
-    } else {
-      console.log('📊 No lesson progress records found or empty')
     }
   }, [overallProgress])
   
   // Mark lesson as complete and update backend progress
   const markLessonComplete = async (moduleId, lessonId) => {
     try {
-      console.log('🔄 markLessonComplete called with:', { moduleId, lessonId })
-      console.log('🔄 Current modules:', modules)
-      
       // Find the module by provided moduleId (avoid cross-module ID collisions)
       const module = modules.find(m => String(m.id) === String(moduleId))
       if (!module) {
-        console.error('❌ Module not found for ids:', { moduleId, lessonId })
         return
       }
-
-      console.log('🔄 Found module for lesson:', {
-        moduleId: module.id,
-        moduleTitle: module.title,
-        lessonId: lessonId,
-        allLessonsInModule: module.content?.lessons?.map(l => ({ id: l.id, title: l.title }))
-      })
 
       // If already completed, skip backend call
       const lessonKeyPre = `${String(module.id)}_${String(lessonId)}`
       if (completedLessons.includes(lessonKeyPre)) {
-        console.log('ℹ️ Lesson already completed, skipping update:', lessonKeyPre)
         return
       }
 
@@ -149,20 +112,12 @@ export default function LearnHub({ setActiveTab }) {
         completed_at: new Date().toISOString()
       }
 
-      console.log('🔄 Calling updateLessonProgress with:', {
-        moduleId: module.id,
-        lessonId: lessonId,
-        progressData
-      })
-
       // Import updateLessonProgress function for lesson-level tracking
       const { updateLessonProgress } = await import('../utils/contentManager')
       const result = await updateLessonProgress(module.id, lessonId, progressData)
       // Normalize backend response and ensure completed flag is true
       const backendKey = `${String(result?.progress?.module_id ?? module.id)}_${String(result?.progress?.lesson_id ?? lessonId)}`
       const backendCompleted = Boolean(result?.progress?.completed ?? true)
-      
-      console.log('🔄 updateLessonProgress result:', result)
 
       // Update local state - prefer backend key if present
       const lessonKey = backendCompleted ? backendKey : `${String(module.id)}_${String(lessonId)}`
@@ -170,7 +125,6 @@ export default function LearnHub({ setActiveTab }) {
         const updated = [...new Set([...prev, lessonKey])]
         return updated
       })
-      console.log('🔄 Updated completedLessons state with key:', lessonKey)
       
       // Optimistically update overall progress locally for instant UI feedback
       setOverallProgress(prev => {
@@ -199,7 +153,6 @@ export default function LearnHub({ setActiveTab }) {
       })
 
       // Lightweight refresh: only fetch overall progress and recompute next lesson
-      console.log('🔄 Refreshing overall progress...')
       const refreshedProgress = await getOverallProgress()
       // Merge backend progress with local optimistic completion to avoid UI regression
       const localCompletedSet = new Set([...(completedLessons || []), lessonKey])
@@ -228,11 +181,7 @@ export default function LearnHub({ setActiveTab }) {
       }
       setOverallProgress(mergedProgress)
       setNextLesson(computeNextRecommendedLesson(modules, mergedProgress))
-      console.log('🔄 Overall progress refreshed and merged with local state')
-      
-      console.log('✅ Lesson marked as complete:', lessonId)
     } catch (error) {
-      console.error('❌ Failed to mark lesson complete:', error)
       // Fallback to local storage if backend fails
       const fallbackKey = `${selectedModule?.id || 'unknown'}_${lessonId}`
       setCompletedLessons(prev => {
@@ -527,11 +476,6 @@ export default function LearnHub({ setActiveTab }) {
               ).length || 0
               const progressPercent = lessonCount > 0 ? (completedLessonsInModule / lessonCount) * 100 : 0
               
-              // Debug logging for module progress
-              console.log(`📊 Module ${module.id} (${module.title}): ${completedLessonsInModule}/${lessonCount} = ${Math.round(progressPercent)}%`)
-              console.log(`📊 Module ${module.id} lessons:`, module.content?.lessons?.map(l => ({ id: l.id, title: l.title })))
-              console.log(`📊 Module ${module.id} completed keys:`, completedLessons.filter(key => key.startsWith(`${module.id}_`)))
-              
               return (
                 <MobileCard key={module.id} className="cursor-pointer hover:shadow-md transition-shadow" 
                            onClick={() => setSelectedModule(module)}>
@@ -626,15 +570,6 @@ export default function LearnHub({ setActiveTab }) {
                 {selectedModule.content?.lessons?.map(lesson => {
                   const lessonKey = `${String(selectedModule.id)}_${String(lesson.id)}`
                   const isCompleted = completedLessons.includes(lessonKey)
-                  
-                  // Debug logging for each lesson
-                  console.log(`📊 Lesson ${lesson.id} in Module ${selectedModule.id}:`, {
-                    lessonKey,
-                    isCompleted,
-                    title: lesson.title,
-                    inCompletedLessons: completedLessons.includes(lessonKey),
-                    allCompletedKeys: completedLessons
-                  })
                   
                   return (
                     <div 
