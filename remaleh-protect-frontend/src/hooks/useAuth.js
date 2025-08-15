@@ -7,6 +7,35 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Refresh auth token function (defined early to avoid TDZ in callbacks below)
+  const refreshAuthToken = useCallback(async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        return { success: false, error: 'No refresh token available' };
+      }
+
+      const response = await apiPost(API_ENDPOINTS.AUTH.REFRESH, {
+        refresh_token: refreshToken
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        const { access_token, refresh_token: newRefreshToken } = responseData;
+        localStorage.setItem('authToken', access_token);
+        if (newRefreshToken) {
+          localStorage.setItem('refreshToken', newRefreshToken);
+        }
+        return { success: true };
+      } else {
+        return { success: false, error: 'Token refresh failed' };
+      }
+    } catch (err) {
+      console.error('Token refresh error:', err);
+      return { success: false, error: 'Token refresh failed' };
+    }
+  }, []);
+
   // Central auth check function (reusable and event-driven)
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('authToken');
@@ -183,36 +212,7 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Refresh auth token function
-  const refreshAuthToken = useCallback(async () => {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return { success: false, error: 'No refresh token available' };
-      }
-
-      const response = await apiPost(API_ENDPOINTS.AUTH.REFRESH, {
-        refresh_token: refreshToken
-      });
-
-      if (response.ok) {
-        const responseData = await response.json();
-        const { access_token, refresh_token: newRefreshToken } = responseData;
-        
-        localStorage.setItem('authToken', access_token);
-        if (newRefreshToken) {
-          localStorage.setItem('refreshToken', newRefreshToken);
-        }
-        
-        return { success: true };
-      } else {
-        return { success: false, error: 'Token refresh failed' };
-      }
-    } catch (err) {
-      console.error('Token refresh error:', err);
-      return { success: false, error: 'Token refresh failed' };
-    }
-  }, []);
+  
 
   // Change password function
   const changePassword = useCallback(async (currentPassword, newPassword) => {
