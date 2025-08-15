@@ -78,25 +78,18 @@ export default function LearnHub({ setActiveTab }) {
     }
   }
   
-  // Load completed lessons from backend progress data
+  // Load completed lessons from backend lesson progress data
   useEffect(() => {
-    if (overallProgress.progress_records && overallProgress.progress_records.length > 0) {
-      // Extract completed lesson IDs from progress records
-      const completedLessonIds = []
-      overallProgress.progress_records.forEach(record => {
-        if (record.completed) {
-          // Find the module and get its lessons
-          const module = modules.find(m => m.id === record.module_id)
-          if (module && module.content && module.content.lessons) {
-            module.content.lessons.forEach(lesson => {
-              completedLessonIds.push(lesson.id)
-            })
-          }
-        }
-      })
+    if (overallProgress.lesson_progress_records && overallProgress.lesson_progress_records.length > 0) {
+      // Extract completed lesson IDs from lesson progress records
+      const completedLessonIds = overallProgress.lesson_progress_records
+        .filter(record => record.completed)
+        .map(record => record.lesson_id)
+      
       setCompletedLessons(completedLessonIds)
+      console.log('📊 Loaded completed lessons from backend:', completedLessonIds)
     }
-  }, [overallProgress, modules])
+  }, [overallProgress])
   
   // Mark lesson as complete and update backend progress
   const markLessonComplete = async (lessonId) => {
@@ -108,16 +101,16 @@ export default function LearnHub({ setActiveTab }) {
         return
       }
 
-      // Update backend progress
+      // Update backend lesson progress
       const progressData = {
         completed: true,
         score: 100, // Full score for completing lesson
         completed_at: new Date().toISOString()
       }
 
-      // Import updateProgress function
-      const { updateProgress } = await import('../utils/contentManager')
-      await updateProgress(module.id, progressData)
+      // Import updateLessonProgress function for lesson-level tracking
+      const { updateLessonProgress } = await import('../utils/contentManager')
+      await updateLessonProgress(module.id, lessonId, progressData)
 
       // Update local state
       const newCompleted = [...new Set([...completedLessons, lessonId])]

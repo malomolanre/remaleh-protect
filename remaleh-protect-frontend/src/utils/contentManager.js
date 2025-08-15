@@ -472,7 +472,33 @@ export const deleteLesson = async (moduleId, lessonId) => {
   }
 }
 
-// Update user progress
+// Update lesson progress (new function for lesson-level tracking)
+export const updateLessonProgress = async (moduleId, lessonId, progressData) => {
+  try {
+    const response = await apiPost(`/api/learning/modules/${moduleId}/lessons/${lessonId}/progress`, progressData)
+    if (response.ok) {
+      const data = await response.json()
+      return data
+    } else {
+      throw new Error('Failed to update lesson progress')
+    }
+  } catch (error) {
+    console.warn('Backend unavailable, storing progress locally:', error)
+    // Store locally as fallback
+    const localProgress = {
+      module_id: moduleId,
+      lesson_id: lessonId,
+      completed: progressData.completed || false,
+      score: progressData.score || 0,
+      started_at: new Date().toISOString(),
+      completed_at: progressData.completed ? new Date().toISOString() : null
+    }
+    localStorage.setItem(`lesson_progress_${moduleId}_${lessonId}`, JSON.stringify(localProgress))
+    return { progress: localProgress }
+  }
+}
+
+// Update user progress (kept for backward compatibility)
 export const updateProgress = async (moduleId, progressData) => {
   try {
     const response = await apiPost(API_ENDPOINTS.PROGRESS(moduleId), progressData)

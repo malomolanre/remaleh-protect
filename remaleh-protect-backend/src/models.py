@@ -24,6 +24,7 @@ class User(db.Model):
     # Relationships
     scans = db.relationship('UserScan', backref='user', lazy=True)
     learning_progress = db.relationship('LearningProgress', backref='user', lazy=True)
+    lesson_progress = db.relationship('LessonProgress', backref='user', lazy=True)
     reports = db.relationship('CommunityReport', backref='user', lazy=True)
     votes = db.relationship('ReportVote', backref='user', lazy=True)
     
@@ -180,6 +181,9 @@ class LearningModule(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     
+    # Relationships
+    lesson_progress = db.relationship('LessonProgress', backref='module', lazy=True)
+    
     def to_dict(self):
         return {
             'id': self.id,
@@ -208,6 +212,32 @@ class LearningProgress(db.Model):
         return {
             'id': self.id,
             'module_id': self.module_id,
+            'completed': self.completed,
+            'score': self.score,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }
+
+class LessonProgress(db.Model):
+    __tablename__ = 'lesson_progress'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    module_id = db.Column(db.Integer, db.ForeignKey('learning_modules.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, nullable=False)  # ID of the lesson within the module
+    completed = db.Column(db.Boolean, default=False)
+    score = db.Column(db.Integer, default=0)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    
+    __table_args__ = (db.UniqueConstraint('user_id', 'module_id', 'lesson_id'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'module_id': self.module_id,
+            'lesson_id': self.lesson_id,
             'completed': self.completed,
             'score': self.score,
             'started_at': self.started_at.isoformat() if self.started_at else None,

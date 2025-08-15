@@ -436,6 +436,90 @@ def update_module_progress(current_user, module_id):
         logger.error(f"Error updating module progress: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@learning_content_bp.route('/modules/<int:module_id>/lessons/<int:lesson_id>/progress', methods=['GET'])
+@token_required
+def get_lesson_progress(current_user, module_id, lesson_id):
+    """Get user's progress for a specific lesson"""
+    try:
+        user_id = current_user.id
+        
+        progress = LessonProgress.query.filter_by(
+            user_id=user_id,
+            module_id=module_id,
+            lesson_id=lesson_id
+        ).first()
+        
+        if not progress:
+            return jsonify({
+                'module_id': module_id,
+                'lesson_id': lesson_id,
+                'completed': False,
+                'score': 0,
+                'started_at': None,
+                'completed_at': None
+            }), 200
+        
+        return jsonify(progress.to_dict()), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting lesson progress: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@learning_content_bp.route('/modules/<int:module_id>/lessons/<int:lesson_id>/progress', methods=['POST'])
+@token_required
+def update_lesson_progress(current_user, module_id, lesson_id):
+    """Update user's progress for a specific lesson"""
+    try:
+        user_id = current_user.id
+        data = request.get_json()
+        
+        # Check if lesson exists in the module
+        module = LearningModule.query.get(module_id)
+        if not module or not module.content or not module.content.get('lessons'):
+            return jsonify({'error': 'Module or lesson not found'}), 404
+        
+        lesson_exists = any(lesson.get('id') == lesson_id for lesson in module.content.get('lessons', []))
+        if not lesson_exists:
+            return jsonify({'error': 'Lesson not found in module'}), 404
+        
+        # Find or create lesson progress record
+        progress = LessonProgress.query.filter_by(
+            user_id=user_id,
+            module_id=module_id,
+            lesson_id=lesson_id
+        ).first()
+        
+        if not progress:
+            # Create new progress record
+            progress = LessonProgress(
+                user_id=user_id,
+                module_id=module_id,
+                lesson_id=lesson_id,
+                completed=data.get('completed', False),
+                score=data.get('score', 0)
+            )
+            db.session.add(progress)
+        else:
+            # Update existing progress
+            progress.completed = data.get('completed', progress.completed)
+            progress.score = data.get('score', progress.score)
+            if data.get('completed') and not progress.completed:
+                progress.completed_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        logger.info(f"Updated lesson progress for user {user_id}, module {module_id}, lesson {lesson_id}")
+        
+        return jsonify({
+            'message': 'Lesson progress updated successfully',
+            'progress': progress.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating lesson progress: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @learning_content_bp.route('/progress/overview', methods=['GET'])
 @token_required
 def get_progress_overview(current_user):
@@ -443,22 +527,38 @@ def get_progress_overview(current_user):
     try:
         user_id = current_user.id
         
-        # Get all progress records for the user
-        progress_records = LearningProgress.query.filter_by(user_id=user_id).all()
+        # Get all lesson progress records for the user
+        lesson_progress_records = LessonProgress.query.filter_by(user_id=user_id).all()
         
-        # Calculate statistics
-        total_modules = LearningModule.query.filter_by(is_active=True).count()
-        completed_modules = len([p for p in progress_records if p.completed])
-        total_score = sum(p.score for p in progress_records)
-        average_score = total_score / len(progress_records) if progress_records else 0
+        # Get all active modules
+        active_modules = LearningModule.query.filter_by(is_active=True).all()
+        
+        # Calculate statistics based on lesson completion
+        total_lessons = sum(len(m.content.get('lessons', [])) if m.content else 0 for m in active_modules)
+        completed_lessons = len([p for p in lesson_progress_records if p.completed])
+        
+        # Calculate module completion (module is complete if all its lessons are complete)
+        completed_modules = 0
+        for module in active_modules:
+            module_lessons = module.content.get('lessons', []) if module.content else []
+            if module_lessons:
+                module_completed_lessons = len([p for p in lesson_progress_records 
+                                             if p.module_id == module.id and p.completed])
+                if module_completed_lessons == len(module_lessons):
+                    completed_modules += 1
+        
+        total_score = sum(p.score for p in lesson_progress_records)
+        average_score = total_score / len(lesson_progress_records) if lesson_progress_records else 0
         
         return jsonify({
-            'total_modules': total_modules,
+            'total_modules': len(active_modules),
             'completed_modules': completed_modules,
-            'completion_percentage': (completed_modules / total_modules * 100) if total_modules > 0 else 0,
+            'total_lessons': total_lessons,
+            'completed_lessons': completed_lessons,
+            'completion_percentage': (completed_lessons / total_lessons * 100) if total_lessons > 0 else 0,
             'total_score': total_score,
             'average_score': round(average_score, 2),
-            'progress_records': [p.to_dict() for p in progress_records]
+            'lesson_progress_records': [p.to_dict() for p in lesson_progress_records]
         }), 200
         
     except Exception as e:
