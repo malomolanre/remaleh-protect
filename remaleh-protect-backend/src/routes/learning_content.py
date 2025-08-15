@@ -528,8 +528,13 @@ def get_progress_overview(current_user):
         user_id = current_user.id
         
         # Get all lesson progress records for the user
-        lesson_progress_records = LessonProgress.query.filter_by(user_id=user_id).all()
+        # Use a fresh query to ensure we get the latest data
+        lesson_progress_records = db.session.query(LessonProgress).filter_by(user_id=user_id).all()
         logger.info(f"Progress overview for user {user_id}: {len(lesson_progress_records)} lesson progress records")
+        
+        # Debug: Log each lesson progress record
+        for record in lesson_progress_records:
+            logger.info(f"Progress record: Module {record.module_id}, Lesson {record.lesson_id}, Completed: {record.completed}")
         
         # Get all active modules
         active_modules = LearningModule.query.filter_by(is_active=True).all()
