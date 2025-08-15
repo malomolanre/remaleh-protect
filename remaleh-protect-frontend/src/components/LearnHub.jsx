@@ -6,11 +6,10 @@ import { MobileInput } from './ui/mobile-input'
 import { useAuth } from '../hooks/useAuth'
 import { 
   getAllModules, 
-  getModuleProgress, 
   getOverallProgress,
-  getNextRecommendedLesson,
   searchLearningContent,
-  getContentByDifficulty
+  getContentByDifficulty,
+  computeNextRecommendedLesson
 } from '../utils/contentManager'
 
 export default function LearnHub({ setActiveTab }) {
@@ -43,32 +42,16 @@ export default function LearnHub({ setActiveTab }) {
       setError(null)
       
       // Load modules and progress in parallel
-      const [modulesData, progressData, nextLessonData] = await Promise.all([
+      const [modulesData, progressData] = await Promise.all([
         getAllModules(),
-        getOverallProgress(),
-        getNextRecommendedLesson()
+        getOverallProgress()
       ])
       
       setModules(modulesData)
       setOverallProgress(progressData)
-      setNextLesson(nextLessonData)
+      setNextLesson(computeNextRecommendedLesson(modulesData, progressData))
       
-      // Load individual lesson progress for each module
-      if (modulesData.length > 0) {
-        const lessonProgressPromises = modulesData.map(async (module) => {
-          try {
-            const { getModuleProgress } = await import('../utils/contentManager')
-            const moduleProgress = await getModuleProgress(module.id)
-            return { moduleId: module.id, progress: moduleProgress }
-          } catch (error) {
-            console.warn(`Failed to load progress for module ${module.id}:`, error)
-            return { moduleId: module.id, progress: null }
-          }
-        })
-        
-        const lessonProgressResults = await Promise.all(lessonProgressPromises)
-        console.log('📊 Lesson progress loaded:', lessonProgressResults)
-      }
+      // Avoid extra per-module progress calls; compute view state locally from overallProgress
       
     } catch (err) {
       console.error('Error loading learning data:', err)

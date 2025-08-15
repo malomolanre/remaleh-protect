@@ -192,6 +192,37 @@ export const getNextRecommendedLesson = async () => {
   }
 }
 
+// Compute next recommended lesson without extra API calls
+export const computeNextRecommendedLesson = (modules, overallProgress) => {
+  try {
+    if (!Array.isArray(modules) || !overallProgress) return null
+    const completedSet = new Set(
+      (overallProgress.lesson_progress_records || [])
+        .filter((r) => r.completed)
+        .map((r) => `${r.module_id}_${r.lesson_id}`)
+    )
+
+    for (const module of modules) {
+      const lessons = module?.content?.lessons || []
+      for (const lesson of lessons) {
+        const key = `${module.id}_${lesson.id}`
+        if (!completedSet.has(key)) {
+          return {
+            module_id: module.id,
+            module_title: module.title,
+            lesson_id: lesson.id,
+            lesson_title: lesson.title
+          }
+        }
+      }
+    }
+    return null
+  } catch (error) {
+    console.warn('Error computing next recommended lesson:', error)
+    return null
+  }
+}
+
 // Get learning statistics
 export const getLearningStats = async () => {
   try {
