@@ -239,7 +239,7 @@ export default function LearnHub({ setActiveTab }) {
     let filtered = modules
     
     if (difficultyFilter !== 'all') {
-      filtered = filtered.filter(module => module.difficulty === difficultyFilter)
+      filtered = filtered.filter(module => (module.difficulty || '').toLowerCase() === difficultyFilter)
     }
     
     if (searchTerm) {
@@ -481,6 +481,13 @@ export default function LearnHub({ setActiveTab }) {
             className="text-sm px-3 py-2"
           >
             Intermediate
+          </MobileButton>
+          <MobileButton
+            onClick={() => setDifficultyFilter('advanced')}
+            variant={difficultyFilter === 'advanced' ? 'primary' : 'secondary'}
+            className="text-sm px-3 py-2"
+          >
+            Advanced
           </MobileButton>
         </div>
       </div>
