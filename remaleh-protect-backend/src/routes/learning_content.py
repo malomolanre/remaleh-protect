@@ -508,6 +508,19 @@ def update_lesson_progress(current_user, module_id, lesson_id):
         
         db.session.commit()
         
+        # Debug: Verify the commit worked by querying the database directly
+        db.session.flush()
+        verification_query = db.session.query(LessonProgress).filter_by(
+            user_id=user_id,
+            module_id=module_id,
+            lesson_id=lesson_id
+        ).first()
+        
+        logger.info(f"Lesson progress update verification:")
+        logger.info(f"  - Progress object completed: {progress.completed}")
+        logger.info(f"  - Verification query completed: {verification_query.completed if verification_query else 'NOT FOUND'}")
+        logger.info(f"  - Database has changes: {db.session.dirty}")
+        
         logger.info(f"Updated lesson progress for user {user_id}, module {module_id}, lesson {lesson_id}")
         
         return jsonify({
@@ -535,6 +548,32 @@ def get_progress_overview(current_user):
         # Debug: Log each lesson progress record
         for record in lesson_progress_records:
             logger.info(f"Progress record: Module {record.module_id}, Lesson {record.lesson_id}, Completed: {record.completed}")
+        
+        # Debug: Check if there are any uncommitted changes in the session
+        logger.info(f"Session has uncommitted changes: {db.session.dirty}")
+        logger.info(f"Session has new objects: {db.session.new}")
+        logger.info(f"Session has deleted objects: {db.session.deleted}")
+        
+        # Force a commit and refresh to ensure we get the latest data
+        db.session.commit()
+        db.session.flush()
+        
+        # Query again after commit to see if anything changed
+        lesson_progress_records_after = db.session.query(LessonProgress).filter_by(user_id=user_id).all()
+        logger.info(f"Progress overview after commit: {len(lesson_progress_records_after)} lesson progress records")
+        
+        # Use the data after commit
+        lesson_progress_records = lesson_progress_records_after
+        
+        # Debug: Direct SQL query to see what's actually in the database
+        try:
+            from sqlalchemy import text
+            direct_sql = text("SELECT COUNT(*) as count FROM lesson_progress WHERE user_id = :user_id AND completed = true")
+            result = db.session.execute(direct_sql, {"user_id": user_id})
+            direct_count = result.scalar()
+            logger.info(f"Direct SQL query shows {direct_count} completed lessons")
+        except Exception as e:
+            logger.error(f"Direct SQL query failed: {e}")
         
         # Get all active modules
         active_modules = LearningModule.query.filter_by(is_active=True).all()
