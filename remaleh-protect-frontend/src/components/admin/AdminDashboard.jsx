@@ -79,7 +79,8 @@ export default function AdminDashboard({ setActiveTab }) {
     content: '',
     contentType: 'info',
     contentStyle: 'default',
-    duration: 5
+    duration: 5,
+    media: []
   })
   const [editingLesson, setEditingLesson] = useState(null)
   
@@ -531,7 +532,8 @@ export default function AdminDashboard({ setActiveTab }) {
           content: '',
           contentType: 'info',
           contentStyle: 'default',
-          duration: 5
+          duration: 5,
+          media: []
         })
         
         // Refresh both the modules list and the selected module data
@@ -1753,6 +1755,71 @@ export default function AdminDashboard({ setActiveTab }) {
                       className="w-full"
                       rows={4}
                     />
+                  </div>
+
+                  {/* Media attachments */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Media (optional)</label>
+                    <div className="space-y-3">
+                      {(newLessonData.media || []).map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+                          <select
+                            value={item.type || 'image'}
+                            onChange={(e) => setNewLessonData(prev => {
+                              const media = [...(prev.media || [])]
+                              media[idx] = { ...media[idx], type: e.target.value }
+                              return { ...prev, media }
+                            })}
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                          >
+                            <option value="image">Image</option>
+                            <option value="video">Video</option>
+                          </select>
+                          <input
+                            type="url"
+                            placeholder="https://cdn.example.com/path/to/media"
+                            value={item.url || ''}
+                            onChange={(e) => setNewLessonData(prev => {
+                              const media = [...(prev.media || [])]
+                              media[idx] = { ...media[idx], url: e.target.value }
+                              return { ...prev, media }
+                            })}
+                            className="md:col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Caption (optional)"
+                            value={item.caption || ''}
+                            onChange={(e) => setNewLessonData(prev => {
+                              const media = [...(prev.media || [])]
+                              media[idx] = { ...media[idx], caption: e.target.value }
+                              return { ...prev, media }
+                            })}
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setNewLessonData(prev => ({
+                              ...prev,
+                              media: (prev.media || []).filter((_, i) => i !== idx)
+                            }))}
+                            className="text-red-600 text-sm hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setNewLessonData(prev => ({
+                          ...prev,
+                          media: [...(prev.media || []), { type: 'image', url: '', caption: '' }]
+                        }))}
+                        className="text-[#21a1ce] text-sm hover:underline"
+                      >
+                        + Add media
+                      </button>
+                    </div>
                   </div>
                 </div>
                 

@@ -11,7 +11,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: false,
+    // Enable sourcemaps to debug minified ReferenceError stack traces in production
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: {
