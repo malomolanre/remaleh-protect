@@ -154,28 +154,83 @@ export default function LearnHub({ setActiveTab }) {
       
       console.log('🔄 updateLessonProgress result:', result)
 
-      // Update local state - use module_lesson key format for uniqueness
+      // Update local state - use module_lesson key format for uniqueness (functional update to avoid stale state)
       const lessonKey = `${module.id}_${lessonId}`
-      const newCompleted = [...new Set([...completedLessons, lessonKey])]
-      setCompletedLessons(newCompleted)
-      
+      setCompletedLessons(prev => {
+        const updated = [...new Set([...prev, lessonKey])]
+        return updated
+      })
       console.log('🔄 Updated completedLessons state with key:', lessonKey)
-      console.log('🔄 New completed lessons array:', newCompleted)
       
+      // Optimistically update overall progress locally for instant UI feedback
+      setOverallProgress(prev => {
+        const prevRecords = Array.isArray(prev?.lesson_progress_records) ? prev.lesson_progress_records : []
+        const updatedRecords = [...prevRecords]
+        const existingIndex = updatedRecords.findIndex(r => r.module_id === module.id && r.lesson_id === lessonId)
+        if (existingIndex >= 0) {
+          updatedRecords[existingIndex] = { ...updatedRecords[existingIndex], completed: true, score: 100 }
+        } else {
+          updatedRecords.push({ module_id: module.id, lesson_id: lessonId, completed: true, score: 100 })
+        }
+        const completedCount = updatedRecords.filter(r => r.completed).length
+        const totalLessons = prev?.total_lessons || (modules.reduce((acc, m) => acc + (m.content?.lessons?.length || 0), 0))
+        const percentage = totalLessons > 0 ? (completedCount / totalLessons) * 100 : prev?.completion_percentage || 0
+        const next = {
+          ...prev,
+          lesson_progress_records: updatedRecords,
+          completed_lessons: completedCount,
+          completion_percentage: percentage
+        }
+        // Also optimistically compute next lesson locally
+        setNextLesson(computeNextRecommendedLesson(modules, next))
+        return next
+      })
+
       // Lightweight refresh: only fetch overall progress and recompute next lesson
       console.log('🔄 Refreshing overall progress...')
       const refreshedProgress = await getOverallProgress()
-      setOverallProgress(refreshedProgress)
-      setNextLesson(computeNextRecommendedLesson(modules, refreshedProgress))
-      console.log('🔄 Overall progress refreshed')
+      // Merge backend progress with local optimistic completion to avoid UI regression
+      const localCompletedSet = new Set([...(completedLessons || []), lessonKey])
+      const mergedRecords = Array.isArray(refreshedProgress?.lesson_progress_records)
+        ? [...refreshedProgress.lesson_progress_records]
+        : []
+      for (const key of localCompletedSet) {
+        const [mIdStr, lIdStr] = key.split('_')
+        const mId = Number(mIdStr)
+        const lId = Number(lIdStr)
+        const idx = mergedRecords.findIndex(r => r.module_id === mId && r.lesson_id === lId)
+        if (idx >= 0) {
+          mergedRecords[idx] = { ...mergedRecords[idx], completed: true, score: 100 }
+        } else {
+          mergedRecords.push({ module_id: mId, lesson_id: lId, completed: true, score: 100 })
+        }
+      }
+      const mergedCompletedCount = mergedRecords.filter(r => r.completed).length
+      const totalLessonsMerged = refreshedProgress?.total_lessons || (modules.reduce((acc, m) => acc + (m.content?.lessons?.length || 0), 0))
+      const mergedPercentage = totalLessonsMerged > 0 ? (mergedCompletedCount / totalLessonsMerged) * 100 : (refreshedProgress?.completion_percentage || 0)
+      const mergedProgress = {
+        ...refreshedProgress,
+        lesson_progress_records: mergedRecords,
+        completed_lessons: mergedCompletedCount,
+        completion_percentage: mergedPercentage
+      }
+      setOverallProgress(mergedProgress)
+      setNextLesson(computeNextRecommendedLesson(modules, mergedProgress))
+      console.log('🔄 Overall progress refreshed and merged with local state')
       
       console.log('✅ Lesson marked as complete:', lessonId)
     } catch (error) {
       console.error('❌ Failed to mark lesson complete:', error)
       // Fallback to local storage if backend fails
-      const newCompleted = [...new Set([...completedLessons, lessonId])]
-      setCompletedLessons(newCompleted)
-      localStorage.setItem('remaleh-completed-lessons', JSON.stringify(newCompleted))
+      const fallbackKey = `${selectedModule?.id || 'unknown'}_${lessonId}`
+      setCompletedLessons(prev => {
+        const updated = [...new Set([...prev, fallbackKey])]
+        return updated
+      })
+      try {
+        const tentative = [...new Set([...completedLessons, fallbackKey])]
+        localStorage.setItem('remaleh-completed-lessons', JSON.stringify(tentative))
+      } catch {}
     }
   }
   
