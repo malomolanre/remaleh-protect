@@ -780,6 +780,33 @@ function LessonContent({ lesson }) {
   return (
     <div className="space-y-6">
       {renderContent()}
+      {Array.isArray(lesson.media) && lesson.media.length > 0 && (
+        <div className="space-y-3">
+          {lesson.media.map((item, idx) => (
+            <div key={idx} className="space-y-2">
+              {item.type === 'image' ? (
+                <img
+                  src={item.url}
+                  alt={item.caption || lesson.title}
+                  className="w-full max-h-72 object-cover rounded-lg border border-gray-200"
+                  loading="lazy"
+                />
+              ) : item.type === 'video' ? (
+                <video
+                  controls
+                  className="w-full max-h-80 rounded-lg border border-gray-200"
+                >
+                  <source src={item.url} />
+                  Your browser does not support the video tag.
+                </video>
+              ) : null}
+              {item.caption && (
+                <div className="text-xs text-gray-500">{item.caption}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -230,7 +230,9 @@ def add_lesson(current_user, module_id):
             'content': data['content'],
             'contentType': data.get('contentType', 'info'),
             'contentStyle': data.get('contentStyle', 'default'),
-            'duration': data.get('duration', 5)
+            'duration': data.get('duration', 5),
+            # Optional media attachments: list of { type: 'image'|'video', url: str, caption?: str }
+            'media': data.get('media', [])
         }
         
         lessons.append(new_lesson)
@@ -290,8 +292,8 @@ def update_lesson(current_user, module_id, lesson_id):
         if not lesson:
             return jsonify({'error': 'Lesson not found'}), 404
         
-        # Update lesson fields
-        for field in ['title', 'type', 'content', 'contentType', 'contentStyle', 'duration']:
+        # Update lesson fields (allow optional media array)
+        for field in ['title', 'type', 'content', 'contentType', 'contentStyle', 'duration', 'media']:
             if field in data:
                 lesson[field] = data[field]
         
