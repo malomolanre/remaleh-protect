@@ -565,6 +565,28 @@ def get_progress_overview(current_user):
         # Use the data after commit
         lesson_progress_records = lesson_progress_records_after
         
+        # Additional fix: Use a raw SQL query to bypass any ORM caching issues
+        try:
+            from sqlalchemy import text
+            raw_sql = text("SELECT * FROM lesson_progress WHERE user_id = :user_id")
+            raw_result = db.session.execute(raw_sql, {"user_id": user_id})
+            raw_records = raw_result.fetchall()
+            logger.info(f"Raw SQL query shows {len(raw_records)} total lesson progress records")
+            
+            # Count completed lessons from raw SQL
+            completed_sql = text("SELECT COUNT(*) as count FROM lesson_progress WHERE user_id = :user_id AND completed = true")
+            completed_result = db.session.execute(completed_sql, {"user_id": user_id})
+            completed_count = completed_result.scalar()
+            logger.info(f"Raw SQL completed count: {completed_count}")
+            
+            # If raw SQL shows more records, use that count
+            if completed_count > len(lesson_progress_records):
+                logger.info(f"Raw SQL shows more completed lessons ({completed_count}) than ORM ({len(lesson_progress_records)})")
+                # Recalculate using raw SQL data
+                lesson_progress_records = [dict(zip(raw_result.keys(), row)) for row in raw_records]
+        except Exception as e:
+            logger.error(f"Raw SQL query failed: {e}")
+        
         # Debug: Direct SQL query to see what's actually in the database
         try:
             from sqlalchemy import text
