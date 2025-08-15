@@ -7,8 +7,6 @@ import { useAuth } from '../hooks/useAuth'
 import { 
   getAllModules, 
   getOverallProgress,
-  searchLearningContent,
-  getContentByDifficulty,
   computeNextRecommendedLesson
 } from '../utils/contentManager'
 
@@ -164,10 +162,12 @@ export default function LearnHub({ setActiveTab }) {
       console.log('🔄 Updated completedLessons state with key:', lessonKey)
       console.log('🔄 New completed lessons array:', newCompleted)
       
-      // Refresh progress data to sync with backend
-      console.log('🔄 Refreshing progress data...')
-      await loadData()
-      console.log('🔄 Progress data refreshed')
+      // Lightweight refresh: only fetch overall progress and recompute next lesson
+      console.log('🔄 Refreshing overall progress...')
+      const refreshedProgress = await getOverallProgress()
+      setOverallProgress(refreshedProgress)
+      setNextLesson(computeNextRecommendedLesson(modules, refreshedProgress))
+      console.log('🔄 Overall progress refreshed')
       
       console.log('✅ Lesson marked as complete:', lessonId)
     } catch (error) {
@@ -584,7 +584,7 @@ export default function LearnHub({ setActiveTab }) {
                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                         )}
                         {lesson.contentType === 'example' && (
-                          <div className="w-2 w-2 bg-yellow-500 rounded-full"></div>
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                         )}
                         <ArrowLeft className="w-4 h-4 text-gray-400 transform rotate-180" />
                       </div>
