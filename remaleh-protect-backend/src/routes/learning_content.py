@@ -499,17 +499,20 @@ def update_lesson_progress(current_user, module_id, lesson_id):
                 score=data.get('score', 0)
             )
             db.session.add(progress)
+            logger.info(f"Created new lesson progress record for user {user_id}, module {module_id}, lesson {lesson_id}")
         else:
             # Update existing progress
             progress.completed = data.get('completed', progress.completed)
             progress.score = data.get('score', progress.score)
             if data.get('completed') and not progress.completed:
                 progress.completed_at = datetime.utcnow()
+            logger.info(f"Updated existing lesson progress record for user {user_id}, module {module_id}, lesson {lesson_id}")
         
+        # Commit the changes to the database
         db.session.commit()
+        logger.info(f"Database commit successful for lesson progress update")
         
         # Debug: Verify the commit worked by querying the database directly
-        db.session.flush()
         verification_query = db.session.query(LessonProgress).filter_by(
             user_id=user_id,
             module_id=module_id,
