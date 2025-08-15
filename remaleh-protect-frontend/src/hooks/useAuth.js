@@ -7,56 +7,51 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is already logged in on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      console.log('🔐 useAuth - Checking authentication on mount, token:', token ? 'Present' : 'Missing');
-      
-      if (token) {
-        try {
-          console.log('🔐 useAuth - Token found, checking profile...');
-          const response = await apiGet(API_ENDPOINTS.AUTH.PROFILE);
-          console.log('🔐 useAuth - Profile response status:', response.status);
-          
-          if (response.ok) {
-            const userData = await response.json();
-            // Handle both response formats: {user: {...}} and direct user object
-            const user = userData.user || userData;
-            console.log('Profile data received:', userData);
-            console.log('User object:', user);
-            console.log('Is admin?', user.is_admin);
-            setUser(user);
-            setIsAuthenticated(true);
-            console.log('🔐 useAuth - Authentication successful, user set');
-          } else if (response.status === 401) {
-            // Token expired, try to refresh
-            console.log('🔐 useAuth - Token expired, attempting refresh...');
-            const refreshResult = await refreshAuthToken();
-            if (!refreshResult.success) {
-              console.log('🔐 useAuth - Token refresh failed, removing tokens');
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('refreshToken');
-            }
-          } else {
-            console.log('🔐 useAuth - Profile check failed, removing tokens');
+  // Central auth check function (reusable and event-driven)
+  const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const response = await apiGet(API_ENDPOINTS.AUTH.PROFILE);
+        if (response.ok) {
+          const userData = await response.json();
+          const newUser = userData.user || userData;
+          setUser(newUser);
+          setIsAuthenticated(true);
+        } else if (response.status === 401) {
+          const refreshResult = await refreshAuthToken();
+          if (!refreshResult.success) {
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
+            setUser(null);
+            setIsAuthenticated(false);
           }
-        } catch (err) {
-          console.error('Profile check error:', err);
-          console.log('🔐 useAuth - Profile check error, removing tokens');
+        } else {
           localStorage.removeItem('authToken');
           localStorage.removeItem('refreshToken');
+          setUser(null);
+          setIsAuthenticated(false);
         }
-      } else {
-        console.log('🔐 useAuth - No token found, user not authenticated');
+      } catch (_err) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+        setUser(null);
+        setIsAuthenticated(false);
       }
-      setIsLoading(false);
-    };
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+    setIsLoading(false);
+  }, [refreshAuthToken]);
 
+  // On mount: check auth and subscribe to global auth change events
+  useEffect(() => {
     checkAuth();
-  }, []);
+    const handler = () => checkAuth();
+    window.addEventListener('remaleh-auth-changed', handler);
+    return () => window.removeEventListener('remaleh-auth-changed', handler);
+  }, [checkAuth]);
 
   // Login function
   const login = useCallback(async (email, password) => {
@@ -88,6 +83,8 @@ export const useAuth = () => {
         
         setUser(user);
         setIsAuthenticated(true);
+        // Notify all hook instances (e.g., App) to refresh their state
+        window.dispatchEvent(new Event('remaleh-auth-changed'));
         return { success: true };
       } else {
         const errorData = await response.json();
@@ -128,6 +125,7 @@ export const useAuth = () => {
         
         setUser(newUser);
         setIsAuthenticated(true);
+        window.dispatchEvent(new Event('remaleh-auth-changed'));
         return { success: true };
       } else {
         const errorData = await response.json();
@@ -156,6 +154,7 @@ export const useAuth = () => {
       localStorage.removeItem('refreshToken');
       setUser(null);
       setIsAuthenticated(false);
+      window.dispatchEvent(new Event('remaleh-auth-changed'));
     }
   }, []);
 
