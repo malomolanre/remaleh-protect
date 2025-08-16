@@ -8,7 +8,8 @@ export default function MobileModal({
   title, 
   children, 
   showCloseButton = true,
-  fullScreen = false 
+  fullScreen = false,
+  hideOnDesktop = true
 }) {
   // Close on escape key
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function MobileModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden">
+    <div className={`fixed inset-0 z-50 ${hideOnDesktop ? 'md:hidden' : ''}`}>
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"

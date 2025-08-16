@@ -220,6 +220,7 @@ const CommunityReports = ({ initialFilters }) => {
       isOpen={showReportModal}
       onClose={() => setShowReportModal(false)}
       title="Report Details"
+      hideOnDesktop={false}
     >
       {selectedReport && (
         <div className="space-y-4">
