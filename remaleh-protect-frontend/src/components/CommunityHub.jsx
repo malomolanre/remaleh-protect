@@ -706,7 +706,7 @@ export default function CommunityHub({ setActiveTab }) {
       )}
 
       {/* Lightbox Modal */}
-      <MobileModal isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} title="Preview" fullScreen>
+      <MobileModal isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} title="Preview" fullScreen hideOnDesktop={false}>
         {lightboxImages.length > 0 && (
           <div className="flex flex-col items-center">
             <div className="w-full h-[60vh] bg-black flex items-center justify-center mb-3">
@@ -726,7 +726,7 @@ export default function CommunityHub({ setActiveTab }) {
       </MobileModal>
 
       {/* Full Comments Modal */}
-      <MobileModal isOpen={commentsModalOpen} onClose={() => setCommentsModalOpen(false)} title="All Comments">
+      <MobileModal isOpen={commentsModalOpen} onClose={() => setCommentsModalOpen(false)} title="All Comments" hideOnDesktop={false}>
         {commentsReport ? (
           <div className="space-y-3">
             {commentsReport.comments && commentsReport.comments.length > 0 ? (
