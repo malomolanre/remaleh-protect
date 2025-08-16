@@ -554,99 +554,31 @@ def get_progress_overview(current_user):
     try:
         user_id = current_user.id
         
-        # Get all lesson progress records for the user
-        # Use a fresh query to ensure we get the latest data
-        lesson_progress_records = db.session.query(LessonProgress).filter_by(user_id=user_id).all()
-        logger.info(f"Progress overview for user {user_id}: {len(lesson_progress_records)} lesson progress records")
-        
-        # Debug: Log each lesson progress record
-        for record in lesson_progress_records:
-            logger.info(f"Progress record: Module {record.module_id}, Lesson {record.lesson_id}, Completed: {record.completed}")
-        
-        # Debug: Check if there are any uncommitted changes in the session
-        logger.info(f"Session has uncommitted changes: {db.session.dirty}")
-        logger.info(f"Session has new objects: {db.session.new}")
-        logger.info(f"Session has deleted objects: {db.session.deleted}")
-        
-        # Force a commit and refresh to ensure we get the latest data
-        db.session.commit()
-        db.session.flush()
-        
-        # Query again after commit to see if anything changed
-        lesson_progress_records_after = db.session.query(LessonProgress).filter_by(user_id=user_id).all()
-        logger.info(f"Progress overview after commit: {len(lesson_progress_records_after)} lesson progress records")
-        
-        # Use the data after commit
-        lesson_progress_records = lesson_progress_records_after
-        
-        # Additional fix: Use a raw SQL query to bypass any ORM caching issues
-        try:
-            from sqlalchemy import text
-            raw_sql = text("SELECT * FROM lesson_progress WHERE user_id = :user_id")
-            raw_result = db.session.execute(raw_sql, {"user_id": user_id})
-            raw_records = raw_result.fetchall()
-            logger.info(f"Raw SQL query shows {len(raw_records)} total lesson progress records")
-            
-            # Count completed lessons from raw SQL
-            completed_sql = text("SELECT COUNT(*) as count FROM lesson_progress WHERE user_id = :user_id AND completed = true")
-            completed_result = db.session.execute(completed_sql, {"user_id": user_id})
-            completed_count = completed_result.scalar()
-            logger.info(f"Raw SQL completed count: {completed_count}")
-            
-            # If raw SQL shows more records, use that count
-            if completed_count > len(lesson_progress_records):
-                logger.info(f"Raw SQL shows more completed lessons ({completed_count}) than ORM ({len(lesson_progress_records)})")
-                # Recalculate using raw SQL data
-                lesson_progress_records = [dict(zip(raw_result.keys(), row)) for row in raw_records]
-        except Exception as e:
-            logger.error(f"Raw SQL query failed: {e}")
-        
-        # Debug: Direct SQL query to see what's actually in the database
-        try:
-            from sqlalchemy import text
-            direct_sql = text("SELECT COUNT(*) as count FROM lesson_progress WHERE user_id = :user_id AND completed = true")
-            result = db.session.execute(direct_sql, {"user_id": user_id})
-            direct_count = result.scalar()
-            logger.info(f"Direct SQL query shows {direct_count} completed lessons")
-        except Exception as e:
-            logger.error(f"Direct SQL query failed: {e}")
-        
-        # Get all active modules
+        # Simple, read-only aggregation without committing or raw SQL
+        lesson_progress_records = LessonProgress.query.filter_by(user_id=user_id).all()
         active_modules = LearningModule.query.filter_by(is_active=True).all()
-        logger.info(f"Found {len(active_modules)} active modules")
         
-        # Calculate statistics based on lesson completion
         total_lessons = 0
         completed_lessons = 0
+        completed_modules = 0
+        
+        # Build a lookup of completed counts per module
+        from collections import defaultdict
+        completed_by_module = defaultdict(int)
+        for p in lesson_progress_records:
+            if p.completed:
+                completed_by_module[p.module_id] += 1
         
         for module in active_modules:
             module_lessons = module.content.get('lessons', []) if module.content else []
             module_total = len(module_lessons)
             total_lessons += module_total
-            
-            # Count completed lessons for this specific module
-            module_completed = len([p for p in lesson_progress_records 
-                                  if p.module_id == module.id and p.completed])
-            completed_lessons += module_completed
-            
-            logger.info(f"Module {module.id} ({module.title}): {module_completed}/{module_total} lessons completed")
+            completed_for_module = completed_by_module.get(module.id, 0)
+            completed_lessons += completed_for_module
+            if module_total > 0 and completed_for_module == module_total:
+                completed_modules += 1
         
-        logger.info(f"Total lessons: {total_lessons}, Completed lessons: {completed_lessons}")
-        
-        # Calculate module completion (module is complete if all its lessons are complete)
-        completed_modules = 0
-        for module in active_modules:
-            module_lessons = module.content.get('lessons', []) if module.content else []
-            if module_lessons:
-                module_completed_lessons = len([p for p in lesson_progress_records 
-                                             if p.module_id == module.id and p.completed])
-                if module_completed_lessons == len(module_lessons):
-                    completed_modules += 1
-                    logger.info(f"Module {module.id} ({module.title}) is COMPLETE")
-        
-        # Calculate completion percentage
         completion_percentage = (completed_lessons / total_lessons * 100) if total_lessons > 0 else 0
-        
         total_score = sum(p.score for p in lesson_progress_records)
         average_score = total_score / len(lesson_progress_records) if lesson_progress_records else 0
         
@@ -660,14 +592,9 @@ def get_progress_overview(current_user):
             'average_score': round(average_score, 2),
             'lesson_progress_records': [p.to_dict() for p in lesson_progress_records]
         }
-        
-        logger.info(f"Progress overview result: {result}")
         return jsonify(result), 200
-        
     except Exception as e:
         logger.error(f"Error getting progress overview: {e}")
-        import traceback
-        logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @learning_content_bp.route('/content/export', methods=['GET'])
