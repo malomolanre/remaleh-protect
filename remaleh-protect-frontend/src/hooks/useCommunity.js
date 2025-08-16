@@ -205,14 +205,15 @@ export const useCommunity = () => {
   }, []);
 
   // Fetch leaderboard
-  const fetchLeaderboard = useCallback(async () => {
+  const fetchLeaderboard = useCallback(async ({ period = '90d' } = {}) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiGet(API_ENDPOINTS.COMMUNITY.LEADERBOARD);
+      const qs = new URLSearchParams({ period }).toString();
+      const response = await apiGet(`${API_ENDPOINTS.COMMUNITY.LEADERBOARD}?${qs}`);
       if (response.ok) {
         const data = await response.json();
-        setLeaderboard(data.leaderboard || data);
+        setLeaderboard((data && data.leaderboard) ? data.leaderboard : (Array.isArray(data) ? data : []));
         return data;
       } else {
         throw new Error('Failed to fetch leaderboard');
@@ -226,11 +227,12 @@ export const useCommunity = () => {
   }, []);
 
   // Fetch current user's reporting stats
-  const fetchMyStats = useCallback(async () => {
+  const fetchMyStats = useCallback(async ({ period = '90d' } = {}) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiGet(API_ENDPOINTS.COMMUNITY.MY_STATS);
+      const qs = new URLSearchParams({ period }).toString();
+      const response = await apiGet(`${API_ENDPOINTS.COMMUNITY.MY_STATS}?${qs}`);
       if (response.ok) {
         const data = await response.json();
         setMyStats(data);
@@ -449,15 +451,15 @@ export const useCommunity = () => {
   }, []);
 
   // Load all data
-  const loadAllData = useCallback(async () => {
+  const loadAllData = useCallback(async ({ period = '90d' } = {}) => {
     await Promise.all([
       fetchReports({}, false), // Reset reports, don't append
       fetchTrendingThreats(),
       fetchLatestReports(),
       fetchCommunityStats(),
       fetchAlerts(),
-      fetchLeaderboard(),
-      fetchMyStats()
+      fetchLeaderboard({ period }),
+      fetchMyStats({ period })
     ]);
   }, [fetchReports, fetchTrendingThreats, fetchLatestReports, fetchCommunityStats, fetchAlerts, fetchLeaderboard, fetchMyStats]);
 

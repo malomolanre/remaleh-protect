@@ -210,6 +210,26 @@ class CommunityReportComment(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
+class UserPointLog(db.Model):
+    __tablename__ = 'user_point_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id'))
+    points = db.Column(db.Integer, nullable=False)
+    reason = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'report_id': self.report_id,
+            'points': self.points,
+            'reason': self.reason,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 class LearningModule(db.Model):
     __tablename__ = 'learning_modules'
     

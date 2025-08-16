@@ -12,7 +12,7 @@ import MobileModal from './MobileModal';
 
 export default function CommunityHub({ setActiveTab }) {
   const [activeTab, setActiveTabLocal] = useState('reports');
-  const { reports, latestReports, fetchLatestReports, fetchReports, leaderboard, trendingThreats, myStats, loadAllData, isLoading, pagination, hasMore, createReport, uploadReportMedia, deleteReport, voteOnReport, addComment, fetchReportById, fetchComments, deleteComment } = useCommunity();
+  const { reports, latestReports, fetchLatestReports, fetchReports, leaderboard, trendingThreats, myStats, loadAllData, isLoading, pagination, hasMore, createReport, uploadReportMedia, deleteReport, voteOnReport, addComment, fetchReportById, fetchComments, deleteComment, fetchLeaderboard, fetchMyStats } = useCommunity();
   const { user, isAuthenticated } = useAuth();
 
   const [showNewReport, setShowNewReport] = useState(false);
@@ -40,11 +40,13 @@ export default function CommunityHub({ setActiveTab }) {
   // Inline comment inputs per report
   const [commentTexts, setCommentTexts] = useState({}); // { [reportId]: text }
 
+  const [pointsPeriod, setPointsPeriod] = useState('90d'); // '90d' | 'all'
+
   useEffect(() => {
     if (isAuthenticated) {
-      loadAllData();
+      loadAllData({ period: pointsPeriod });
     }
-  }, [isAuthenticated, loadAllData]);
+  }, [isAuthenticated, loadAllData, pointsPeriod]);
 
   // Proper infinite scroll with pagination
   useEffect(() => {
@@ -152,6 +154,22 @@ export default function CommunityHub({ setActiveTab }) {
                     <p className="text-sm text-gray-600">Keep reporting to climb the leaderboard!</p>
                   </div>
                 </div>
+                <div className="flex justify-end mb-2">
+                  <select
+                    value={pointsPeriod}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setPointsPeriod(v);
+                      // Refresh stats + leaderboard for chosen period
+                      fetchMyStats({ period: v });
+                      fetchLeaderboard({ period: v });
+                    }}
+                    className="text-xs border border-gray-300 rounded px-2 py-1"
+                  >
+                    <option value="90d">Last 90 days</option>
+                    <option value="all">All time</option>
+                  </select>
+                </div>
                 
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
@@ -167,6 +185,11 @@ export default function CommunityHub({ setActiveTab }) {
                     <div className="text-xs text-gray-600">Rank</div>
                   </div>
                 </div>
+                {myStats?.tier && (
+                  <div className="mt-3 text-center">
+                    <span className="inline-block text-xs font-medium px-3 py-1 rounded-full bg-purple-100 text-purple-700">Tier: {myStats.tier}</span>
+                  </div>
+                )}
               </div>
             </MobileCard>
 
@@ -440,6 +463,20 @@ export default function CommunityHub({ setActiveTab }) {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Top Reporters</h3>
               <p className="text-sm text-gray-600">Community heroes protecting others from scams</p>
             </div>
+            <div className="flex justify-end">
+              <select
+                value={pointsPeriod}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setPointsPeriod(v);
+                  fetchLeaderboard({ period: v });
+                }}
+                className="text-xs border border-gray-300 rounded px-2 py-1"
+              >
+                <option value="90d">Last 90 days</option>
+                <option value="all">All time</option>
+              </select>
+            </div>
             
             <div className="space-y-2">
               {leaderboard.map((user, index) => (
@@ -457,7 +494,7 @@ export default function CommunityHub({ setActiveTab }) {
                         </div>
                         <div>
                           <div className="font-semibold text-gray-900">{user.username || user.name}</div>
-                          <div className="text-xs text-gray-600">{user.reports} reports</div>
+                          <div className="text-xs text-gray-600">{user.points ?? 0} pts • {user.tier || 'Helper'}</div>
                         </div>
                       </div>
                       {index < 3 && (

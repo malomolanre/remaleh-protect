@@ -1,11 +1,41 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 try:
-    from ..models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia, CommunityReportComment
+    from ..models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia, CommunityReportComment, UserPointLog
     from ..auth import token_required, get_current_user_id
+    from ..cache import cache
 except ImportError:
-    from models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia, CommunityReportComment
+    from models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia, CommunityReportComment, UserPointLog
     from auth import token_required, get_current_user_id
+    from cache import cache
 from datetime import datetime, timedelta
+def compute_user_tier(points):
+    if points >= 500:
+        return 'Guardian'
+    if points >= 250:
+        return 'Champion'
+    if points >= 100:
+        return 'Ally'
+    return 'Helper'
+
+def award_points_with_daily_cap(user_id, base_points, reason, report_id=None, daily_cap=120):
+    # Sum awarded today
+    start_of_day = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_points = db.session.query(func.coalesce(func.sum(UserPointLog.points), 0)).filter(
+        UserPointLog.user_id == user_id,
+        UserPointLog.created_at >= start_of_day
+    ).scalar() or 0
+
+    remaining = max(0, daily_cap - int(today_points))
+    to_award = min(base_points, remaining)
+    if to_award <= 0:
+        return 0
+    log = UserPointLog(user_id=user_id, report_id=report_id, points=to_award, reason=reason)
+    db.session.add(log)
+    try:
+        db.session.flush()  # ensure subsequent reads see this award within the same transaction
+    except Exception:
+        pass
+    return to_award
 import os
 from werkzeug.utils import secure_filename
 from sqlalchemy import func, desc, case, or_
@@ -133,6 +163,25 @@ def get_community_reports(current_user):
 def create_report(current_user):
     """Create a new community threat report"""
     try:
+        # Rate limit submissions: max 5/minute and 20 per 5-minute window per user
+        try:
+            if cache and cache.redis_client:
+                now = datetime.utcnow()
+                minute_bucket = now.strftime('%Y%m%d%H%M')
+                five_min_bucket = now.strftime('%Y%m%d%H') + f"{now.minute // 5}"
+                k1 = f"ratelimit:report:{current_user.id}:m:{minute_bucket}"
+                k5 = f"ratelimit:report:{current_user.id}:m5:{five_min_bucket}"
+                m_count = cache.redis_client.incr(k1)
+                if m_count == 1:
+                    cache.redis_client.expire(k1, 65)
+                f_count = cache.redis_client.incr(k5)
+                if f_count == 1:
+                    cache.redis_client.expire(k5, 5*60 + 10)
+                if int(m_count) > 5 or int(f_count) > 20:
+                    return jsonify({'error': 'Rate limit exceeded. Please wait before submitting more reports.'}), 429
+        except Exception:
+            pass
+
         data = request.get_json()
         
         if not data or not data.get('threat_type') or not data.get('description'):
@@ -336,14 +385,30 @@ def verify_report(current_user, report_id):
             return jsonify({'error': 'Moderator or admin privileges required'}), 403
         
         report = CommunityReport.query.get_or_404(report_id)
-        report.verified = True
-        report.status = 'VERIFIED'
-        
+        total_awarded = 0
+        if not report.verified:
+            report.verified = True
+            report.status = 'VERIFIED'
+
+            # Points model: +10 base per verified report, +5 bonus if evidence is attached
+            base_points = 10
+            has_evidence = bool(getattr(report, 'media', []))
+            bonus_points = 5 if has_evidence else 0
+
+            # Award with daily cap 120
+            total_awarded += award_points_with_daily_cap(report.user_id, base_points, 'Verified report', report_id=report.id)
+            if bonus_points:
+                total_awarded += award_points_with_daily_cap(report.user_id, bonus_points, 'Verified report with evidence', report_id=report.id)
+
+            # If the report was APPROVED before, optionally it may have awarded +2 already.
+            # We do NOT revoke it; verified awards are additive.
+
         db.session.commit()
-        
+
         return jsonify({
             'message': 'Report verified successfully',
-            'report': report.to_dict()
+            'report': report.to_dict(),
+            'awarded_points': total_awarded
         }), 200
         
     except Exception as e:
@@ -545,22 +610,39 @@ def migrate_local_media_to_cloudinary(current_user):
 @community_bp.route('/leaderboard', methods=['GET'])
 @token_required
 def get_leaderboard(current_user):
-    """Get top reporters leaderboard"""
+    """Get top reporters leaderboard by points.
+    Query param: period=90d|all (default 90d)
+    """
     try:
+        period = (request.args.get('period') or '90d').lower()
+        if period == 'all':
+            points_by_user = db.session.query(
+                UserPointLog.user_id.label('uid'),
+                func.coalesce(func.sum(UserPointLog.points), 0).label('points')
+            ).group_by(UserPointLog.user_id).subquery()
+        else:
+            lookback_start = datetime.utcnow() - timedelta(days=90)
+            points_by_user = db.session.query(
+                UserPointLog.user_id.label('uid'),
+                func.coalesce(func.sum(UserPointLog.points), 0).label('points')
+            ).filter(UserPointLog.created_at >= lookback_start).group_by(UserPointLog.user_id).subquery()
+
         results = db.session.query(
             User.id,
             User.first_name,
             User.last_name,
-            func.count(CommunityReport.id).label('report_count')
-        ).join(CommunityReport).group_by(User.id, User.first_name, User.last_name).order_by(desc('report_count')).limit(20).all()
+            func.coalesce(points_by_user.c.points, 0).label('points')
+        ).outerjoin(points_by_user, points_by_user.c.uid == User.id).order_by(desc('points')).limit(20).all()
 
         leaderboard = []
         rank = 1
         for r in results:
+            pts = int(r.points or 0)
             leaderboard.append({
                 'id': r.id,
                 'name': f"{r.first_name} {r.last_name}".strip() or 'Anonymous',
-                'reports': r.report_count,
+                'points': pts,
+                'tier': compute_user_tier(pts),
                 'rank': rank
             })
             rank += 1
@@ -688,8 +770,11 @@ def get_community_stats(current_user):
 @community_bp.route('/my-stats', methods=['GET'])
 @token_required
 def get_my_reporting_stats(current_user):
-    """Get current user's reporting stats including rank and points"""
+    """Get current user's reporting stats including rank, points and tier.
+    Query param: period=90d|all (default 90d) applies to points and rank only.
+    """
     try:
+        period = (request.args.get('period') or '90d').lower()
         # Base counts
         report_count = CommunityReport.query.filter_by(user_id=current_user.id).count()
         approved_count = CommunityReport.query.filter_by(user_id=current_user.id, status='APPROVED').count()
@@ -697,27 +782,29 @@ def get_my_reporting_stats(current_user):
         pending_count = CommunityReport.query.filter_by(user_id=current_user.id, status='PENDING').count()
         rejected_count = CommunityReport.query.filter_by(user_id=current_user.id, status='REJECTED').count()
 
-        # Aggregate votes
-        votes_agg = db.session.query(
-            func.coalesce(func.sum(CommunityReport.votes_up), 0),
-            func.coalesce(func.sum(CommunityReport.votes_down), 0)
-        ).filter(CommunityReport.user_id == current_user.id).first()
-        total_upvotes = int(votes_agg[0] or 0)
-        total_downvotes = int(votes_agg[1] or 0)
+        # Points from logs (period-bound)
+        q = db.session.query(func.coalesce(func.sum(UserPointLog.points), 0)).filter(UserPointLog.user_id == current_user.id)
+        if period != 'all':
+            lookback_start = datetime.utcnow() - timedelta(days=90)
+            q = q.filter(UserPointLog.created_at >= lookback_start)
+        total_points = q.scalar() or 0
+        points = int(total_points)
+        tier = compute_user_tier(points)
 
-        # Points: simple formula (5 per report, +5 per verified, + upvotes)
-        points = (report_count * 5) + (verified_count * 5) + total_upvotes
-
-        # Rank by report count (descending)
-        user_counts = db.session.query(
-            User.id.label('uid'),
-            func.count(CommunityReport.id).label('rc')
-        ).join(CommunityReport).group_by(User.id).order_by(desc('rc')).all()
+        # Rank by points (period-bound)
+        pq = db.session.query(
+            UserPointLog.user_id,
+            func.coalesce(func.sum(UserPointLog.points), 0).label('points')
+        )
+        if period != 'all':
+            lookback_start = datetime.utcnow() - timedelta(days=90)
+            pq = pq.filter(UserPointLog.created_at >= lookback_start)
+        points_by_user = pq.group_by(UserPointLog.user_id).order_by(desc('points')).all()
 
         rank = None
-        if report_count > 0 and user_counts:
-            for idx, row in enumerate(user_counts, start=1):
-                if row.uid == current_user.id:
+        if points_by_user:
+            for idx, row in enumerate(points_by_user, start=1):
+                if row.user_id == current_user.id:
                     rank = idx
                     break
 
@@ -727,9 +814,8 @@ def get_my_reporting_stats(current_user):
             'verified_count': verified_count,
             'pending_count': pending_count,
             'rejected_count': rejected_count,
-            'total_upvotes': total_upvotes,
-            'total_downvotes': total_downvotes,
             'points': points,
+            'tier': tier,
             'rank': rank
         }), 200
     except Exception as e:

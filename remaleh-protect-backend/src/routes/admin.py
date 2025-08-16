@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from functools import wraps
 from datetime import datetime
 import logging
-from sqlalchemy import text
+from sqlalchemy import text, func
 import os
 from urllib.parse import urlparse
 
@@ -15,14 +15,36 @@ except ImportError:
 
 # Import production modules - try relative imports first, then absolute
 try:
-    from ..models import db, User, CommunityReport, CommunityReportMedia
+    from ..models import db, User, CommunityReport, CommunityReportMedia, UserPointLog
     from ..auth import token_required, admin_required
 except ImportError:
-    from models import db, User, CommunityReport, CommunityReportMedia
+    from models import db, User, CommunityReport, CommunityReportMedia, UserPointLog
     from auth import token_required, admin_required
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint('admin', __name__)
+
+def award_points_with_daily_cap(user_id, base_points, reason, report_id=None, daily_cap=120):
+    """Award points with a per-day cap. Returns points actually awarded."""
+    try:
+        start_of_day = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_points = db.session.query(func.coalesce(func.sum(UserPointLog.points), 0)).filter(
+            UserPointLog.user_id == user_id,
+            UserPointLog.created_at >= start_of_day
+        ).scalar() or 0
+        remaining = max(0, daily_cap - int(today_points))
+        to_award = min(int(base_points), int(remaining))
+        if to_award <= 0:
+            return 0
+        log = UserPointLog(user_id=user_id, report_id=report_id, points=to_award, reason=reason)
+        db.session.add(log)
+        try:
+            db.session.flush()
+        except Exception:
+            pass
+        return to_award
+    except Exception:
+        return 0
 
 def admin_required(f):
     """Decorator to check if user is admin - must be used AFTER token_required"""
@@ -617,7 +639,20 @@ def moderate_report(current_user, report_id):
         if action not in ['APPROVED', 'REJECTED', 'FLAGGED']:
             return jsonify({'error': 'Invalid action'}), 400
             
+        previous_status = report.status
         report.status = action
+
+        # Award +2 points for APPROVED (only once per report and not when already VERIFIED)
+        awarded_points = 0
+        if action == 'APPROVED' and previous_status != 'VERIFIED':
+            already_awarded = UserPointLog.query.filter_by(
+                user_id=report.user_id,
+                report_id=report.id,
+                reason='Approved report'
+            ).first() is not None
+            if not already_awarded:
+                awarded_points += award_points_with_daily_cap(report.user_id, 2, 'Approved report', report_id=report.id)
+
         db.session.commit()
         
         logger.info(f"Admin {current_user.email} {action.lower()}ed report {report_id}")
@@ -625,7 +660,8 @@ def moderate_report(current_user, report_id):
         return jsonify({
             'message': f'Report {action.lower()}ed successfully',
             'report_id': report_id,
-            'action': action
+            'action': action,
+            'awarded_points': awarded_points
         }), 200
         
     except Exception as e:
