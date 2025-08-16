@@ -17,7 +17,7 @@ import { MobileCard } from '../ui/mobile-card'
 import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
-import { createModule, getAllModules, updateModule, deleteModule, addLesson, updateLesson, deleteLesson } from '../../utils/contentManager'
+import { createModule, getAllModules, updateModule, deleteModule, addLesson, updateLesson, deleteLesson, uploadLessonMedia } from '../../utils/contentManager'
 import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword, restoreUser, getDeletedUsers } from '../../utils/userManager'
 import CommunityReports from './CommunityReports'
 import { apiGet } from '../../lib/api'
@@ -1868,6 +1868,33 @@ export default function AdminDashboard({ setActiveTab }) {
                       >
                         + Add media
                       </button>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            try {
+                              setLessonActionLoading(true)
+                              const res = await uploadLessonMedia(file)
+                              const url = res.url
+                              const type = res.resource_type || 'image'
+                              setNewLessonData(prev => ({
+                                ...prev,
+                                media: [...(prev.media || []), { type, url, caption: '' }]
+                              }))
+                            } catch (err) {
+                              alert('Upload failed: ' + (err.message || 'Unknown error'))
+                            } finally {
+                              setLessonActionLoading(false)
+                              e.target.value = ''
+                            }
+                          }}
+                          className="text-sm"
+                        />
+                        <span className="text-xs text-gray-500">Upload to Cloudinary and auto-add to list</span>
+                      </div>
                     </div>
                   </div>
                 </div>
