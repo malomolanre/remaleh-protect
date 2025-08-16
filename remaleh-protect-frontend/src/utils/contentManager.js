@@ -3,7 +3,7 @@
  * This makes it easy to update learning content without code changes
  */
 
-import { apiPost, apiGet, apiPut, apiDelete } from '../lib/api'
+import { API, apiPost, apiGet, apiPut, apiDelete } from '../lib/api'
 
 // Backend API endpoints
 const API_ENDPOINTS = {
@@ -465,18 +465,27 @@ export const uploadLessonMedia = async (file) => {
     const token = localStorage.getItem('authToken')
     const formData = new FormData()
     formData.append('file', file)
-    const res = await fetch(`${(import.meta?.env?.VITE_API_BASE || import.meta?.env?.VITE_API_URL || '')}${API_ENDPOINTS.LEARNING_MEDIA}`, {
+    const res = await fetch(`${API}${API_ENDPOINTS.LEARNING_MEDIA}`, {
       method: 'POST',
       headers: {
         ...(token && { 'Authorization': `Bearer ${token}` })
       },
       body: formData
     })
+
+    const text = await res.text()
+    let data = null
+    try { data = text ? JSON.parse(text) : null } catch {}
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.error || 'Upload failed')
+      const message = (data && (data.error || data.message)) || `Upload failed (HTTP ${res.status})`
+      throw new Error(message)
     }
-    return await res.json()
+
+    if (!data || !data.url) {
+      throw new Error('Upload failed: unexpected response')
+    }
+    return data
   } catch (error) {
     console.error('❌ Error uploading lesson media:', error)
     throw error

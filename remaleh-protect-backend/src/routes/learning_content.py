@@ -768,7 +768,7 @@ def upload_learning_media(current_user):
 
         cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
         # resource_type 'auto' supports images and videos
-        result = cloudinary.uploader.upload(file, folder='learning_content', resource_type='auto', use_filename=True, unique_filename=True)
+        result = cloudinary.uploader.upload(file, folder='learning_content', resource_type='auto', use_filename=True, unique_filename=True, timeout=60)
         secure_url = result.get('secure_url') or result.get('url')
         public_id = result.get('public_id')
         resource_type = result.get('resource_type', 'image')

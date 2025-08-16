@@ -78,6 +78,11 @@ export default function CommunityHub({ setActiveTab }) {
     return media.media_type.toLowerCase().startsWith('image');
   };
 
+  const isVideoMedia = (media) => {
+    if (!media || !media.media_type) return false;
+    return media.media_type.toLowerCase().startsWith('video');
+  };
+
   const openLightbox = (mediaList, startIndex = 0) => {
     const images = (mediaList || [])
       .filter(isImageMedia)
@@ -220,7 +225,7 @@ export default function CommunityHub({ setActiveTab }) {
 
                           {report.media && report.media.length > 0 && (
                             <div className="mt-2 grid grid-cols-3 gap-2">
-                              {(report.media.filter(isImageMedia).slice(0, 3)).map((m, idx, arr) => {
+                              {(report.media.filter(m => isImageMedia(m) || isVideoMedia(m)).slice(0, 3)).map((m, idx, arr) => {
                                 const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
                                 const extraCount = report.media.length - 3;
                                 const src = resolveMediaUrl(m.media_url);
@@ -232,22 +237,24 @@ export default function CommunityHub({ setActiveTab }) {
                                     className="relative w-full h-24 bg-gray-100 rounded overflow-hidden focus:outline-none"
                                   >
                                     {src && (
-                                      <img
-                                        src={src}
-                                        alt="report media"
-                                        className="w-full h-full object-cover"
-                                        loading="lazy"
-                                        onError={(e) => {
-                                          // Fallback 1: try relative URL without API base
-                                          const fallback = m.media_url || '';
-                                          if (fallback && e.currentTarget.src !== fallback) {
-                                            e.currentTarget.src = fallback;
-                                          } else {
-                                            // Fallback 2: hide if still not loadable
-                                            e.currentTarget.style.display = 'none';
-                                          }
-                                        }}
-                                      />
+                                      isVideoMedia(m) ? (
+                                        <video src={src} className="w-full h-full object-cover" muted playsInline />
+                                      ) : (
+                                        <img
+                                          src={src}
+                                          alt="report media"
+                                          className="w-full h-full object-cover"
+                                          loading="lazy"
+                                          onError={(e) => {
+                                            const fallback = m.media_url || '';
+                                            if (fallback && e.currentTarget.src !== fallback) {
+                                              e.currentTarget.src = fallback;
+                                            } else {
+                                              e.currentTarget.style.display = 'none';
+                                            }
+                                          }}
+                                        />
+                                      )
                                     )}
                                     {isLastAndExtra && extraCount > 0 && (
                                       <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">

@@ -665,7 +665,7 @@ function LessonContent({ lesson }) {
       case 'tips':
         return (
           <div className="space-y-4">
-            <p className="text-gray-700">{lesson.content}</p>
+            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
             <div className="space-y-3">
               {lesson.tips?.map((tip, index) => (
                 <div key={index} className="flex items-start">
@@ -673,8 +673,8 @@ function LessonContent({ lesson }) {
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   </div>
                   <div>
-                    <p className="font-medium">{tip.title}</p>
-                    <p className="text-sm text-gray-600">{tip.description}</p>
+                    <p className="font-medium whitespace-pre-line">{tip.title}</p>
+                    <p className="text-sm text-gray-600 whitespace-pre-line">{tip.description}</p>
                   </div>
                 </div>
               ))}
@@ -685,7 +685,7 @@ function LessonContent({ lesson }) {
       case 'warning-signs':
         return (
           <div className="space-y-4">
-            <p className="text-gray-700">{lesson.content}</p>
+            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
             <div className="space-y-3">
               {lesson.signs?.map((sign, index) => (
                 <div key={index} className="flex items-start">
@@ -693,8 +693,8 @@ function LessonContent({ lesson }) {
                     <div className={`w-2 h-2 rounded-full ${sign.danger ? 'bg-red-500' : 'bg-green-500'}`}></div>
                   </div>
                   <div>
-                    <p className="font-medium">{sign.title}</p>
-                    <p className="text-sm text-gray-600">{sign.description}</p>
+                    <p className="font-medium whitespace-pre-line">{sign.title}</p>
+                    <p className="text-sm text-gray-600 whitespace-pre-line">{sign.description}</p>
                   </div>
                 </div>
               ))}
@@ -705,14 +705,14 @@ function LessonContent({ lesson }) {
       case 'steps':
         return (
           <div className="space-y-4">
-            <p className="text-gray-700">{lesson.content}</p>
+            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
             <div className="space-y-2">
               {lesson.steps?.map((step, index) => (
                 <div key={index} className="flex items-start">
                   <div className="w-6 h-6 rounded-full bg-[#21a1ce] text-white text-sm font-bold flex items-center justify-center mr-3 mt-0.5">
                     {index + 1}
                   </div>
-                  <p className="text-gray-700">{step}</p>
+                  <p className="text-gray-700 whitespace-pre-line">{step}</p>
                 </div>
               ))}
             </div>
@@ -722,10 +722,10 @@ function LessonContent({ lesson }) {
       case 'list':
         return (
           <div className="space-y-4">
-            <p className="text-gray-700">{lesson.content}</p>
+            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
             <ul className="space-y-2 ml-4">
               {lesson.items?.map((item, index) => (
-                <li key={index} className="text-gray-700">• {item}</li>
+                <li key={index} className="text-gray-700 whitespace-pre-line">• {item}</li>
               ))}
             </ul>
           </div>
@@ -736,11 +736,11 @@ function LessonContent({ lesson }) {
         return (
           <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
             <h4 className="font-bold mb-2 text-red-800">Important</h4>
-            <p className="text-red-700 mb-3">{lesson.content}</p>
+            <div className="text-red-700 mb-3 whitespace-pre-line">{lesson.content}</div>
             {lesson.items && (
               <ul className="space-y-1 text-red-700">
                 {lesson.items.map((item, index) => (
-                  <li key={index}>• {item}</li>
+                  <li key={index} className="whitespace-pre-line">• {item}</li>
                 ))}
               </ul>
             )}
@@ -751,10 +751,10 @@ function LessonContent({ lesson }) {
         return (
           <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
             <h4 className="font-bold mb-2 text-green-800">Actions to Take</h4>
-            <p className="text-green-700 mb-3">{lesson.content}</p>
+            <div className="text-green-700 mb-3 whitespace-pre-line">{lesson.content}</div>
             <ul className="space-y-1 text-green-700">
               {lesson.actions?.map((action, index) => (
-                <li key={index}>• {action}</li>
+                <li key={index} className="whitespace-pre-line">• {action}</li>
               ))}
             </ul>
           </div>
@@ -764,14 +764,14 @@ function LessonContent({ lesson }) {
         return (
           <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
             <h4 className="font-bold mb-2">Real-World Example</h4>
-            <p className="text-gray-700">{lesson.content}</p>
+            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
           </div>
         )
       
       default:
         return (
           <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
-            <p className="text-gray-700">{lesson.content}</p>
+            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
           </div>
         )
     }

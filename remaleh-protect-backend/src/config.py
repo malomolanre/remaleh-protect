@@ -67,7 +67,7 @@ class Config:
 
     # File uploads
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'uploads'))
-    ALLOWED_EXTENSIONS = set(os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,gif,webp').split(','))
+    ALLOWED_EXTENSIONS = set(os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,gif,webp,mp4,mov,webm,mkv,avi').split(','))
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_UPLOAD_BYTES', 16 * 1024 * 1024))  # 16 MB
 
     # Cloudinary (optional)

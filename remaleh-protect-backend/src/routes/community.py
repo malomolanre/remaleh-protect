@@ -379,7 +379,7 @@ def upload_report_media(current_user, report_id):
 
         filename = secure_filename(file.filename)
         ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-        if ext not in current_app.config.get('ALLOWED_EXTENSIONS', set(['png','jpg','jpeg','gif','webp'])):
+        if ext not in current_app.config.get('ALLOWED_EXTENSIONS', set(['png','jpg','jpeg','gif','webp','mp4','mov','webm','mkv','avi'])):
             return jsonify({'error': 'File type not allowed'}), 400
 
         media_url = None
@@ -395,7 +395,7 @@ def upload_report_media(current_user, report_id):
                 api_secret=api_secret,
                 secure=True
             )
-            upload_result = cloudinary.uploader.upload(file, folder='community_reports', resource_type='image', use_filename=True, unique_filename=True)
+            upload_result = cloudinary.uploader.upload(file, folder='community_reports', resource_type='auto', use_filename=True, unique_filename=True, timeout=60)
             media_url = upload_result.get('secure_url') or upload_result.get('url')
             media_type = upload_result.get('resource_type', 'image')
         else:
