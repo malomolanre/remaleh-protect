@@ -50,9 +50,9 @@ def moderator_or_admin_required(f):
     @wraps(f)
     def decorated_function(current_user, *args, **kwargs):
         try:
-            role = getattr(current_user, 'role', None)
+            role = (getattr(current_user, 'role', None) or '').upper()
             is_admin = getattr(current_user, 'is_admin', False)
-            if not current_user or not (is_admin or role == 'MODERATOR' or role == 'ADMIN'):
+            if not current_user or not (is_admin or role in ('MODERATOR','ADMIN')):
                 return jsonify({'error': 'Moderator or admin access required'}), 403
             return f(current_user, *args, **kwargs)
         except Exception:

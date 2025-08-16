@@ -330,9 +330,9 @@ def verify_report(current_user, report_id):
     """Mark a report as verified (admin only)"""
     try:
         # Allow admin or moderator
-        role = getattr(current_user, 'role', None)
+        role = (getattr(current_user, 'role', None) or '').upper()
         is_admin = getattr(current_user, 'is_admin', False)
-        if not (is_admin or role == 'MODERATOR' or role == 'ADMIN'):
+        if not (is_admin or role in ('MODERATOR','ADMIN')):
             return jsonify({'error': 'Moderator or admin privileges required'}), 403
         
         report = CommunityReport.query.get_or_404(report_id)

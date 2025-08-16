@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from functools import wraps
 from datetime import datetime
 import logging
@@ -14,18 +14,25 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 learning_content_bp = Blueprint('learning_content', __name__)
+# Optional Cloudinary support
+try:
+    import cloudinary
+    import cloudinary.uploader
+except ImportError:
+    cloudinary = None
 
 def admin_required_learning(f):
-    """Custom admin_required decorator for learning content routes"""
+    """Admin or Moderator required decorator for learning content routes"""
     @wraps(f)
     def decorated(current_user, *args, **kwargs):
         try:
-            # Check if user is admin
-            if not getattr(current_user, 'is_admin', False) and getattr(current_user, 'role', '') != 'ADMIN':
-                logger.warning(f"Admin access denied for user: {current_user.email}")
-                return jsonify({'error': 'Admin privileges required'}), 403
+            role = (getattr(current_user, 'role', '') or '').upper()
+            is_admin = getattr(current_user, 'is_admin', False)
+            if not (is_admin or role in ('ADMIN','MODERATOR')):
+                logger.warning(f"Admin/moderator access denied for user: {current_user.email}")
+                return jsonify({'error': 'Moderator or admin privileges required'}), 403
             
-            logger.info(f"Admin access granted for user: {current_user.email}")
+            logger.info(f"Admin/moderator access granted for user: {current_user.email}")
             return f(current_user, *args, **kwargs)
         except Exception as e:
             logger.error(f"Error in admin_required_learning decorator: {e}")
@@ -740,3 +747,37 @@ def import_content(current_user):
         db.session.rollback()
         logger.error(f"Error importing content: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@learning_content_bp.route('/media', methods=['POST'])
+@token_required
+@admin_required_learning
+def upload_learning_media(current_user):
+    """Upload a media file for learning content to Cloudinary and return its URL."""
+    try:
+        cloud_name = current_app.config.get('CLOUDINARY_CLOUD_NAME')
+        api_key = current_app.config.get('CLOUDINARY_API_KEY')
+        api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
+        if not (cloudinary and cloud_name and api_key and api_secret):
+            return jsonify({'error': 'Cloudinary not configured'}), 400
+
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
+
+        cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
+        # resource_type 'auto' supports images and videos
+        result = cloudinary.uploader.upload(file, folder='learning_content', resource_type='auto', use_filename=True, unique_filename=True)
+        secure_url = result.get('secure_url') or result.get('url')
+        public_id = result.get('public_id')
+        resource_type = result.get('resource_type', 'image')
+        return jsonify({
+            'message': 'Media uploaded',
+            'url': secure_url,
+            'public_id': public_id,
+            'resource_type': resource_type
+        }), 201
+    except Exception as e:
+        logger.error(f"Learning media upload failed: {e}")
+        return jsonify({'error': str(e)}), 500

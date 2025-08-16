@@ -14,7 +14,8 @@ const API_ENDPOINTS = {
   PROGRESS: (moduleId) => `/api/learning/modules/${moduleId}/progress`,
   PROGRESS_OVERVIEW: '/api/learning/progress/overview',
   EXPORT: '/api/learning/content/export',
-  IMPORT: '/api/learning/content/import'
+  IMPORT: '/api/learning/content/import',
+  LEARNING_MEDIA: '/api/learning/media'
 }
 
 // Fallback to local storage if backend is unavailable
@@ -455,6 +456,29 @@ export const addLesson = async (moduleId, lessonData) => {
     }
   } catch (error) {
     console.error('❌ Error in addLesson:', error)
+    throw error
+  }
+}
+
+export const uploadLessonMedia = async (file) => {
+  try {
+    const token = localStorage.getItem('authToken')
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`${(import.meta?.env?.VITE_API_BASE || import.meta?.env?.VITE_API_URL || '')}${API_ENDPOINTS.LEARNING_MEDIA}`, {
+      method: 'POST',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
+      body: formData
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || 'Upload failed')
+    }
+    return await res.json()
+  } catch (error) {
+    console.error('❌ Error uploading lesson media:', error)
     throw error
   }
 }

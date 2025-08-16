@@ -1252,8 +1252,8 @@ export default function AdminDashboard({ setActiveTab }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user?.name || 'Admin'}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{(user?.role === 'MODERATOR' && !user?.is_admin) ? 'Moderator Dashboard' : 'Admin Dashboard'}</h1>
+          <p className="text-gray-600">Welcome back, {user?.name || (user?.role === 'MODERATOR' ? 'Moderator' : 'Admin')}</p>
           <div className="flex items-center space-x-2 mt-1">
             <span className="text-sm text-gray-500">Backend:</span>
             <div className={`flex items-center space-x-1 ${
@@ -1283,17 +1283,18 @@ export default function AdminDashboard({ setActiveTab }) {
 
       {/* Navigation Tabs */}
       <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl">
-        <button
-          onClick={() => setActiveSection('overview')}
-          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-            activeSection === 'overview'
-              ? 'bg-white text-[#21a1ce] shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Overview
-        </button>
         {(user?.is_admin || user?.role === 'ADMIN') && (
+          <button
+            onClick={() => setActiveSection('overview')}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+              activeSection === 'overview'
+                ? 'bg-white text-[#21a1ce] shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Overview
+          </button>
+        )}
         <button
           onClick={() => setActiveSection('content')}
           className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
@@ -1304,7 +1305,6 @@ export default function AdminDashboard({ setActiveTab }) {
         >
           Content
         </button>
-        )}
         {(user?.is_admin || user?.role === 'ADMIN') && (
         <button
           onClick={() => setActiveSection('users')}
@@ -1330,8 +1330,8 @@ export default function AdminDashboard({ setActiveTab }) {
       </div>
 
       {/* Content Sections */}
-      {activeSection === 'overview' && renderOverview()}
-      {(user?.is_admin || user?.role === 'ADMIN') && activeSection === 'content' && renderContentManagement()}
+      {(user?.is_admin || user?.role === 'ADMIN') && activeSection === 'overview' && renderOverview()}
+      {activeSection === 'content' && renderContentManagement()}
       {(user?.is_admin || user?.role === 'ADMIN') && activeSection === 'users' && (
         <>
           {renderUserManagement()}

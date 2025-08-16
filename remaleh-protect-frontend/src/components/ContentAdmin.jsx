@@ -5,7 +5,7 @@ import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
 import { Textarea } from './ui/textarea'
 import { useAuth } from '../hooks/useAuth'
-import {
+import { 
   getAllModules,
   createModule,
   updateModule,
@@ -14,7 +14,8 @@ import {
   updateLesson,
   deleteLesson,
   exportContent,
-  importContent
+  importContent,
+  uploadLessonMedia
 } from '../utils/contentManager'
 
 export default function ContentAdmin({ setActiveTab }) {
@@ -25,6 +26,7 @@ export default function ContentAdmin({ setActiveTab }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddModule, setShowAddModule] = useState(false)
   const [showAddLesson, setShowAddLesson] = useState(false)
+  const [pendingLessonMedia, setPendingLessonMedia] = useState([]) // {url, type}
   const [selectedModuleId, setSelectedModuleId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -123,12 +125,14 @@ export default function ContentAdmin({ setActiveTab }) {
         content: 'Lesson content here...',
         contentType: 'info',
         contentStyle: 'default',
-        duration: 5
+        duration: 5,
+        media: pendingLessonMedia.map(m => ({ type: m.type, url: m.url }))
       }
       
       const result = await addLesson(moduleId, newLessonData)
       await loadModules() // Refresh the modules list
       setShowAddLesson(false)
+      setPendingLessonMedia([])
       alert('Lesson added successfully!')
     } catch (err) {
       console.error('❌ Error adding lesson:', err)
@@ -551,27 +555,67 @@ export default function ContentAdmin({ setActiveTab }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-4">Add New Lesson</h3>
-            <MobileButton 
-              onClick={() => handleAddLesson(showAddLesson)} 
-              className="w-full"
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Lesson
-                </>
-              )}
-            </MobileButton>
+            <div className="space-y-3">
+              <MobileButton 
+                onClick={() => handleAddLesson(showAddLesson)} 
+                className="w-full"
+                disabled={actionLoading}
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Lesson
+                  </>
+                )}
+              </MobileButton>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Attach Media (optional)</label>
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    try {
+                      setActionLoading(true)
+                      const res = await uploadLessonMedia(file)
+                      const url = res.url
+                      const type = (res.resource_type || 'image')
+                      setPendingLessonMedia(prev => [...prev, { url, type }])
+                      alert('Uploaded to Cloudinary. Added to lesson media list.')
+                    } catch (err) {
+                      alert('Upload failed: ' + (err.message || 'Unknown error'))
+                    } finally {
+                      setActionLoading(false)
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-700"
+                />
+                {pendingLessonMedia.length > 0 && (
+                  <div className="mt-2 text-sm text-gray-700">
+                    <div className="font-medium mb-1">Pending media to include:</div>
+                    <ul className="list-disc list-inside space-y-1">
+                      {pendingLessonMedia.map((m, idx) => (
+                        <li key={idx} className="break-all">
+                          <span className="uppercase text-xs bg-gray-100 px-1 py-0.5 rounded mr-1">{m.type}</span>
+                          {m.url}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
             <button
               onClick={() => {
                 setShowAddLesson(false)
                 setSelectedModuleId(null)
+                setPendingLessonMedia([])
               }}
               className="w-full mt-2 p-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
