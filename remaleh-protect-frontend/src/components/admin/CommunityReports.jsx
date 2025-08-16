@@ -59,19 +59,26 @@ const CommunityReports = ({ initialFilters }) => {
 
   const handleReportAction = async (reportId, action) => {
     try {
-      const actionMap = {
-        verify: 'APPROVED',
-        reject: 'REJECTED',
-        escalate: 'FLAGGED'
-      };
-      const mapped = actionMap[action];
-      if (!mapped) return;
-
-      const response = await api.request({
-        method: 'PUT',
-        url: `/api/admin/reports/${reportId}/moderate`,
-        data: { action: mapped }
-      });
+      let response;
+      if (action === 'verify') {
+        // Use community verify endpoint to set verified=true and status=VERIFIED
+        response = await api.request({
+          method: 'POST',
+          url: `/api/community/reports/${reportId}/verify`
+        });
+      } else {
+        const actionMap = {
+          reject: 'REJECTED',
+          escalate: 'FLAGGED',
+          approve: 'APPROVED'
+        };
+        const mapped = actionMap[action] || actionMap['approve'];
+        response = await api.request({
+          method: 'PUT',
+          url: `/api/admin/reports/${reportId}/moderate`,
+          data: { action: mapped }
+        });
+      }
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
         throw new Error(errData.error || `Failed to ${action} report`);
@@ -90,26 +97,29 @@ const CommunityReports = ({ initialFilters }) => {
     if (!bulkAction || selectedReports.length === 0) return;
 
     try {
-      const actionMap = {
-        verify: 'APPROVED',
-        reject: 'REJECTED',
-        escalate: 'FLAGGED'
-      };
-      const mapped = actionMap[bulkAction];
-      if (!mapped) return;
-
-      // Execute in parallel
-      await Promise.all(selectedReports.map(async (id) => {
-        const response = await api.request({
-          method: 'PUT',
-          url: `/api/admin/reports/${id}/moderate`,
-          data: { action: mapped }
-        });
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || `Failed to ${bulkAction} report ${id}`);
-        }
-      }));
+      if (bulkAction === 'verify') {
+        await Promise.all(selectedReports.map(async (id) => {
+          const response = await api.request({ method: 'POST', url: `/api/community/reports/${id}/verify` });
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to verify report ${id}`);
+          }
+        }));
+      } else {
+        const actionMap = { reject: 'REJECTED', escalate: 'FLAGGED', approve: 'APPROVED' };
+        const mapped = actionMap[bulkAction] || actionMap['approve'];
+        await Promise.all(selectedReports.map(async (id) => {
+          const response = await api.request({
+            method: 'PUT',
+            url: `/api/admin/reports/${id}/moderate`,
+            data: { action: mapped }
+          });
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to ${bulkAction} report ${id}`);
+          }
+        }));
+      }
 
       // Refresh reports list
       fetchReports();
