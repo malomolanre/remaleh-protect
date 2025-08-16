@@ -220,6 +220,11 @@ const CommunityReports = ({ initialFilters }) => {
                   <option value="escalate">Flag</option>
                 </>
               )}
+              {report.status === 'APPROVED' && (
+                <>
+                  <option value="verify">Verify</option>
+                </>
+              )}
             </select>
           </div>
         </div>
@@ -350,6 +355,17 @@ const CommunityReports = ({ initialFilters }) => {
                     Escalate
                   </button>
                 </>
+              )}
+              {selectedReport.status === 'APPROVED' && (
+                <button
+                  onClick={() => {
+                    handleReportAction(selectedReport.id, 'verify');
+                    setShowReportModal(false);
+                  }}
+                  className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
+                >
+                  Verify
+                </button>
               )}
               <button
                 onClick={async () => {

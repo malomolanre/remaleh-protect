@@ -1252,8 +1252,8 @@ export default function AdminDashboard({ setActiveTab }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{(user?.role === 'MODERATOR' && !user?.is_admin) ? 'Moderator Dashboard' : 'Admin Dashboard'}</h1>
-          <p className="text-gray-600">Welcome back, {user?.name || (user?.role === 'MODERATOR' ? 'Moderator' : 'Admin')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{((user?.role || '').toUpperCase() === 'MODERATOR' && !user?.is_admin) ? 'Moderator Dashboard' : 'Admin Dashboard'}</h1>
+          <p className="text-gray-600">Welcome back, {user?.name || (((user?.role || '').toUpperCase() === 'MODERATOR') ? 'Moderator' : 'Admin')}</p>
           <div className="flex items-center space-x-2 mt-1">
             <span className="text-sm text-gray-500">Backend:</span>
             <div className={`flex items-center space-x-1 ${
