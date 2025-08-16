@@ -20,7 +20,7 @@ import { useCommunity } from '../hooks/useCommunity';
 import { useAuth } from '../hooks/useAuth';
 
 export default function CommunityReporting({ setActiveTab }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const {
     reports,
     trendingThreats,
@@ -34,6 +34,7 @@ export default function CommunityReporting({ setActiveTab }) {
     verifyReport,
     addComment,
     createAlert,
+    uploadReportMedia,
     clearError
   } = useCommunity();
 
@@ -45,6 +46,7 @@ export default function CommunityReporting({ setActiveTab }) {
     urgency: 'MEDIUM',
     location: ''
   });
+  const [newReportFiles, setNewReportFiles] = useState([]);
   const [newAlert, setNewAlert] = useState({
     title: '',
     message: '',
@@ -62,6 +64,10 @@ export default function CommunityReporting({ setActiveTab }) {
     e.preventDefault();
     const result = await createReport(newReport);
     if (result.success) {
+      // Upload any selected files
+      for (const file of newReportFiles) {
+        await uploadReportMedia(result.report.id, file);
+      }
       setShowNewReport(false);
       setNewReport({
         description: '',
@@ -69,6 +75,7 @@ export default function CommunityReporting({ setActiveTab }) {
         urgency: 'MEDIUM',
         location: ''
       });
+      setNewReportFiles([]);
     }
   };
 
@@ -390,12 +397,6 @@ export default function CommunityReporting({ setActiveTab }) {
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
             <h2 className="text-xl font-semibold mb-4">Report New Threat</h2>
             <form onSubmit={handleSubmitReport} className="space-y-4">
-              <MobileInput
-                placeholder="Threat Title"
-                value={newReport.title}
-                onChange={(e) => setNewReport({...newReport, title: e.target.value})}
-                required
-              />
               <MobileTextarea
                 placeholder="Detailed Description"
                 value={newReport.description}
@@ -409,33 +410,39 @@ export default function CommunityReporting({ setActiveTab }) {
                   onChange={(e) => setNewReport({...newReport, threat_type: e.target.value})}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
-                  <option value="phishing">Phishing</option>
-                  <option value="malware">Malware</option>
-                  <option value="scam">Scam</option>
-                  <option value="social_engineering">Social Engineering</option>
-                  <option value="other">Other</option>
+                  <option value="PHISHING">Phishing</option>
+                  <option value="MALWARE">Malware</option>
+                  <option value="SCAM">Scam</option>
+                  <option value="SOCIAL_ENGINEERING">Social Engineering</option>
+                  <option value="OTHER">Other</option>
                 </select>
                 <select
-                  value={newReport.severity}
-                  onChange={(e) => setNewReport({...newReport, severity: e.target.value})}
+                  value={newReport.urgency}
+                  onChange={(e) => setNewReport({...newReport, urgency: e.target.value})}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Attach Photos (optional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => setNewReportFiles(Array.from(e.target.files || []))}
+                  className="block w-full text-sm text-gray-700"
+                />
+                {newReportFiles.length > 0 && (
+                  <div className="mt-2 text-xs text-gray-600">{newReportFiles.length} file(s) selected</div>
+                )}
               </div>
               <MobileInput
                 placeholder="Location/URL"
                 value={newReport.location}
                 onChange={(e) => setNewReport({...newReport, location: e.target.value})}
-              />
-              <MobileTextarea
-                placeholder="Evidence or Additional Details"
-                value={newReport.evidence}
-                onChange={(e) => setNewReport({...newReport, evidence: e.target.value})}
-                rows={3}
               />
               <div className="flex space-x-3">
                 <Button type="submit" className="flex-1">

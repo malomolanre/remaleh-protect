@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { API_ENDPOINTS, apiGet, apiPost, apiPut } from '../lib/api';
+import { API, API_ENDPOINTS, apiGet, apiPost, apiPut } from '../lib/api';
 
 export const useCommunity = () => {
   const [reports, setReports] = useState([]);
@@ -154,6 +154,49 @@ export const useCommunity = () => {
     }
   }, []);
 
+  // Upload media to a report (accepts File or remote URL)
+  const uploadReportMedia = useCallback(async (reportId, fileOrUrl) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      let response;
+      if (fileOrUrl instanceof File) {
+        const token = localStorage.getItem('authToken');
+        const formData = new FormData();
+        formData.append('file', fileOrUrl);
+        response = await fetch(`${API}${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/media`, {
+          method: 'POST',
+          headers: {
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          },
+          body: formData
+        });
+      } else {
+        response = await apiPost(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/media`, {
+          media_url: String(fileOrUrl),
+          media_type: 'image'
+        });
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        const media = data.media || data;
+        // Optionally update report media in local state
+        setReports(prev => prev.map(r => r.id === reportId ? { ...r, media: [...(r.media || []), media] } : r));
+        return { success: true, media };
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Failed to upload media');
+      }
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setReports]);
+
   // Vote on report
   const voteOnReport = useCallback(async (reportId, voteType) => {
     try {
@@ -298,6 +341,7 @@ export const useCommunity = () => {
     verifyReport,
     addComment,
     createAlert,
+    uploadReportMedia,
     loadAllData,
     clearError
   };

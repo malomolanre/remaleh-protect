@@ -65,6 +65,11 @@ class Config:
     # Render-specific
     PORT = int(os.getenv('PORT', 10000))
 
+    # File uploads
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'uploads'))
+    ALLOWED_EXTENSIONS = set(os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,gif,webp').split(','))
+    MAX_CONTENT_LENGTH = int(os.getenv('MAX_UPLOAD_BYTES', 16 * 1024 * 1024))  # 16 MB
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True

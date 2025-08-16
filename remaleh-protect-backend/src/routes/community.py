@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app, send_from_directory
 try:
     from ..models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia
     from ..auth import token_required, get_current_user_id
@@ -6,6 +6,8 @@ except ImportError:
     from models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia
     from auth import token_required, get_current_user_id
 from datetime import datetime, timedelta
+import os
+from werkzeug.utils import secure_filename
 from sqlalchemy import func, desc, case
 import json
 
@@ -217,21 +219,64 @@ def verify_report(current_user, report_id):
 @community_bp.route('/reports/<int:report_id>/media', methods=['POST'])
 @token_required
 def upload_report_media(current_user, report_id):
-    """Attach media to a community report (expects JSON with media_url and optional media_type)"""
+    """Attach media to a community report.
+    Accepts either JSON with media_url or multipart/form-data with a file field 'file'.
+    """
     try:
         report = CommunityReport.query.get_or_404(report_id)
-        data = request.get_json() or {}
-        media_url = data.get('media_url')
-        media_type = data.get('media_type', 'image')
-        if not media_url:
-            return jsonify({'error': 'media_url is required'}), 400
-        media = CommunityReportMedia(report_id=report.id, media_url=media_url, media_type=media_type)
+        # JSON path (remote URL)
+        if request.is_json:
+            data = request.get_json() or {}
+            media_url = data.get('media_url')
+            media_type = data.get('media_type', 'image')
+            if not media_url:
+                return jsonify({'error': 'media_url is required'}), 400
+            media = CommunityReportMedia(report_id=report.id, media_url=media_url, media_type=media_type)
+            db.session.add(media)
+            db.session.commit()
+            return jsonify({'message': 'Media uploaded', 'media': media.to_dict()}), 201
+
+        # Multipart file path (local upload)
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
+
+        filename = secure_filename(file.filename)
+        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+        if ext not in current_app.config.get('ALLOWED_EXTENSIONS', set(['png','jpg','jpeg','gif','webp'])):
+            return jsonify({'error': 'File type not allowed'}), 400
+
+        upload_folder = current_app.config.get('UPLOAD_FOLDER')
+        os.makedirs(upload_folder, exist_ok=True)
+        save_path = os.path.join(upload_folder, filename)
+        # Ensure unique filename
+        base, extension = os.path.splitext(filename)
+        counter = 1
+        while os.path.exists(save_path):
+            filename = f"{base}_{counter}{extension}"
+            save_path = os.path.join(upload_folder, filename)
+            counter += 1
+        file.save(save_path)
+
+        public_url = f"/api/community/uploads/{filename}"
+        media = CommunityReportMedia(report_id=report.id, media_url=public_url, media_type='image')
         db.session.add(media)
         db.session.commit()
         return jsonify({'message': 'Media uploaded', 'media': media.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@community_bp.route('/uploads/<path:filename>', methods=['GET'])
+def serve_uploaded_media(filename):
+    """Serve uploaded media files."""
+    try:
+        upload_folder = current_app.config.get('UPLOAD_FOLDER')
+        return send_from_directory(upload_folder, filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
 
 @community_bp.route('/leaderboard', methods=['GET'])
 @token_required
