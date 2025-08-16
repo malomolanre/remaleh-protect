@@ -12,7 +12,7 @@ import MobileModal from './MobileModal';
 
 export default function CommunityHub({ setActiveTab }) {
   const [activeTab, setActiveTabLocal] = useState('reports');
-  const { reports, fetchReports, leaderboard, trendingThreats, myStats, loadAllData, isLoading, pagination, hasMore, createReport, uploadReportMedia, deleteReport, voteOnReport, addComment, fetchReportById, fetchComments, deleteComment } = useCommunity();
+  const { reports, latestReports, fetchLatestReports, fetchReports, leaderboard, trendingThreats, myStats, loadAllData, isLoading, pagination, hasMore, createReport, uploadReportMedia, deleteReport, voteOnReport, addComment, fetchReportById, fetchComments, deleteComment } = useCommunity();
   const { user, isAuthenticated } = useAuth();
 
   const [showNewReport, setShowNewReport] = useState(false);
@@ -469,23 +469,65 @@ export default function CommunityHub({ setActiveTab }) {
           <div className="space-y-4">
             <div className="text-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Latest Scams</h3>
-              <p className="text-sm text-gray-600">Stay informed about current threats</p>
+              <p className="text-sm text-gray-600">10 most recent approved or verified reports</p>
             </div>
             
             <div className="space-y-3">
-              {trendingThreats.map((trend, idx) => (
-                <MobileCard key={idx} className="border-gray-200">
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-gray-900">{trend.threat_type}</h4>
+              {latestReports && latestReports.length > 0 ? (
+                latestReports.map((report) => (
+                  <MobileCard key={report.id} className="border-gray-200">
+                    <div className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 pr-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              report.status === 'APPROVED' || report.status === 'VERIFIED' ? 'bg-green-100 text-green-700' :
+                              report.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {report.status}
+                            </span>
+                            {report.verified && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">Verified</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 mb-1">by {report.creator?.name || 'Anonymous'} • {new Date(report.created_at).toLocaleString()}</div>
+                          <p className="text-sm text-gray-800">{report.description}</p>
+
+                          {report.media && report.media.length > 0 && (
+                            <div className="mt-2 grid grid-cols-3 gap-2">
+                              {(report.media.filter(m => !m.media_type || m.media_type.startsWith('image')).slice(0, 3)).map((m, idx, arr) => {
+                                const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
+                                const extraCount = report.media.length - 3;
+                                const src = m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`);
+                                return (
+                                  <button
+                                    key={m.id || idx}
+                                    type="button"
+                                    onClick={() => openLightbox(report.media, idx)}
+                                    className="relative w-full h-24 bg-gray-100 rounded overflow-hidden focus:outline-none"
+                                  >
+                                    {src && (
+                                      <img src={src} alt="report media" className="w-full h-full object-cover" loading="lazy" />
+                                    )}
+                                    {isLastAndExtra && extraCount > 0 && (
+                                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                                        <span className="text-white text-sm font-semibold">+{extraCount}</span>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">Reports: {trend.report_count} • Trend: {trend.trend}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Urgency score: {trend.urgency_score}</span>
-                    </div>
-                  </div>
-                </MobileCard>
-              ))}
+                  </MobileCard>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-6">No recent reports.</p>
+              )}
             </div>
           </div>
         );

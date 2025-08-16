@@ -7,6 +7,7 @@ export const useCommunity = () => {
   const [communityStats, setCommunityStats] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [latestReports, setLatestReports] = useState([]);
   const [myStats, setMyStats] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -67,6 +68,28 @@ export const useCommunity = () => {
     } catch (err) {
       setError(err.message);
       console.error('Error fetching trending threats:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch latest reports (10 most recent, approved or verified)
+  const fetchLatestReports = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const params = new URLSearchParams({ per_page: 10, sort: 'newest' }).toString();
+      const response = await apiGet(`${API_ENDPOINTS.COMMUNITY.REPORTS}?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLatestReports(data.reports || []);
+        return data;
+      } else {
+        throw new Error('Failed to fetch latest reports');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching latest reports:', err);
     } finally {
       setIsLoading(false);
     }
@@ -433,12 +456,13 @@ export const useCommunity = () => {
     await Promise.all([
       fetchReports({}, false), // Reset reports, don't append
       fetchTrendingThreats(),
+      fetchLatestReports(),
       fetchCommunityStats(),
       fetchAlerts(),
       fetchLeaderboard(),
       fetchMyStats()
     ]);
-  }, [fetchReports, fetchTrendingThreats, fetchCommunityStats, fetchAlerts, fetchLeaderboard, fetchMyStats]);
+  }, [fetchReports, fetchTrendingThreats, fetchLatestReports, fetchCommunityStats, fetchAlerts, fetchLeaderboard, fetchMyStats]);
 
   // Clear error
   const clearError = useCallback(() => setError(null), []);
@@ -449,6 +473,7 @@ export const useCommunity = () => {
     communityStats,
     alerts,
     leaderboard,
+    latestReports,
     myStats,
     isLoading,
     error,
@@ -456,6 +481,7 @@ export const useCommunity = () => {
     hasMore,
     fetchReports,
     fetchTrendingThreats,
+    fetchLatestReports,
     fetchComments,
     deleteComment,
     fetchReportById,
