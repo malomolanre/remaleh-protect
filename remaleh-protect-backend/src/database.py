@@ -100,6 +100,14 @@ class DatabaseManager:
                     CREATE INDEX IF NOT EXISTS idx_learning_modules_is_active ON learning_modules(is_active);
                 """))
                 
+                # Lightweight schema migration: ensure 'bio' column exists on users
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
+                    logger.info("Added missing 'bio' column to users table")
+                except Exception as e:
+                    # Ignore if column already exists or ALTER not needed
+                    logger.debug(f"Bio column add skipped/failed (likely exists): {e}")
+                
                 # LearningProgress table indexes
                 conn.execute(text("""
                     CREATE INDEX IF NOT EXISTS idx_learning_progress_user_module ON learning_progress(user_id, module_id);
