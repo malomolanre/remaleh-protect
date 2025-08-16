@@ -9,6 +9,7 @@ import { MobileInput } from './ui/mobile-input';
 import { MobileTextarea } from './ui/mobile-input';
 import { API } from '../lib/api';
 import MobileModal from './MobileModal';
+import Login from './Login';
 
 export default function CommunityHub({ setActiveTab }) {
   const [activeTab, setActiveTabLocal] = useState('reports');
@@ -65,6 +66,9 @@ export default function CommunityHub({ setActiveTab }) {
             </MobileButton>
           </div>
         </MobileCard>
+        <div className="max-w-md mx-auto">
+          <Login onLoginSuccess={() => setActiveTab('community')} onSwitchToRegister={() => setActiveTab('register')} />
+        </div>
       </div>
     );
   }
