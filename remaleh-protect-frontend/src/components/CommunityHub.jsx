@@ -49,29 +49,7 @@ export default function CommunityHub({ setActiveTab }) {
     }
   }, [isAuthenticated, loadAllData, pointsPeriod]);
 
-  // Require authentication to access Community Hub
-  if (!isAuthenticated) {
-    return (
-      <div className="space-y-6 p-4">
-        <MobileCard>
-          <div className="text-center py-8">
-            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
-            <p className="text-gray-600 mb-6">Please log in to access the Community Hub, report scams, and view the feed.</p>
-            <MobileButton 
-              onClick={() => setActiveTab('login')}
-              className="bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
-            >
-              Go to Login
-            </MobileButton>
-          </div>
-        </MobileCard>
-        <div className="max-w-md mx-auto">
-          <Login onLoginSuccess={() => setActiveTab('community')} onSwitchToRegister={() => setActiveTab('register')} />
-        </div>
-      </div>
-    );
-  }
+  
 
   // Proper infinite scroll with pagination
   useEffect(() => {
@@ -608,220 +586,243 @@ export default function CommunityHub({ setActiveTab }) {
 
   return (
     <div className="space-y-4 p-4">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="flex justify-center mb-3">
-          <div className="p-3 bg-orange-100 rounded-full">
-            <Users className="w-8 h-8 text-orange-600" />
-          </div>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Community Hub</h1>
-        <p className="text-sm text-gray-600">Report scams, track threats, and see top reporters</p>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTabLocal(tab.id)}
-              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Content */}
-      {renderContent()}
-
-      {/* Community Benefits */}
-      <div className="mt-6">
-        <MobileCard className="bg-orange-50 border-orange-200">
-          <div className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">🤝 Community Benefits</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Report scams to protect others</li>
-              <li>• Earn points and climb the leaderboard</li>
-              <li>• Stay updated on latest threats</li>
-              <li>• Build a safer digital community</li>
-            </ul>
-          </div>
-        </MobileCard>
-      </div>
-
-      {/* New Report Modal */}
-      {showNewReport && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
-            <h2 className="text-xl font-semibold mb-4">Report New Threat</h2>
-            {!isAuthenticated ? (
-              <div className="text-center text-gray-600">
-                Please log in to submit a community report.
-              </div>
-            ) : (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  try {
-                    setIsSubmitting(true);
-                    const result = await createReport(newReport);
-                    if (!result.success) {
-                      throw new Error(result.error || 'Failed to create report');
-                    }
-                    // Upload files
-                    for (const file of newReportFiles) {
-                      const up = await uploadReportMedia(result.report.id, file);
-                      if (!up.success) {
-                        throw new Error(up.error || 'Failed to upload media');
-                      }
-                    }
-                    setShowNewReport(false);
-                    setNewReport({ description: '', threat_type: 'SCAM', urgency: 'MEDIUM', location: '' });
-                    setNewReportFiles([]);
-                    setToast({ type: 'success', message: 'Report submitted successfully' });
-                    setTimeout(() => setToast(null), 3000);
-                    loadAllData();
-                  } catch (err) {
-                    setToast({ type: 'error', message: err.message || 'Submission failed' });
-                    setTimeout(() => setToast(null), 4000);
-                  } finally {
-                    setIsSubmitting(false);
-                  }
-                }}
-                className="space-y-4"
+      {!isAuthenticated ? (
+        <div className="space-y-6">
+          <MobileCard>
+            <div className="text-center py-8">
+              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+              <p className="text-gray-600 mb-6">Please log in to access the Community Hub, report scams, and view the feed.</p>
+              <MobileButton 
+                onClick={() => setActiveTab('login')}
+                className="bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
               >
-                <MobileTextarea
-                  placeholder="Detailed Description"
-                  value={newReport.description}
-                  onChange={(e) => setNewReport({ ...newReport, description: e.target.value })}
-                  required
-                  rows={4}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <select
-                    value={newReport.threat_type}
-                    onChange={(e) => setNewReport({ ...newReport, threat_type: e.target.value })}
-                    className="border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="PHISHING">Phishing</option>
-                    <option value="MALWARE">Malware</option>
-                    <option value="SCAM">Scam</option>
-                    <option value="SOCIAL_ENGINEERING">Social Engineering</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                  <select
-                    value={newReport.urgency}
-                    onChange={(e) => setNewReport({ ...newReport, urgency: e.target.value })}
-                    className="border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">Attach Photos (optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => setNewReportFiles(Array.from(e.target.files || []))}
-                    className="block w-full text-sm text-gray-700"
-                  />
-                  {newReportFiles.length > 0 && (
-                    <div className="mt-2 text-xs text-gray-600">{newReportFiles.length} file(s) selected</div>
-                  )}
-                </div>
-                <MobileInput
-                  placeholder="Location/URL"
-                  value={newReport.location}
-                  onChange={(e) => setNewReport({ ...newReport, location: e.target.value })}
-                />
-                <div className="flex space-x-3">
-                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                    {isSubmitting ? 'Submitting...' : 'Submit Report'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowNewReport(false)}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            )}
+                Go to Login
+              </MobileButton>
+            </div>
+          </MobileCard>
+          <div className="max-w-md mx-auto">
+            <Login onLoginSuccess={() => setActiveTab('community')} onSwitchToRegister={() => setActiveTab('register')} />
           </div>
         </div>
-      )}
-
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg shadow-md text-sm z-50 ${
-          toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-        }`}>
-          {toast.message}
-        </div>
-      )}
-
-      {/* Lightbox Modal */}
-      <MobileModal isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} title="Preview" fullScreen hideOnDesktop={false}>
-        {lightboxImages.length > 0 && (
-          <div className="flex flex-col items-center">
-            <div className="w-full h-[60vh] bg-black flex items-center justify-center mb-3">
-              <img
-                src={lightboxImages[lightboxIndex].src}
-                alt="preview"
-                className="max-h-full max-w-full object-contain"
-              />
+      ) : (
+        <>
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-3">
+              <div className="p-3 bg-orange-100 rounded-full">
+                <Users className="w-8 h-8 text-orange-600" />
+              </div>
             </div>
-            <div className="flex items-center justify-between w-full">
-              <Button onClick={() => setLightboxIndex(i => Math.max(0, i - 1))} disabled={lightboxIndex === 0} variant="outline" size="sm">Prev</Button>
-              <div className="text-sm text-gray-600">{lightboxIndex + 1} / {lightboxImages.length}</div>
-              <Button onClick={() => setLightboxIndex(i => Math.min(lightboxImages.length - 1, i + 1))} disabled={lightboxIndex >= lightboxImages.length - 1} variant="outline" size="sm">Next</Button>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Community Hub</h1>
+            <p className="text-sm text-gray-600">Report scams, track threats, and see top reporters</p>
           </div>
-        )}
-      </MobileModal>
 
-      {/* Full Comments Modal */}
-      <MobileModal isOpen={commentsModalOpen} onClose={() => setCommentsModalOpen(false)} title="All Comments" hideOnDesktop={false}>
-        {commentsReport ? (
-          <div className="space-y-3">
-            {commentsReport.comments && commentsReport.comments.length > 0 ? (
-              commentsReport.comments.map((c) => (
-                <div key={c.id} className="p-2 bg-gray-50 rounded border border-gray-200 flex items-start justify-between">
-                  <div>
-                    <div className="text-sm text-gray-800"><span className="font-medium">{c.user_name || 'Anonymous'}:</span> {c.comment}</div>
-                    <div className="text-xs text-gray-500 mt-1">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</div>
+          {/* Navigation Tabs */}
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTabLocal(tab.id)}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Content */}
+          {renderContent()}
+
+          {/* Community Benefits */}
+          <div className="mt-6">
+            <MobileCard className="bg-orange-50 border-orange-200">
+              <div className="p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">🤝 Community Benefits</h3>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Report scams to protect others</li>
+                  <li>• Earn points and climb the leaderboard</li>
+                  <li>• Stay updated on latest threats</li>
+                  <li>• Build a safer digital community</li>
+                </ul>
+              </div>
+            </MobileCard>
+          </div>
+
+          {/* New Report Modal */}
+          {showNewReport && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
+                <h2 className="text-xl font-semibold mb-4">Report New Threat</h2>
+                {!isAuthenticated ? (
+                  <div className="text-center text-gray-600">
+                    Please log in to submit a community report.
                   </div>
-                  {/* Deletion allowed only if backend returns user_id; optional */}
-                </div>
-              ))
-            ) : (
-              <div className="text-sm text-gray-500">No comments yet.</div>
-            )}
+                ) : (
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      try {
+                        setIsSubmitting(true);
+                        const result = await createReport(newReport);
+                        if (!result.success) {
+                          throw new Error(result.error || 'Failed to create report');
+                        }
+                        // Upload files
+                        for (const file of newReportFiles) {
+                          const up = await uploadReportMedia(result.report.id, file);
+                          if (!up.success) {
+                            throw new Error(up.error || 'Failed to upload media');
+                          }
+                        }
+                        setShowNewReport(false);
+                        setNewReport({ description: '', threat_type: 'SCAM', urgency: 'MEDIUM', location: '' });
+                        setNewReportFiles([]);
+                        setToast({ type: 'success', message: 'Report submitted successfully' });
+                        setTimeout(() => setToast(null), 3000);
+                        loadAllData();
+                      } catch (err) {
+                        setToast({ type: 'error', message: err.message || 'Submission failed' });
+                        setTimeout(() => setToast(null), 4000);
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
+                    className="space-y-4"
+                  >
+                    <MobileTextarea
+                      placeholder="Detailed Description"
+                      value={newReport.description}
+                      onChange={(e) => setNewReport({ ...newReport, description: e.target.value })}
+                      required
+                      rows={4}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <select
+                        value={newReport.threat_type}
+                        onChange={(e) => setNewReport({ ...newReport, threat_type: e.target.value })}
+                        className="border border-gray-300 rounded-md px-3 py-2"
+                      >
+                        <option value="PHISHING">Phishing</option>
+                        <option value="MALWARE">Malware</option>
+                        <option value="SCAM">Scam</option>
+                        <option value="SOCIAL_ENGINEERING">Social Engineering</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                      <select
+                        value={newReport.urgency}
+                        onChange={(e) => setNewReport({ ...newReport, urgency: e.target.value })}
+                        className="border border-gray-300 rounded-md px-3 py-2"
+                      >
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-700 mb-1">Attach Photos (optional)</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => setNewReportFiles(Array.from(e.target.files || []))}
+                        className="block w-full text-sm text-gray-700"
+                      />
+                      {newReportFiles.length > 0 && (
+                        <div className="mt-2 text-xs text-gray-600">{newReportFiles.length} file(s) selected</div>
+                      )}
+                    </div>
+                    <MobileInput
+                      placeholder="Location/URL"
+                      value={newReport.location}
+                      onChange={(e) => setNewReport({ ...newReport, location: e.target.value })}
+                    />
+                    <div className="flex space-x-3">
+                      <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                        {isSubmitting ? 'Submitting...' : 'Submit Report'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowNewReport(false)}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
 
-            {commentsHasMore && (
-              <div className="pt-2">
-                <Button onClick={handleLoadMoreComments} variant="outline" size="sm">Load more</Button>
+          {/* Toast Notification */}
+          {toast && (
+            <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg shadow-md text-sm z-50 ${
+              toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            }`}>
+              {toast.message}
+            </div>
+          )}
+
+          {/* Lightbox Modal */}
+          <MobileModal isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} title="Preview" fullScreen hideOnDesktop={false}>
+            {lightboxImages.length > 0 && (
+              <div className="flex flex-col items-center">
+                <div className="w-full h-[60vh] bg-black flex items-center justify-center mb-3">
+                  <img
+                    src={lightboxImages[lightboxIndex].src}
+                    alt="preview"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+                <div className="flex items-center justify-between w-full">
+                  <Button onClick={() => setLightboxIndex(i => Math.max(0, i - 1))} disabled={lightboxIndex === 0} variant="outline" size="sm">Prev</Button>
+                  <div className="text-sm text-gray-600">{lightboxIndex + 1} / {lightboxImages.length}</div>
+                  <Button onClick={() => setLightboxIndex(i => Math.min(lightboxImages.length - 1, i + 1))} disabled={lightboxIndex >= lightboxImages.length - 1} variant="outline" size="sm">Next</Button>
+                </div>
               </div>
             )}
-          </div>
-        ) : (
-          <div className="text-sm text-gray-500">Loading...</div>
-        )}
-      </MobileModal>
+          </MobileModal>
+
+          {/* Full Comments Modal */}
+          <MobileModal isOpen={commentsModalOpen} onClose={() => setCommentsModalOpen(false)} title="All Comments" hideOnDesktop={false}>
+            {commentsReport ? (
+              <div className="space-y-3">
+                {commentsReport.comments && commentsReport.comments.length > 0 ? (
+                  commentsReport.comments.map((c) => (
+                    <div key={c.id} className="p-2 bg-gray-50 rounded border border-gray-200 flex items-start justify-between">
+                      <div>
+                        <div className="text-sm text-gray-800"><span className="font-medium">{c.user_name || 'Anonymous'}:</span> {c.comment}</div>
+                        <div className="text-xs text-gray-500 mt-1">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</div>
+                      </div>
+                      {/* Deletion allowed only if backend returns user_id; optional */}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-500">No comments yet.</div>
+                )}
+
+                {commentsHasMore && (
+                  <div className="pt-2">
+                    <Button onClick={handleLoadMoreComments} variant="outline" size="sm">Load more</Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">Loading...</div>
+            )}
+          </MobileModal>
+        </>
+      )}
     </div>
   );
 }
