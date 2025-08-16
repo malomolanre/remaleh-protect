@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle } from 'lucide-react';
+import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle, ThumbsUp, ThumbsDown, MessageSquare, Trash2 } from 'lucide-react';
 import { MobileCard } from './ui/mobile-card';
 import { MobileButton } from './ui/mobile-button';
 import { useAuth } from '../hooks/useAuth';
@@ -7,10 +7,12 @@ import { useCommunity } from '../hooks/useCommunity';
 import { Button } from './ui/button';
 import { MobileInput } from './ui/mobile-input';
 import { MobileTextarea } from './ui/mobile-input';
+import { API } from '../lib/api';
+import MobileModal from './MobileModal';
 
 export default function CommunityHub({ setActiveTab }) {
   const [activeTab, setActiveTabLocal] = useState('reports');
-  const { reports, fetchReports, leaderboard, trendingThreats, myStats, fetchMyStats, loadAllData, isLoading, createReport, uploadReportMedia } = useCommunity();
+  const { reports, fetchReports, leaderboard, trendingThreats, myStats, loadAllData, isLoading, pagination, hasMore, createReport, uploadReportMedia, voteOnReport, addComment, fetchReportById, fetchComments, deleteComment } = useCommunity();
   const { user, isAuthenticated } = useAuth();
 
   const [showNewReport, setShowNewReport] = useState(false);
@@ -24,11 +26,81 @@ export default function CommunityHub({ setActiveTab }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', message: string }
 
+  // Lightbox for media
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Comments modal
+  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
+  const [commentsReport, setCommentsReport] = useState(null);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsHasMore, setCommentsHasMore] = useState(false);
+
+  // Inline comment inputs per report
+  const [commentTexts, setCommentTexts] = useState({}); // { [reportId]: text }
+
   useEffect(() => {
     if (isAuthenticated) {
       loadAllData();
     }
   }, [isAuthenticated, loadAllData]);
+
+  // Proper infinite scroll with pagination
+  useEffect(() => {
+    const handleScroll = () => {
+      if (activeTab !== 'feed') return;
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+      if (nearBottom && !isLoading && hasMore && pagination) {
+        const nextPage = pagination.next_num;
+        if (nextPage) {
+          fetchReports({ page: nextPage }, true); // Append to existing reports
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [activeTab, isLoading, hasMore, pagination, fetchReports]);
+
+  const openLightbox = (mediaList, startIndex = 0) => {
+    const images = (mediaList || [])
+      .filter(m => !m.media_type || m.media_type === 'image')
+      .map(m => ({ id: m.id, src: m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`) }))
+      .filter(i => !!i.src);
+    if (images.length > 0) {
+      setLightboxImages(images);
+      setLightboxIndex(Math.max(0, Math.min(startIndex, images.length - 1)));
+      setLightboxOpen(true);
+    }
+  };
+
+  const handleViewAllComments = async (reportId) => {
+    setCommentsPage(1);
+    const res = await fetchComments(reportId, { page: 1, per_page: 20 });
+    if (res.success) {
+      setCommentsReport({ id: reportId, comments: res.comments || [] });
+      setCommentsHasMore((res.pagination?.page || 1) < (res.pagination?.pages || 1));
+      setCommentsModalOpen(true);
+    }
+  };
+
+  const handleLoadMoreComments = async () => {
+    if (!commentsReport) return;
+    const nextPage = commentsPage + 1;
+    const res = await fetchComments(commentsReport.id, { page: nextPage, per_page: 20 });
+    if (res.success) {
+      setCommentsReport(prev => ({ ...prev, comments: [...(prev.comments || []), ...(res.comments || [])] }));
+      setCommentsPage(nextPage);
+      setCommentsHasMore((res.pagination?.page || nextPage) < (res.pagination?.pages || nextPage));
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    const res = await deleteComment(commentId);
+    if (res.success) {
+      setCommentsReport(prev => ({ ...prev, comments: (prev.comments || []).filter(c => c.id !== commentId) }));
+    }
+  };
 
   const tabs = [
     { id: 'reports', label: 'Report Scam', icon: Flag },
@@ -94,34 +166,142 @@ export default function CommunityHub({ setActiveTab }) {
                 <h3 className="text-lg font-semibold text-gray-900">Community Reports</h3>
                 <p className="text-sm text-gray-600">Approved and verified reports from the community</p>
               </div>
-              <Button onClick={() => fetchReports({})} variant="outline" size="sm">Refresh</Button>
+              <div className="flex items-center gap-2">
+                <select
+                  onChange={(e) => fetchReports({ sort: e.target.value }, false)}
+                  className="text-xs border border-gray-300 rounded px-2 py-1"
+                  defaultValue="newest"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="top">Top</option>
+                  <option value="verified">Verified first</option>
+                </select>
+                <Button onClick={() => fetchReports({}, false)} variant="outline" size="sm">Refresh</Button>
+              </div>
             </div>
+            {/* Pagination info */}
+            {pagination && (
+              <div className="text-center text-xs text-gray-500 mb-2">
+                Showing {reports?.length || 0} of {pagination.total} reports
+                {hasMore && <span className="ml-2">• Scroll to load more</span>}
+              </div>
+            )}
             <div className="space-y-3">
               {reports && reports.length > 0 ? (
                 reports.map((report) => (
                   <MobileCard key={report.id} className="border-gray-200">
                     <div className="p-4">
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{report.threat_type}</span>
                             <span className="text-xs text-gray-500">{report.created_at ? new Date(report.created_at).toLocaleDateString() : ''}</span>
+                            {report.verified && <CheckCircle className="w-3.5 h-3.5 text-green-600" />}
                           </div>
+                          <div className="text-xs text-gray-500 mb-1">by {report.creator?.name || 'Anonymous'}</div>
                           <p className="text-sm text-gray-800">{report.description}</p>
-                          <div className="mt-2 text-xs text-gray-500 flex items-center gap-3">
-                            <span>Location: {report.location || 'N/A'}</span>
-                            <span>Votes: +{report.votes_up || 0} / -{report.votes_down || 0}</span>
+
+                          {report.media && report.media.length > 0 && (
+                            <div className="mt-2 grid grid-cols-3 gap-2">
+                              {(report.media.filter(m => !m.media_type || m.media_type === 'image').slice(0, 3)).map((m, idx, arr) => {
+                                const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
+                                const extraCount = report.media.length - 3;
+                                const src = m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`);
+                                return (
+                                  <button
+                                    key={m.id || idx}
+                                    type="button"
+                                    onClick={() => openLightbox(report.media, idx)}
+                                    className="relative w-full h-24 bg-gray-100 rounded overflow-hidden focus:outline-none"
+                                  >
+                                    {src && (
+                                      <img src={src} alt="report media" className="w-full h-full object-cover" loading="lazy" />
+                                    )}
+                                    {isLastAndExtra && extraCount > 0 && (
+                                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                                        <span className="text-white text-sm font-semibold">+{extraCount}</span>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          <div className="mt-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                onClick={() => voteOnReport(report.id, 'up')}
+                                variant="ghost"
+                                size="sm"
+                                className={report.user_vote === 'up' ? 'text-green-600' : ''}
+                              >
+                                <ThumbsUp className="w-4 h-4 mr-1" /> {report.votes_up || 0}
+                              </Button>
+                              <Button
+                                onClick={() => voteOnReport(report.id, 'down')}
+                                variant="ghost"
+                                size="sm"
+                                className={report.user_vote === 'down' ? 'text-red-600' : ''}
+                              >
+                                <ThumbsDown className="w-4 h-4 mr-1" /> {report.votes_down || 0}
+                              </Button>
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                              <MessageSquare className="w-3.5 h-3.5" /> {report.comments?.length || 0}
+                            </div>
+                          </div>
+
+                          {report.comments && report.comments.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {report.comments.slice(0, 2).map((c, i) => (
+                                <div key={c.id || i} className="text-xs text-gray-700 bg-gray-50 p-2 rounded">
+                                  <span className="font-medium">{c.user_name || 'Anonymous'}:</span> {c.comment}
+                                </div>
+                              ))}
+                              <div>
+                                <Button variant="ghost" size="sm" onClick={() => handleViewAllComments(report.id)}>
+                                  View all comments
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-2 flex items-center gap-2">
+                            <MobileInput
+                              placeholder="Add a comment..."
+                              value={commentTexts[report.id] || ''}
+                              onChange={(e) => setCommentTexts(prev => ({ ...prev, [report.id]: e.target.value }))}
+                              className="flex-1"
+                            />
+                            <Button
+                              size="sm"
+                              disabled={!((commentTexts[report.id] || '').trim())}
+                              onClick={async () => {
+                                const text = (commentTexts[report.id] || '').trim();
+                                if (!text) return;
+                                await addComment(report.id, { comment: text });
+                                setCommentTexts(prev => ({ ...prev, [report.id]: '' }));
+                              }}
+                            >
+                              Comment
+                            </Button>
                           </div>
                         </div>
-                        {report.verified && (
-                          <CheckCircle className="w-4 h-4 text-green-600 mt-1" />
-                        )}
                       </div>
                     </div>
                   </MobileCard>
                 ))
               ) : (
                 <p className="text-gray-500 text-center py-6">No reports to display yet.</p>
+              )}
+              
+              {/* Loading indicator for pagination */}
+              {isLoading && hasMore && (
+                <div className="text-center py-4">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <p className="text-sm text-gray-500 mt-2">Loading more reports...</p>
+                </div>
               )}
             </div>
           </div>
@@ -363,6 +543,55 @@ export default function CommunityHub({ setActiveTab }) {
           {toast.message}
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      <MobileModal isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} title="Preview" fullScreen>
+        {lightboxImages.length > 0 && (
+          <div className="flex flex-col items-center">
+            <div className="w-full h-[60vh] bg-black flex items-center justify-center mb-3">
+              <img
+                src={lightboxImages[lightboxIndex].src}
+                alt="preview"
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+            <div className="flex items-center justify-between w-full">
+              <Button onClick={() => setLightboxIndex(i => Math.max(0, i - 1))} disabled={lightboxIndex === 0} variant="outline" size="sm">Prev</Button>
+              <div className="text-sm text-gray-600">{lightboxIndex + 1} / {lightboxImages.length}</div>
+              <Button onClick={() => setLightboxIndex(i => Math.min(lightboxImages.length - 1, i + 1))} disabled={lightboxIndex >= lightboxImages.length - 1} variant="outline" size="sm">Next</Button>
+            </div>
+          </div>
+        )}
+      </MobileModal>
+
+      {/* Full Comments Modal */}
+      <MobileModal isOpen={commentsModalOpen} onClose={() => setCommentsModalOpen(false)} title="All Comments">
+        {commentsReport ? (
+          <div className="space-y-3">
+            {commentsReport.comments && commentsReport.comments.length > 0 ? (
+              commentsReport.comments.map((c) => (
+                <div key={c.id} className="p-2 bg-gray-50 rounded border border-gray-200 flex items-start justify-between">
+                  <div>
+                    <div className="text-sm text-gray-800"><span className="font-medium">{c.user_name || 'Anonymous'}:</span> {c.comment}</div>
+                    <div className="text-xs text-gray-500 mt-1">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</div>
+                  </div>
+                  {/* Deletion allowed only if backend returns user_id; optional */}
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500">No comments yet.</div>
+            )}
+
+            {commentsHasMore && (
+              <div className="pt-2">
+                <Button onClick={handleLoadMoreComments} variant="outline" size="sm">Load more</Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500">Loading...</div>
+        )}
+      </MobileModal>
     </div>
   );
 }

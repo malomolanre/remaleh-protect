@@ -26,6 +26,7 @@ def get_community_reports(current_user):
         verified_only = request.args.get('verified_only', 'false').lower() == 'true'
         include_all = request.args.get('include_all', 'false').lower() == 'true'
         include_own = request.args.get('include_own', 'false').lower() == 'true'
+        sort = request.args.get('sort', 'newest').lower()  # newest | top | verified
         
         query = CommunityReport.query
         
@@ -49,8 +50,18 @@ def get_community_reports(current_user):
                 query = query.filter(or_(CommunityReport.user_id == current_user.id, base_filter))
             else:
                 query = query.filter(base_filter)
+
+        # Sorting
+        if sort == 'top':
+            query = query.order_by((CommunityReport.votes_up - CommunityReport.votes_down).desc(), CommunityReport.created_at.desc())
+        elif sort == 'verified':
+            # Put verified first, then newest
+            query = query.order_by(CommunityReport.verified.desc(), CommunityReport.created_at.desc())
+        else:
+            # newest
+            query = query.order_by(CommunityReport.created_at.desc())
         
-        reports = query.order_by(CommunityReport.created_at.desc()).paginate(
+        reports = query.paginate(
             page=page, per_page=per_page, error_out=False
         )
         
@@ -84,7 +95,11 @@ def get_community_reports(current_user):
                 'page': page,
                 'per_page': per_page,
                 'total': reports.total,
-                'pages': reports.pages
+                'pages': reports.pages,
+                'has_next': reports.has_next,
+                'has_prev': reports.has_prev,
+                'next_num': reports.next_num,
+                'prev_num': reports.prev_num
             }
         }), 200
         

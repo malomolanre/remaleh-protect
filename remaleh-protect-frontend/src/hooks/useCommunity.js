@@ -10,9 +10,11 @@ export const useCommunity = () => {
   const [myStats, setMyStats] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
 
   // Fetch community reports
-  const fetchReports = useCallback(async (filters = {}) => {
+  const fetchReports = useCallback(async (filters = {}, append = false) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -23,7 +25,18 @@ export const useCommunity = () => {
       const response = await apiGet(endpoint);
       if (response.ok) {
         const data = await response.json();
-        setReports(data.reports || data);
+        
+        if (append && data.reports) {
+          setReports(prev => [...prev, ...data.reports]);
+        } else {
+          setReports(data.reports || data);
+        }
+        
+        if (data.pagination) {
+          setPagination(data.pagination);
+          setHasMore(data.pagination.has_next);
+        }
+        
         return data;
       } else {
         throw new Error('Failed to fetch community reports');
@@ -397,7 +410,7 @@ export const useCommunity = () => {
   // Load all data
   const loadAllData = useCallback(async () => {
     await Promise.all([
-      fetchReports(),
+      fetchReports({}, false), // Reset reports, don't append
       fetchTrendingThreats(),
       fetchCommunityStats(),
       fetchAlerts(),
@@ -418,6 +431,8 @@ export const useCommunity = () => {
     myStats,
     isLoading,
     error,
+    pagination,
+    hasMore,
     fetchReports,
     fetchTrendingThreats,
     fetchComments,
