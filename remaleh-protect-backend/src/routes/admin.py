@@ -3,6 +3,15 @@ from functools import wraps
 from datetime import datetime
 import logging
 from sqlalchemy import text
+import os
+from urllib.parse import urlparse
+
+# Optional Cloudinary support
+try:
+    import cloudinary
+    import cloudinary.uploader
+except ImportError:
+    cloudinary = None
 
 # Import production modules - try relative imports first, then absolute
 try:
@@ -528,16 +537,49 @@ def get_reports(current_user):
 @token_required
 @admin_required
 def admin_delete_report(current_user, report_id):
-    """Admin delete report - delegates to community delete logic by user/admin permissions."""
+    """Admin delete a report and associated media (local or Cloudinary)."""
     try:
-        # Import here to avoid circular
-        try:
-            from ..routes.community import delete_report
-        except ImportError:
-            from routes.community import delete_report
-        # Call the same logic with current_user enforced by decorators
-        return delete_report(current_user, report_id)
+        report = CommunityReport.query.get(report_id)
+        if not report:
+            return jsonify({'error': 'Report not found'}), 404
+
+        # Remove media files
+        for m in list(getattr(report, 'media', [])):
+            media_url = getattr(m, 'media_url', '') or ''
+            if media_url.startswith('/api/community/uploads/'):
+                try:
+                    filename = media_url.split('/api/community/uploads/', 1)[1]
+                    upload_folder = current_app.config.get('UPLOAD_FOLDER')
+                    file_path = os.path.join(upload_folder, filename)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except Exception:
+                    pass
+            else:
+                if cloudinary and ('res.cloudinary.com' in media_url):
+                    try:
+                        cloud_name = current_app.config.get('CLOUDINARY_CLOUD_NAME')
+                        api_key = current_app.config.get('CLOUDINARY_API_KEY')
+                        api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
+                        if cloud_name and api_key and api_secret:
+                            cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
+                            parsed = urlparse(media_url)
+                            parts = parsed.path.split('/')
+                            if 'upload' in parts:
+                                upload_idx = parts.index('upload')
+                                public_parts = parts[upload_idx+2:]
+                                public_id_with_ext = '/'.join(public_parts)
+                                if public_id_with_ext:
+                                    public_id = os.path.splitext(public_id_with_ext)[0]
+                                    cloudinary.uploader.destroy(public_id)
+                    except Exception:
+                        pass
+
+        db.session.delete(report)
+        db.session.commit()
+        return jsonify({'message': 'Report deleted', 'report_id': report_id}), 200
     except Exception as e:
+        db.session.rollback()
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 @admin_bp.route('/reports/<int:report_id>/moderate', methods=['PUT'])
