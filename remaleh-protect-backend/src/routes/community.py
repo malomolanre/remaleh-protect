@@ -329,9 +329,11 @@ def vote_on_report(current_user, report_id):
 def verify_report(current_user, report_id):
     """Mark a report as verified (admin only)"""
     try:
-        # Check if user is admin (you can add admin field to User model)
-        if not getattr(current_user, 'is_admin', False):
-            return jsonify({'error': 'Admin privileges required'}), 403
+        # Allow admin or moderator
+        role = getattr(current_user, 'role', None)
+        is_admin = getattr(current_user, 'is_admin', False)
+        if not (is_admin or role == 'MODERATOR' or role == 'ADMIN'):
+            return jsonify({'error': 'Moderator or admin privileges required'}), 403
         
         report = CommunityReport.query.get_or_404(report_id)
         report.verified = True

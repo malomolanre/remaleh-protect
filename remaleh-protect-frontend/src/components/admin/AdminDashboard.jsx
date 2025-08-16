@@ -781,7 +781,7 @@ export default function AdminDashboard({ setActiveTab }) {
     )
   }
   
-  if (!user?.is_admin && user?.role !== 'ADMIN') {
+  if (!user?.is_admin && user?.role !== 'ADMIN' && user?.role !== 'MODERATOR') {
     return (
       <div className="space-y-6 p-4">
         <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-lg">
@@ -1293,6 +1293,7 @@ export default function AdminDashboard({ setActiveTab }) {
         >
           Overview
         </button>
+        {(user?.is_admin || user?.role === 'ADMIN') && (
         <button
           onClick={() => setActiveSection('content')}
           className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
@@ -1303,6 +1304,8 @@ export default function AdminDashboard({ setActiveTab }) {
         >
           Content
         </button>
+        )}
+        {(user?.is_admin || user?.role === 'ADMIN') && (
         <button
           onClick={() => setActiveSection('users')}
           className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
@@ -1313,6 +1316,7 @@ export default function AdminDashboard({ setActiveTab }) {
         >
           Users
         </button>
+        )}
         <button
           onClick={() => setActiveSection('reports')}
           className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
@@ -1327,8 +1331,8 @@ export default function AdminDashboard({ setActiveTab }) {
 
       {/* Content Sections */}
       {activeSection === 'overview' && renderOverview()}
-      {activeSection === 'content' && renderContentManagement()}
-      {activeSection === 'users' && (
+      {(user?.is_admin || user?.role === 'ADMIN') && activeSection === 'content' && renderContentManagement()}
+      {(user?.is_admin || user?.role === 'ADMIN') && activeSection === 'users' && (
         <>
           {renderUserManagement()}
           {renderDeletedUsers()}

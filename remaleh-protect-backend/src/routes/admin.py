@@ -45,6 +45,20 @@ def admin_required(f):
             return jsonify({'error': 'Authentication error'}), 500
     return decorated_function
 
+def moderator_or_admin_required(f):
+    """Decorator to allow access to users with role MODERATOR or ADMIN."""
+    @wraps(f)
+    def decorated_function(current_user, *args, **kwargs):
+        try:
+            role = getattr(current_user, 'role', None)
+            is_admin = getattr(current_user, 'is_admin', False)
+            if not current_user or not (is_admin or role == 'MODERATOR' or role == 'ADMIN'):
+                return jsonify({'error': 'Moderator or admin access required'}), 403
+            return f(current_user, *args, **kwargs)
+        except Exception:
+            return jsonify({'error': 'Authentication error'}), 500
+    return decorated_function
+
 @admin_bp.route('/users', methods=['GET'])
 @token_required
 @admin_required
@@ -455,7 +469,7 @@ def restore_user(current_user, user_id):
 
 @admin_bp.route('/reports', methods=['GET'])
 @token_required
-@admin_required
+@moderator_or_admin_required
 def get_reports(current_user):
     """Get all community reports with pagination and filtering"""
     try:
@@ -584,7 +598,7 @@ def admin_delete_report(current_user, report_id):
 
 @admin_bp.route('/reports/<int:report_id>/moderate', methods=['PUT'])
 @token_required
-@admin_required
+@moderator_or_admin_required
 def moderate_report(current_user, report_id):
     """Moderate a community report (approve, reject, flag)"""
     try:
