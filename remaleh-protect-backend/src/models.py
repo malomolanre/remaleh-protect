@@ -141,7 +141,7 @@ class CommunityReport(db.Model):
     verified = db.Column(db.Boolean, default=False)
     
     # Relationships
-    votes = db.relationship('ReportVote', backref='report', lazy=True)
+    votes = db.relationship('ReportVote', backref='report', lazy=True, cascade="all, delete-orphan")
     media = db.relationship('CommunityReportMedia', backref='report', lazy=True, cascade="all, delete-orphan")
     comments = db.relationship('CommunityReportComment', backref='report', lazy=True, cascade="all, delete-orphan")
     
