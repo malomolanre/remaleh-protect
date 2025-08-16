@@ -102,7 +102,17 @@ def get_community_reports(current_user):
         reports = query.paginate(
             page=page, per_page=per_page, error_out=False
         )
-        
+        # Prepare tiers for creators (all-time points)
+        creator_ids = list({r.user_id for r in reports.items})
+        user_id_to_tier = {}
+        if creator_ids:
+            points_by_user = db.session.query(
+                UserPointLog.user_id,
+                func.coalesce(func.sum(UserPointLog.points), 0).label('points')
+            ).filter(UserPointLog.user_id.in_(creator_ids)).group_by(UserPointLog.user_id).all()
+            for uid, pts in points_by_user:
+                user_id_to_tier[int(uid)] = compute_user_tier(int(pts or 0))
+
         # Get user's votes for these reports (guard against empty list)
         report_ids = [r.id for r in reports.items]
         vote_dict = {}
@@ -133,7 +143,7 @@ def get_community_reports(current_user):
                     # try email prefix
                     email = getattr(creator_user, 'email', '') or ''
                     creator_name = (email.split('@')[0] if email else 'Anonymous')
-            report_data['creator'] = {'id': creator_id, 'name': creator_name}
+            report_data['creator'] = {'id': creator_id, 'name': creator_name, 'tier': user_id_to_tier.get(creator_id)}
             # Attach media
             report_data['media'] = [m.to_dict() for m in getattr(report, 'media', [])]
             # Attach latest comments (limit 3)
@@ -627,12 +637,13 @@ def get_leaderboard(current_user):
                 func.coalesce(func.sum(UserPointLog.points), 0).label('points')
             ).filter(UserPointLog.created_at >= lookback_start).group_by(UserPointLog.user_id).subquery()
 
+        # Only include users who have points in the selected period
         results = db.session.query(
             User.id,
             User.first_name,
             User.last_name,
-            func.coalesce(points_by_user.c.points, 0).label('points')
-        ).outerjoin(points_by_user, points_by_user.c.uid == User.id).order_by(desc('points')).limit(20).all()
+            points_by_user.c.points.label('points')
+        ).join(points_by_user, points_by_user.c.uid == User.id).order_by(desc('points')).limit(20).all()
 
         leaderboard = []
         rank = 1

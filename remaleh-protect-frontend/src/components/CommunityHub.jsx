@@ -48,6 +48,27 @@ export default function CommunityHub({ setActiveTab }) {
     }
   }, [isAuthenticated, loadAllData, pointsPeriod]);
 
+  // Require authentication to access Community Hub
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6 p-4">
+        <MobileCard>
+          <div className="text-center py-8">
+            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">Please log in to access the Community Hub, report scams, and view the feed.</p>
+            <MobileButton 
+              onClick={() => setActiveTab('login')}
+              className="bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
+            >
+              Go to Login
+            </MobileButton>
+          </div>
+        </MobileCard>
+      </div>
+    );
+  }
+
   // Proper infinite scroll with pagination
   useEffect(() => {
     const handleScroll = () => {
@@ -243,7 +264,7 @@ export default function CommunityHub({ setActiveTab }) {
                             <span className="text-xs text-gray-500">{report.created_at ? new Date(report.created_at).toLocaleDateString() : ''}</span>
                             {report.verified && <CheckCircle className="w-3.5 h-3.5 text-green-600" />}
                           </div>
-                          <div className="text-xs text-gray-500 mb-1">by {report.creator?.name || 'Anonymous'}</div>
+                          <div className="text-xs text-gray-500 mb-1">by {report.creator?.name || 'Anonymous'}{report.creator?.tier ? ` • ${report.creator.tier}` : ''}</div>
                           <p className="text-sm text-gray-800">{report.description}</p>
 
                           {report.media && report.media.length > 0 && (
