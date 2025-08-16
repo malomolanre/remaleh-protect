@@ -7,6 +7,7 @@ export const useCommunity = () => {
   const [communityStats, setCommunityStats] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [myStats, setMyStats] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -119,6 +120,27 @@ export const useCommunity = () => {
     } catch (err) {
       setError(err.message);
       console.error('Error fetching leaderboard:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch current user's reporting stats
+  const fetchMyStats = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await apiGet(API_ENDPOINTS.COMMUNITY.MY_STATS);
+      if (response.ok) {
+        const data = await response.json();
+        setMyStats(data);
+        return data;
+      } else {
+        throw new Error('Failed to fetch my stats');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching my stats:', err);
     } finally {
       setIsLoading(false);
     }
@@ -316,9 +338,10 @@ export const useCommunity = () => {
       fetchTrendingThreats(),
       fetchCommunityStats(),
       fetchAlerts(),
-      fetchLeaderboard()
+      fetchLeaderboard(),
+      fetchMyStats()
     ]);
-  }, [fetchReports, fetchTrendingThreats, fetchCommunityStats, fetchAlerts, fetchLeaderboard]);
+  }, [fetchReports, fetchTrendingThreats, fetchCommunityStats, fetchAlerts, fetchLeaderboard, fetchMyStats]);
 
   // Clear error
   const clearError = useCallback(() => setError(null), []);
@@ -329,6 +352,7 @@ export const useCommunity = () => {
     communityStats,
     alerts,
     leaderboard,
+    myStats,
     isLoading,
     error,
     fetchReports,
@@ -336,6 +360,7 @@ export const useCommunity = () => {
     fetchCommunityStats,
     fetchAlerts,
     fetchLeaderboard,
+    fetchMyStats,
     createReport,
     voteOnReport,
     verifyReport,

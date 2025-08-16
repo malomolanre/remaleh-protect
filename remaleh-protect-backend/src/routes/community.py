@@ -435,6 +435,56 @@ def get_community_stats(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@community_bp.route('/my-stats', methods=['GET'])
+@token_required
+def get_my_reporting_stats(current_user):
+    """Get current user's reporting stats including rank and points"""
+    try:
+        # Base counts
+        report_count = CommunityReport.query.filter_by(user_id=current_user.id).count()
+        approved_count = CommunityReport.query.filter_by(user_id=current_user.id, status='APPROVED').count()
+        verified_count = CommunityReport.query.filter_by(user_id=current_user.id, status='VERIFIED').count()
+        pending_count = CommunityReport.query.filter_by(user_id=current_user.id, status='PENDING').count()
+        rejected_count = CommunityReport.query.filter_by(user_id=current_user.id, status='REJECTED').count()
+
+        # Aggregate votes
+        votes_agg = db.session.query(
+            func.coalesce(func.sum(CommunityReport.votes_up), 0),
+            func.coalesce(func.sum(CommunityReport.votes_down), 0)
+        ).filter(CommunityReport.user_id == current_user.id).first()
+        total_upvotes = int(votes_agg[0] or 0)
+        total_downvotes = int(votes_agg[1] or 0)
+
+        # Points: simple formula (5 per report, +5 per verified, + upvotes)
+        points = (report_count * 5) + (verified_count * 5) + total_upvotes
+
+        # Rank by report count (descending)
+        user_counts = db.session.query(
+            User.id.label('uid'),
+            func.count(CommunityReport.id).label('rc')
+        ).join(CommunityReport).group_by(User.id).order_by(desc('rc')).all()
+
+        rank = None
+        if report_count > 0 and user_counts:
+            for idx, row in enumerate(user_counts, start=1):
+                if row.uid == current_user.id:
+                    rank = idx
+                    break
+
+        return jsonify({
+            'report_count': report_count,
+            'approved_count': approved_count,
+            'verified_count': verified_count,
+            'pending_count': pending_count,
+            'rejected_count': rejected_count,
+            'total_upvotes': total_upvotes,
+            'total_downvotes': total_downvotes,
+            'points': points,
+            'rank': rank
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @community_bp.route('/alerts', methods=['GET'])
 @token_required
 def get_community_alerts(current_user):
