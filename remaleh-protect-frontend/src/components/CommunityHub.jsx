@@ -4,11 +4,25 @@ import { MobileCard } from './ui/mobile-card';
 import { MobileButton } from './ui/mobile-button';
 import { useAuth } from '../hooks/useAuth';
 import { useCommunity } from '../hooks/useCommunity';
+import { Button } from './ui/button';
+import { MobileInput } from './ui/mobile-input';
+import { MobileTextarea } from './ui/mobile-input';
 
 export default function CommunityHub({ setActiveTab }) {
   const [activeTab, setActiveTabLocal] = useState('reports');
-  const { leaderboard, trendingThreats, loadAllData, isLoading } = useCommunity();
+  const { leaderboard, trendingThreats, loadAllData, isLoading, createReport, uploadReportMedia } = useCommunity();
   const { user, isAuthenticated } = useAuth();
+
+  const [showNewReport, setShowNewReport] = useState(false);
+  const [newReport, setNewReport] = useState({
+    description: '',
+    threat_type: 'SCAM',
+    urgency: 'MEDIUM',
+    location: ''
+  });
+  const [newReportFiles, setNewReportFiles] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', message: string }
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -62,7 +76,7 @@ export default function CommunityHub({ setActiveTab }) {
             </MobileCard>
 
             <MobileButton
-              onClick={() => setActiveTab('community_reports')}
+              onClick={() => setShowNewReport(true)}
               className="w-full bg-red-600 hover:bg-red-700 text-white py-3"
             >
               <Plus className="w-5 h-5 mr-2" />
@@ -191,6 +205,122 @@ export default function CommunityHub({ setActiveTab }) {
           </div>
         </MobileCard>
       </div>
+
+      {/* New Report Modal */}
+      {showNewReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
+            <h2 className="text-xl font-semibold mb-4">Report New Threat</h2>
+            {!isAuthenticated ? (
+              <div className="text-center text-gray-600">
+                Please log in to submit a community report.
+              </div>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    setIsSubmitting(true);
+                    const result = await createReport(newReport);
+                    if (!result.success) {
+                      throw new Error(result.error || 'Failed to create report');
+                    }
+                    // Upload files
+                    for (const file of newReportFiles) {
+                      const up = await uploadReportMedia(result.report.id, file);
+                      if (!up.success) {
+                        throw new Error(up.error || 'Failed to upload media');
+                      }
+                    }
+                    setShowNewReport(false);
+                    setNewReport({ description: '', threat_type: 'SCAM', urgency: 'MEDIUM', location: '' });
+                    setNewReportFiles([]);
+                    setToast({ type: 'success', message: 'Report submitted successfully' });
+                    setTimeout(() => setToast(null), 3000);
+                    loadAllData();
+                  } catch (err) {
+                    setToast({ type: 'error', message: err.message || 'Submission failed' });
+                    setTimeout(() => setToast(null), 4000);
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <MobileTextarea
+                  placeholder="Detailed Description"
+                  value={newReport.description}
+                  onChange={(e) => setNewReport({ ...newReport, description: e.target.value })}
+                  required
+                  rows={4}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <select
+                    value={newReport.threat_type}
+                    onChange={(e) => setNewReport({ ...newReport, threat_type: e.target.value })}
+                    className="border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="PHISHING">Phishing</option>
+                    <option value="MALWARE">Malware</option>
+                    <option value="SCAM">Scam</option>
+                    <option value="SOCIAL_ENGINEERING">Social Engineering</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                  <select
+                    value={newReport.urgency}
+                    onChange={(e) => setNewReport({ ...newReport, urgency: e.target.value })}
+                    className="border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Attach Photos (optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => setNewReportFiles(Array.from(e.target.files || []))}
+                    className="block w-full text-sm text-gray-700"
+                  />
+                  {newReportFiles.length > 0 && (
+                    <div className="mt-2 text-xs text-gray-600">{newReportFiles.length} file(s) selected</div>
+                  )}
+                </div>
+                <MobileInput
+                  placeholder="Location/URL"
+                  value={newReport.location}
+                  onChange={(e) => setNewReport({ ...newReport, location: e.target.value })}
+                />
+                <div className="flex space-x-3">
+                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Report'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowNewReport(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg shadow-md text-sm z-50 ${
+          toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

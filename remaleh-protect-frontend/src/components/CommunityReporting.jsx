@@ -57,6 +57,18 @@ export default function CommunityReporting({ setActiveTab }) {
   useEffect(() => {
     if (isAuthenticated) {
       loadAllData();
+      // If navigated from CommunityHub with intent to open new report
+      const shouldOpen = (
+        (typeof localStorage !== 'undefined' && localStorage.getItem('openNewReport') === '1') ||
+        (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('openNewReport') === '1') ||
+        (typeof window !== 'undefined' && window.__openNewReport === true)
+      );
+      if (shouldOpen) {
+        setShowNewReport(true);
+        try { localStorage.removeItem('openNewReport'); } catch (e) {}
+        try { sessionStorage.removeItem('openNewReport'); } catch (e) {}
+        try { delete window.__openNewReport; } catch (e) {}
+      }
     }
   }, [loadAllData, isAuthenticated]);
 
@@ -257,9 +269,14 @@ export default function CommunityReporting({ setActiveTab }) {
       <MobileCard className="p-6">
         <MobileCardHeader className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Recent Reports</h2>
-          <Button onClick={loadAllData} variant="outline" size="sm">
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowNewReport(true)} size="sm">
+              Report New Scam
+            </Button>
+            <Button onClick={loadAllData} variant="outline" size="sm">
+              Refresh
+            </Button>
+          </div>
         </MobileCardHeader>
         <MobileCardContent>
           <div className="space-y-4">
