@@ -14,9 +14,10 @@ export default function ProfileSettings({ setActiveTab }) {
   
   // Form state
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    name: user?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
     email: user?.email || '',
-    bio: user?.bio || ''
+    bio: user?.bio || '',
+    risk_level: user?.risk_level || 'MEDIUM'
   })
   
   const [passwordData, setPasswordData] = useState({
@@ -143,10 +144,24 @@ export default function ProfileSettings({ setActiveTab }) {
                   type="email"
                   name="email"
                   value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter your email"
-                  className="w-full"
+                  disabled
+                  className="w-full bg-gray-50 cursor-not-allowed"
                 />
+                <p className="text-xs text-gray-500 mt-1">Email changes are not supported from here.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Risk Level</label>
+                <select
+                  name="risk_level"
+                  value={formData.risk_level}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3"
+                >
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                </select>
               </div>
               
               <div>

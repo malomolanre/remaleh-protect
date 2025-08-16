@@ -192,11 +192,23 @@ export const useAuth = () => {
     try {
       setError(null);
       setIsLoading(true);
-      
-      const response = await apiPut(API_ENDPOINTS.AUTH.PROFILE, profileData);
+      // Backend expects first_name, last_name, risk_level. Map from UI fields.
+      const payload = {};
+      if (typeof profileData?.name === 'string') {
+        const trimmed = profileData.name.trim();
+        const parts = trimmed.split(/\s+/);
+        payload.first_name = parts[0] || '';
+        payload.last_name = parts.length > 1 ? parts.slice(1).join(' ') : '';
+      }
+      if (typeof profileData?.first_name === 'string') payload.first_name = profileData.first_name;
+      if (typeof profileData?.last_name === 'string') payload.last_name = profileData.last_name;
+      if (typeof profileData?.risk_level === 'string') payload.risk_level = profileData.risk_level;
+
+      const response = await apiPut(API_ENDPOINTS.AUTH.PROFILE, payload);
       
       if (response.ok) {
-        const updatedUser = await response.json();
+        const resp = await response.json();
+        const updatedUser = resp.user || resp;
         setUser(updatedUser);
         return { success: true, user: updatedUser };
       } else {
