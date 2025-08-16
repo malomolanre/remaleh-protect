@@ -16,8 +16,7 @@ export default function ProfileSettings({ setActiveTab }) {
   const [formData, setFormData] = useState({
     name: user?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
     email: user?.email || '',
-    bio: user?.bio || '',
-    risk_level: user?.risk_level || 'MEDIUM'
+    bio: user?.bio || ''
   })
   
   const [passwordData, setPasswordData] = useState({
@@ -94,6 +93,11 @@ export default function ProfileSettings({ setActiveTab }) {
 
   return (
     <div className="space-y-6">
+      {(() => {
+        // compute display name once for use below
+        const dn = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.name || ''
+        return null
+      })()}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -150,19 +154,7 @@ export default function ProfileSettings({ setActiveTab }) {
                 <p className="text-xs text-gray-500 mt-1">Email changes are not supported from here.</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Risk Level</label>
-                <select
-                  name="risk_level"
-                  value={formData.risk_level}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3"
-                >
-                  <option value="LOW">LOW</option>
-                  <option value="MEDIUM">MEDIUM</option>
-                  <option value="HIGH">HIGH</option>
-                </select>
-              </div>
+              {/* Bio remains editable */}
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
@@ -192,7 +184,7 @@ export default function ProfileSettings({ setActiveTab }) {
                 <User className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">Name</p>
-                  <p className="font-medium text-gray-900">{user.name || 'Not set'}</p>
+                  <p className="font-medium text-gray-900">{(`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.name || 'Not set')}</p>
                 </div>
               </div>
               

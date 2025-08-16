@@ -82,6 +82,10 @@ export const API_ENDPOINTS = {
     LEADERBOARD: '/api/community/leaderboard',
     MY_STATS: '/api/community/my-stats'
   },
+  // Public
+  PUBLIC: {
+    BLOG_FEED: '/api/public/blog-feed'
+  },
   
   // Existing endpoints
   SCAM: '/api/scam/comprehensive',

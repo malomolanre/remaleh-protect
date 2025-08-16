@@ -165,7 +165,7 @@ def create_admin_user():
                 email='admin@remaleh.com',
                 first_name='Admin',
                 last_name='User',
-                risk_level='LOW',
+                bio='',
                 is_active=True,
                 is_admin=True,
                 role='ADMIN',

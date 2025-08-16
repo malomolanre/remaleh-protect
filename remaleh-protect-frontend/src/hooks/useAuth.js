@@ -192,7 +192,7 @@ export const useAuth = () => {
     try {
       setError(null);
       setIsLoading(true);
-      // Backend expects first_name, last_name, risk_level. Map from UI fields.
+      // Backend expects first_name, last_name, bio. Map from UI fields.
       const payload = {};
       if (typeof profileData?.name === 'string') {
         const trimmed = profileData.name.trim();
@@ -202,7 +202,7 @@ export const useAuth = () => {
       }
       if (typeof profileData?.first_name === 'string') payload.first_name = profileData.first_name;
       if (typeof profileData?.last_name === 'string') payload.last_name = profileData.last_name;
-      if (typeof profileData?.risk_level === 'string') payload.risk_level = profileData.risk_level;
+      if (typeof profileData?.bio === 'string') payload.bio = profileData.bio;
 
       const response = await apiPut(API_ENDPOINTS.AUTH.PROFILE, payload);
       

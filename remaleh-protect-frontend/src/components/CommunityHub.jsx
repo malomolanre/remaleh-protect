@@ -247,6 +247,9 @@ export default function CommunityHub({ setActiveTab }) {
                             {report.verified && <CheckCircle className="w-3.5 h-3.5 text-green-600" />}
                           </div>
                           <div className="text-xs text-gray-500 mb-1">by {report.creator?.name || 'Anonymous'}{report.creator?.tier ? ` • ${report.creator.tier}` : ''}</div>
+                          {report.creator?.bio && (
+                            <div className="text-xs text-gray-500 italic mb-1">{report.creator.bio}</div>
+                          )}
                           <p className="text-sm text-gray-800">{report.description}</p>
 
                           {report.media && report.media.length > 0 && (

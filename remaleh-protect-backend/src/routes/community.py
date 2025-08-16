@@ -143,7 +143,8 @@ def get_community_reports(current_user):
                     # try email prefix
                     email = getattr(creator_user, 'email', '') or ''
                     creator_name = (email.split('@')[0] if email else 'Anonymous')
-            report_data['creator'] = {'id': creator_id, 'name': creator_name, 'tier': user_id_to_tier.get(creator_id)}
+            creator_bio = getattr(creator_user, 'bio', None) if creator_user is not None else None
+            report_data['creator'] = {'id': creator_id, 'name': creator_name, 'tier': user_id_to_tier.get(creator_id), 'bio': creator_bio}
             # Attach media
             report_data['media'] = [m.to_dict() for m in getattr(report, 'media', [])]
             # Attach latest comments (limit 3)

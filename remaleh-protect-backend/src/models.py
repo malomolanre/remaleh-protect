@@ -13,7 +13,10 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
+    # Deprecated: risk_level (kept in DB for backward-compatibility, no longer used)
     risk_level = db.Column(db.String(20), default='MEDIUM')
+    # New: optional bio for community profile cards
+    bio = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     is_active = db.Column(db.Boolean, default=True)
@@ -41,7 +44,8 @@ class User(db.Model):
             'email': self.email,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'risk_level': self.risk_level,
+            # 'risk_level' intentionally omitted from API
+            'bio': self.bio,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None,
             'is_active': self.is_active,

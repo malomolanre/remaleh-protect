@@ -214,6 +214,7 @@ def create_app():
         from .routes.community import community_bp
         from .routes.admin import admin_bp
         from .routes.learning_content import learning_content_bp
+        from .routes.public import public_bp
     except ImportError:
         from routes.scam import scam_bp
         from routes.enhanced_scam import enhanced_scam_bp
@@ -224,6 +225,7 @@ def create_app():
         from routes.community import community_bp
         from routes.admin import admin_bp
         from routes.learning_content import learning_content_bp
+        from routes.public import public_bp
 
     # Register blueprints
     try:
@@ -252,6 +254,9 @@ def create_app():
         logger.info("✓ Admin panel blueprint registered at /api/admin")
         
         app.register_blueprint(learning_content_bp, url_prefix="/api/learning")
+        
+        app.register_blueprint(public_bp, url_prefix="/api/public")
+        logger.info("✓ Public blueprint registered at /api/public")
         logger.info("✓ Learning content blueprint registered at /api/learning")
         
         logger.info("✓ All security analysis blueprints registered successfully")

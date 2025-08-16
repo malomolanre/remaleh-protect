@@ -31,7 +31,7 @@ def register():
             email=data['email'],
             first_name=data.get('first_name', ''),
             last_name=data.get('last_name', ''),
-            risk_level=data.get('risk_level', 'MEDIUM')
+            bio=data.get('bio')
         )
         user.set_password(data['password'])
         
@@ -118,8 +118,8 @@ def update_profile(current_user):
             current_user.first_name = data['first_name']
         if data.get('last_name'):
             current_user.last_name = data['last_name']
-        if data.get('risk_level'):
-            current_user.risk_level = data['risk_level']
+        if data.get('bio') is not None:
+            current_user.bio = data.get('bio')
         
         db.session.commit()
         
