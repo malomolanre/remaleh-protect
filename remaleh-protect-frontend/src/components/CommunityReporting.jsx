@@ -15,7 +15,7 @@ import {
   Star,
   Lock,
   ArrowLeft,
-  X
+  Trash2
 } from 'lucide-react';
 import { useCommunity } from '../hooks/useCommunity';
 import { useAuth } from '../hooks/useAuth';
@@ -38,34 +38,33 @@ export default function CommunityReporting({ setActiveTab }) {
     addComment,
     createAlert,
     uploadReportMedia,
+    fetchReportById,
+    fetchComments,
+    deleteComment,
     clearError
   } = useCommunity();
 
   const [showNewReport, setShowNewReport] = useState(false);
   const [showNewAlert, setShowNewAlert] = useState(false);
-  const [newReport, setNewReport] = useState({
-    description: '',
-    threat_type: 'SCAM',
-    urgency: 'MEDIUM',
-    location: ''
-  });
-  const [newAlert, setNewAlert] = useState({
-    title: '',
-    message: '',
-    priority: 'medium'
-  });
+  const [newReport, setNewReport] = useState({ description: '', threat_type: 'SCAM', urgency: 'MEDIUM', location: '' });
+  const [newAlert, setNewAlert] = useState({ title: '', message: '', priority: 'medium' });
   const [commentText, setCommentText] = useState('');
   const [newReportFiles, setNewReportFiles] = useState([]);
 
-  // Lightbox state
+  // Lightbox
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxImages, setLightboxImages] = useState([]); // [{src, id}]
+  const [lightboxImages, setLightboxImages] = useState([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Full comments modal
+  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
+  const [commentsReport, setCommentsReport] = useState(null);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsHasMore, setCommentsHasMore] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
       loadAllData();
-      // If navigated from CommunityHub with intent to open new report
       const shouldOpen = (
         (typeof localStorage !== 'undefined' && localStorage.getItem('openNewReport') === '1') ||
         (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('openNewReport') === '1') ||
@@ -127,13 +126,38 @@ export default function CommunityReporting({ setActiveTab }) {
     }
   };
 
+  const handleViewAllComments = async (reportId) => {
+    setCommentsPage(1);
+    const res = await fetchComments(reportId, { page: 1, per_page: 20 });
+    if (res.success) {
+      setCommentsReport({ id: reportId, comments: res.comments || [] });
+      setCommentsHasMore((res.pagination?.page || 1) < (res.pagination?.pages || 1));
+      setCommentsModalOpen(true);
+    }
+  };
+
+  const handleLoadMoreComments = async () => {
+    if (!commentsReport) return;
+    const nextPage = commentsPage + 1;
+    const res = await fetchComments(commentsReport.id, { page: nextPage, per_page: 20 });
+    if (res.success) {
+      setCommentsReport(prev => ({ ...prev, comments: [...(prev.comments || []), ...(res.comments || [])] }));
+      setCommentsPage(nextPage);
+      setCommentsHasMore((res.pagination?.page || nextPage) < (res.pagination?.pages || nextPage));
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    const res = await deleteComment(commentId);
+    if (res.success) {
+      setCommentsReport(prev => ({ ...prev, comments: (prev.comments || []).filter(c => c.id !== commentId) }));
+    }
+  };
+
   const openLightbox = (mediaList, startIndex = 0) => {
     const images = (mediaList || [])
       .filter(m => !m.media_type || m.media_type === 'image')
-      .map(m => ({
-        id: m.id,
-        src: m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`)
-      }))
+      .map(m => ({ id: m.id, src: m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`) }))
       .filter(i => !!i.src);
     if (images.length > 0) {
       setLightboxImages(images);
@@ -404,6 +428,11 @@ export default function CommunityReporting({ setActiveTab }) {
                           </div>
                         ))}
                       </div>
+                      <div className="mt-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewAllComments(report.id)}>
+                          View all comments
+                        </Button>
+                      </div>
                     </div>
                   )}
 
@@ -579,6 +608,39 @@ export default function CommunityReporting({ setActiveTab }) {
           </div>
         </div>
       )}
+
+      {/* Full Comments Modal */}
+      <MobileModal isOpen={commentsModalOpen} onClose={() => setCommentsModalOpen(false)} title="All Comments">
+        {commentsReport ? (
+          <div className="space-y-3">
+            {commentsReport.comments && commentsReport.comments.length > 0 ? (
+              commentsReport.comments.map((c) => (
+                <div key={c.id} className="p-2 bg-gray-50 rounded border border-gray-200 flex items-start justify-between">
+                  <div>
+                    <div className="text-sm text-gray-800"><span className="font-medium">{c.user_name || 'Anonymous'}:</span> {c.comment}</div>
+                    <div className="text-xs text-gray-500 mt-1">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</div>
+                  </div>
+                  {(user?.id === c.user_id || user?.is_admin) && (
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteComment(c.id)} title="Delete comment">
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500">No comments yet.</div>
+            )}
+
+            {commentsHasMore && (
+              <div className="pt-2">
+                <Button onClick={handleLoadMoreComments} variant="outline" size="sm">Load more</Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500">Loading...</div>
+        )}
+      </MobileModal>
 
       {/* Lightbox Modal */}
       <MobileModal isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} title="Preview" fullScreen>

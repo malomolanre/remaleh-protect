@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Flag, Trophy, TrendingUp, Plus, Star } from 'lucide-react';
+import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle } from 'lucide-react';
 import { MobileCard } from './ui/mobile-card';
 import { MobileButton } from './ui/mobile-button';
 import { useAuth } from '../hooks/useAuth';
@@ -10,7 +10,7 @@ import { MobileTextarea } from './ui/mobile-input';
 
 export default function CommunityHub({ setActiveTab }) {
   const [activeTab, setActiveTabLocal] = useState('reports');
-  const { leaderboard, trendingThreats, myStats, fetchMyStats, loadAllData, isLoading, createReport, uploadReportMedia } = useCommunity();
+  const { reports, fetchReports, leaderboard, trendingThreats, myStats, fetchMyStats, loadAllData, isLoading, createReport, uploadReportMedia } = useCommunity();
   const { user, isAuthenticated } = useAuth();
 
   const [showNewReport, setShowNewReport] = useState(false);
@@ -32,6 +32,7 @@ export default function CommunityHub({ setActiveTab }) {
 
   const tabs = [
     { id: 'reports', label: 'Report Scam', icon: Flag },
+    { id: 'feed', label: 'Community Reports', icon: Users },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'latest', label: 'Latest Scams', icon: TrendingUp }
   ];
@@ -82,6 +83,47 @@ export default function CommunityHub({ setActiveTab }) {
               <Plus className="w-5 h-5 mr-2" />
               Report New Scam
             </MobileButton>
+          </div>
+        );
+
+      case 'feed':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-center flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">Community Reports</h3>
+                <p className="text-sm text-gray-600">Approved and verified reports from the community</p>
+              </div>
+              <Button onClick={() => fetchReports({})} variant="outline" size="sm">Refresh</Button>
+            </div>
+            <div className="space-y-3">
+              {reports && reports.length > 0 ? (
+                reports.map((report) => (
+                  <MobileCard key={report.id} className="border-gray-200">
+                    <div className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{report.threat_type}</span>
+                            <span className="text-xs text-gray-500">{report.created_at ? new Date(report.created_at).toLocaleDateString() : ''}</span>
+                          </div>
+                          <p className="text-sm text-gray-800">{report.description}</p>
+                          <div className="mt-2 text-xs text-gray-500 flex items-center gap-3">
+                            <span>Location: {report.location || 'N/A'}</span>
+                            <span>Votes: +{report.votes_up || 0} / -{report.votes_down || 0}</span>
+                          </div>
+                        </div>
+                        {report.verified && (
+                          <CheckCircle className="w-4 h-4 text-green-600 mt-1" />
+                        )}
+                      </div>
+                    </div>
+                  </MobileCard>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-6">No reports to display yet.</p>
+              )}
+            </div>
           </div>
         );
 

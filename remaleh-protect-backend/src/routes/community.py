@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 try:
-    from ..models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia
+    from ..models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia, CommunityReportComment
     from ..auth import token_required, get_current_user_id
 except ImportError:
-    from models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia
+    from models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia, CommunityReportComment
     from auth import token_required, get_current_user_id
 from datetime import datetime, timedelta
 import os
@@ -73,6 +73,9 @@ def get_community_reports(current_user):
             }
             # Attach media
             report_data['media'] = [m.to_dict() for m in getattr(report, 'media', [])]
+            # Attach latest comments (limit 3)
+            comments = CommunityReportComment.query.filter_by(report_id=report.id).order_by(CommunityReportComment.created_at.desc()).limit(3).all()
+            report_data['comments'] = [c.to_dict() for c in comments]
             formatted_reports.append(report_data)
         
         return jsonify({
@@ -138,9 +141,37 @@ def get_report(current_user, report_id):
             'name': f"{report.user.first_name} {report.user.last_name}".strip() or 'Anonymous'
         }
         report_data['media'] = [m.to_dict() for m in getattr(report, 'media', [])]
+        report_data['comments'] = [c.to_dict() for c in getattr(report, 'comments', [])]
         
         return jsonify(report_data), 200
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@community_bp.route('/reports/<int:report_id>/comments', methods=['GET'])
+@token_required
+def list_report_comments(current_user, report_id):
+    """List comments for a report with pagination"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+
+        # Ensure report exists
+        CommunityReport.query.get_or_404(report_id)
+
+        comments = CommunityReportComment.query.filter_by(report_id=report_id).order_by(
+            CommunityReportComment.created_at.desc()
+        ).paginate(page=page, per_page=per_page, error_out=False)
+
+        return jsonify({
+            'comments': [c.to_dict() for c in comments.items],
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': comments.total,
+                'pages': comments.pages
+            }
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -551,18 +582,34 @@ def create_community_alert(current_user):
 def add_comment_to_report(current_user, report_id):
     """Add a comment to a community report"""
     try:
-        data = request.get_json()
-        comment_text = data.get('comment')
+        data = request.get_json() or {}
+        comment_text = (data.get('comment') or '').strip()
         
         if not comment_text:
             return jsonify({'error': 'Comment text is required'}), 400
+
+        report = CommunityReport.query.get_or_404(report_id)
+        comment = CommunityReportComment(report_id=report.id, user_id=current_user.id, comment=comment_text)
+        db.session.add(comment)
+        db.session.commit()
         
-        # In a real implementation, you'd have a Comment model
-        # For now, we'll just return success
-        return jsonify({
-            'message': 'Comment added successfully',
-            'comment_id': 1  # Mock ID
-        }), 200
+        return jsonify(comment.to_dict()), 201
         
     except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@community_bp.route('/comments/<int:comment_id>', methods=['DELETE'])
+@token_required
+def delete_comment(current_user, comment_id):
+    """Delete a comment (owner or admin only)"""
+    try:
+        comment = CommunityReportComment.query.get_or_404(comment_id)
+        if comment.user_id != current_user.id and not getattr(current_user, 'is_admin', False):
+            return jsonify({'error': 'Not authorized to delete this comment'}), 403
+        db.session.delete(comment)
+        db.session.commit()
+        return jsonify({'message': 'Comment deleted', 'comment_id': comment_id}), 200
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500

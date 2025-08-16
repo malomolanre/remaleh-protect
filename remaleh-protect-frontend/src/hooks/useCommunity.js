@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { API, API_ENDPOINTS, apiGet, apiPost, apiPut } from '../lib/api';
+import { API, API_ENDPOINTS, apiGet, apiPost, apiPut, apiDelete } from '../lib/api';
 
 export const useCommunity = () => {
   const [reports, setReports] = useState([]);
@@ -54,6 +54,69 @@ export const useCommunity = () => {
     } catch (err) {
       setError(err.message);
       console.error('Error fetching trending threats:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch a single report with full details (including all comments)
+  const fetchReportById = useCallback(async (reportId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await apiGet(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}`);
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, report: data };
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch report');
+      }
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // List comments with pagination
+  const fetchComments = useCallback(async (reportId, { page = 1, per_page = 20 } = {}) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const params = new URLSearchParams({ page, per_page }).toString();
+      const response = await apiGet(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/comments?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, ...data };
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch comments');
+      }
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Delete a comment
+  const deleteComment = useCallback(async (commentId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await apiDelete(`/api/community/comments/${commentId}`);
+      if (response.ok) {
+        return { success: true };
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete comment');
+      }
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
     } finally {
       setIsLoading(false);
     }
@@ -357,6 +420,9 @@ export const useCommunity = () => {
     error,
     fetchReports,
     fetchTrendingThreats,
+    fetchComments,
+    deleteComment,
+    fetchReportById,
     fetchCommunityStats,
     fetchAlerts,
     fetchLeaderboard,

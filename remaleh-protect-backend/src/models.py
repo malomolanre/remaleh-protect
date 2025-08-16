@@ -143,6 +143,7 @@ class CommunityReport(db.Model):
     # Relationships
     votes = db.relationship('ReportVote', backref='report', lazy=True)
     media = db.relationship('CommunityReportMedia', backref='report', lazy=True)
+    comments = db.relationship('CommunityReportComment', backref='report', lazy=True, cascade="all, delete-orphan")
     
     def to_dict(self):
         return {
@@ -185,6 +186,27 @@ class CommunityReportMedia(db.Model):
             'report_id': self.report_id,
             'media_url': self.media_url,
             'media_type': self.media_type,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class CommunityReportComment(db.Model):
+    __tablename__ = 'community_report_comments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    comment = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='report_comments', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'report_id': self.report_id,
+            'user_id': self.user_id,
+            'user_name': f"{self.user.first_name or ''} {self.user.last_name or ''}".strip() or (self.user.email.split('@')[0] if self.user and self.user.email else 'Anonymous'),
+            'comment': self.comment,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
