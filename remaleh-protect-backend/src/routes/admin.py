@@ -6,10 +6,10 @@ from sqlalchemy import text
 
 # Import production modules - try relative imports first, then absolute
 try:
-    from ..models import db, User, CommunityReport
+    from ..models import db, User, CommunityReport, CommunityReportMedia
     from ..auth import token_required, admin_required
 except ImportError:
-    from models import db, User, CommunityReport
+    from models import db, User, CommunityReport, CommunityReportMedia
     from auth import token_required, admin_required
 
 logger = logging.getLogger(__name__)
@@ -503,7 +503,8 @@ def get_reports(current_user):
                 'location': report.location,
                 'votes_up': report.votes_up,
                 'votes_down': report.votes_down,
-                'verified': report.verified
+                'verified': report.verified,
+                'media': [m.to_dict() for m in getattr(report, 'media', [])]
             }
             report_list.append(report_data)
         
@@ -522,6 +523,22 @@ def get_reports(current_user):
     except Exception as e:
         logger.error(f"Error getting reports: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@admin_bp.route('/reports/<int:report_id>', methods=['DELETE'])
+@token_required
+@admin_required
+def admin_delete_report(current_user, report_id):
+    """Admin delete report - delegates to community delete logic by user/admin permissions."""
+    try:
+        # Import here to avoid circular
+        try:
+            from ..routes.community import delete_report
+        except ImportError:
+            from routes.community import delete_report
+        # Call the same logic with current_user enforced by decorators
+        return delete_report(current_user, report_id)
+    except Exception as e:
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 @admin_bp.route('/reports/<int:report_id>/moderate', methods=['PUT'])
 @token_required

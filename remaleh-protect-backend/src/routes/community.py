@@ -73,23 +73,37 @@ def get_community_reports(current_user):
             page=page, per_page=per_page, error_out=False
         )
         
-        # Get user's votes for these reports
+        # Get user's votes for these reports (guard against empty list)
         report_ids = [r.id for r in reports.items]
-        user_votes = ReportVote.query.filter(
-            ReportVote.user_id == current_user.id,
-            ReportVote.report_id.in_(report_ids)
-        ).all()
-        vote_dict = {v.report_id: v.vote_type for v in user_votes}
+        vote_dict = {}
+        if report_ids:
+            user_votes = ReportVote.query.filter(
+                ReportVote.user_id == current_user.id,
+                ReportVote.report_id.in_(report_ids)
+            ).all()
+            vote_dict = {v.report_id: v.vote_type for v in user_votes}
         
         # Format reports with user's vote information
         formatted_reports = []
         for report in reports.items:
             report_data = report.to_dict()
             report_data['user_vote'] = vote_dict.get(report.id)
-            report_data['creator'] = {
-                'id': report.user.id,
-                'name': f"{report.user.first_name} {report.user.last_name}".strip() or 'Anonymous'
-            }
+            # Creator info (robust if user is missing)
+            creator_user = getattr(report, 'user', None)
+            creator_name = 'Anonymous'
+            creator_id = None
+            if creator_user is not None:
+                creator_id = getattr(creator_user, 'id', None)
+                first_name = getattr(creator_user, 'first_name', '') or ''
+                last_name = getattr(creator_user, 'last_name', '') or ''
+                combined = f"{first_name} {last_name}".strip()
+                if combined:
+                    creator_name = combined
+                else:
+                    # try email prefix
+                    email = getattr(creator_user, 'email', '') or ''
+                    creator_name = (email.split('@')[0] if email else 'Anonymous')
+            report_data['creator'] = {'id': creator_id, 'name': creator_name}
             # Attach media
             report_data['media'] = [m.to_dict() for m in getattr(report, 'media', [])]
             # Attach latest comments (limit 3)
@@ -169,6 +183,56 @@ def get_report(current_user, report_id):
         return jsonify(report_data), 200
         
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@community_bp.route('/reports/<int:report_id>', methods=['DELETE'])
+@token_required
+def delete_report(current_user, report_id):
+    """Delete a report owned by the current user, or by admin.
+    Cleans up media (local files or Cloudinary) and comments via cascade.
+    """
+    try:
+        report = CommunityReport.query.get_or_404(report_id)
+        if report.user_id != current_user.id and not getattr(current_user, 'is_admin', False):
+            return jsonify({'error': 'Not authorized to delete this report'}), 403
+
+        # Delete associated media files (local or Cloudinary)
+        for m in list(getattr(report, 'media', [])):
+            media_url = m.media_url or ''
+            if media_url.startswith('/api/community/uploads/'):
+                try:
+                    filename = media_url.split('/api/community/uploads/', 1)[1]
+                    upload_folder = current_app.config.get('UPLOAD_FOLDER')
+                    file_path = os.path.join(upload_folder, filename)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except Exception:
+                    pass
+            else:
+                if cloudinary and ('res.cloudinary.com' in media_url):
+                    try:
+                        cloud_name = current_app.config.get('CLOUDINARY_CLOUD_NAME')
+                        api_key = current_app.config.get('CLOUDINARY_API_KEY')
+                        api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
+                        if cloud_name and api_key and api_secret:
+                            cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
+                            parsed = urlparse(media_url)
+                            parts = parsed.path.split('/')
+                            if 'upload' in parts:
+                                upload_idx = parts.index('upload')
+                                public_parts = parts[upload_idx+2:]
+                                public_id_with_ext = '/'.join(public_parts)
+                                if public_id_with_ext:
+                                    public_id = os.path.splitext(public_id_with_ext)[0]
+                                    cloudinary.uploader.destroy(public_id)
+                    except Exception:
+                        pass
+
+        db.session.delete(report)
+        db.session.commit()
+        return jsonify({'message': 'Report deleted', 'report_id': report_id}), 200
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @community_bp.route('/reports/<int:report_id>/comments', methods=['GET'])

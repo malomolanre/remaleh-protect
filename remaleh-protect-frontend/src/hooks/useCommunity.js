@@ -295,6 +295,27 @@ export const useCommunity = () => {
     }
   }, [setReports]);
 
+  // Delete report (owner or admin)
+  const deleteReport = useCallback(async (reportId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await apiDelete(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}`);
+      if (response.ok) {
+        setReports(prev => prev.filter(r => r.id !== reportId));
+        return { success: true };
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete report');
+      }
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Vote on report
   const voteOnReport = useCallback(async (reportId, voteType) => {
     try {
@@ -448,6 +469,7 @@ export const useCommunity = () => {
     addComment,
     createAlert,
     uploadReportMedia,
+    deleteReport,
     loadAllData,
     clearError
   };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import MobileModal from '../MobileModal';
+import { API } from '../../lib/api';
 
 const CommunityReports = ({ initialFilters }) => {
   const [reports, setReports] = useState([]);
@@ -257,6 +258,33 @@ const CommunityReports = ({ initialFilters }) => {
             <label className="block text-sm font-medium text-gray-700">Description</label>
             <p className="text-gray-900">{selectedReport.description}</p>
           </div>
+
+          {selectedReport.media && selectedReport.media.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
+              <div className="grid grid-cols-3 gap-2">
+                {selectedReport.media.map((m, idx) => {
+                  const url = m.media_url?.startsWith('http') ? m.media_url : `${API}${m.media_url}`;
+                  return (
+                    <a
+                      key={m.id || idx}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block w-full h-24 bg-gray-100 rounded overflow-hidden"
+                    >
+                      <img
+                        src={url}
+                        alt="attachment"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -304,9 +332,16 @@ const CommunityReports = ({ initialFilters }) => {
                 </>
               )}
               <button
-                onClick={() => {
-                  handleReportAction(selectedReport.id, 'delete');
-                  setShowReportModal(false);
+                onClick={async () => {
+                  if (!confirm('Delete this report?')) return;
+                  try {
+                    const response = await api.request({ method: 'DELETE', url: `/api/admin/reports/${selectedReport.id}` });
+                    if (!response.ok) throw new Error('Delete failed');
+                    setShowReportModal(false);
+                    fetchReports();
+                  } catch (e) {
+                    alert('Failed to delete report');
+                  }
                 }}
                 className="bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700"
               >

@@ -142,7 +142,7 @@ class CommunityReport(db.Model):
     
     # Relationships
     votes = db.relationship('ReportVote', backref='report', lazy=True)
-    media = db.relationship('CommunityReportMedia', backref='report', lazy=True)
+    media = db.relationship('CommunityReportMedia', backref='report', lazy=True, cascade="all, delete-orphan")
     comments = db.relationship('CommunityReportComment', backref='report', lazy=True, cascade="all, delete-orphan")
     
     def to_dict(self):
