@@ -62,10 +62,26 @@ export default function CommunityHub({ setActiveTab }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeTab, isLoading, hasMore, pagination, fetchReports]);
 
+  const resolveMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    try {
+      // Use URL to safely join base and path, avoiding double slashes
+      return new URL(url, API).toString();
+    } catch (e) {
+      return `${API}${url}`;
+    }
+  };
+
+  const isImageMedia = (media) => {
+    if (!media || !media.media_type) return true; // default to image if unspecified
+    return media.media_type.toLowerCase().startsWith('image');
+  };
+
   const openLightbox = (mediaList, startIndex = 0) => {
     const images = (mediaList || [])
-      .filter(m => !m.media_type || m.media_type === 'image')
-      .map(m => ({ id: m.id, src: m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`) }))
+      .filter(isImageMedia)
+      .map(m => ({ id: m.id, src: resolveMediaUrl(m.media_url) }))
       .filter(i => !!i.src);
     if (images.length > 0) {
       setLightboxImages(images);
@@ -203,10 +219,10 @@ export default function CommunityHub({ setActiveTab }) {
 
                           {report.media && report.media.length > 0 && (
                             <div className="mt-2 grid grid-cols-3 gap-2">
-                              {(report.media.filter(m => !m.media_type || m.media_type === 'image').slice(0, 3)).map((m, idx, arr) => {
+                              {(report.media.filter(isImageMedia).slice(0, 3)).map((m, idx, arr) => {
                                 const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
                                 const extraCount = report.media.length - 3;
-                                const src = m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`);
+                                const src = resolveMediaUrl(m.media_url);
                                 return (
                                   <button
                                     key={m.id || idx}
@@ -215,7 +231,22 @@ export default function CommunityHub({ setActiveTab }) {
                                     className="relative w-full h-24 bg-gray-100 rounded overflow-hidden focus:outline-none"
                                   >
                                     {src && (
-                                      <img src={src} alt="report media" className="w-full h-full object-cover" loading="lazy" />
+                                      <img
+                                        src={src}
+                                        alt="report media"
+                                        className="w-full h-full object-cover"
+                                        loading="lazy"
+                                        onError={(e) => {
+                                          // Fallback 1: try relative URL without API base
+                                          const fallback = m.media_url || '';
+                                          if (fallback && e.currentTarget.src !== fallback) {
+                                            e.currentTarget.src = fallback;
+                                          } else {
+                                            // Fallback 2: hide if still not loadable
+                                            e.currentTarget.style.display = 'none';
+                                          }
+                                        }}
+                                      />
                                     )}
                                     {isLastAndExtra && extraCount > 0 && (
                                       <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
