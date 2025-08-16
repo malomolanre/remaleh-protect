@@ -70,6 +70,11 @@ class Config:
     ALLOWED_EXTENSIONS = set(os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,gif,webp').split(','))
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_UPLOAD_BYTES', 16 * 1024 * 1024))  # 16 MB
 
+    # Cloudinary (optional)
+    CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME')
+    CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY')
+    CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET')
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True

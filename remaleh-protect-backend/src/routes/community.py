@@ -10,6 +10,14 @@ import os
 from werkzeug.utils import secure_filename
 from sqlalchemy import func, desc, case, or_
 import json
+from urllib.parse import urlparse
+
+# Optional Cloudinary support
+try:
+    import cloudinary
+    import cloudinary.uploader
+except ImportError:
+    cloudinary = None
 
 community_bp = Blueprint('community', __name__)
 
@@ -296,7 +304,7 @@ def upload_report_media(current_user, report_id):
             db.session.commit()
             return jsonify({'message': 'Media uploaded', 'media': media.to_dict()}), 201
 
-        # Multipart file path (local upload)
+        # Multipart file path (local upload or Cloudinary)
         if 'file' not in request.files:
             return jsonify({'error': 'No file part'}), 400
         file = request.files['file']
@@ -308,20 +316,37 @@ def upload_report_media(current_user, report_id):
         if ext not in current_app.config.get('ALLOWED_EXTENSIONS', set(['png','jpg','jpeg','gif','webp'])):
             return jsonify({'error': 'File type not allowed'}), 400
 
-        upload_folder = current_app.config.get('UPLOAD_FOLDER')
-        os.makedirs(upload_folder, exist_ok=True)
-        save_path = os.path.join(upload_folder, filename)
-        # Ensure unique filename
-        base, extension = os.path.splitext(filename)
-        counter = 1
-        while os.path.exists(save_path):
-            filename = f"{base}_{counter}{extension}"
-            save_path = os.path.join(upload_folder, filename)
-            counter += 1
-        file.save(save_path)
+        media_url = None
+        media_type = 'image'
+        cloud_name = current_app.config.get('CLOUDINARY_CLOUD_NAME')
+        api_key = current_app.config.get('CLOUDINARY_API_KEY')
+        api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
 
-        public_url = f"/api/community/uploads/{filename}"
-        media = CommunityReportMedia(report_id=report.id, media_url=public_url, media_type='image')
+        if cloudinary and cloud_name and api_key and api_secret:
+            cloudinary.config(
+                cloud_name=cloud_name,
+                api_key=api_key,
+                api_secret=api_secret,
+                secure=True
+            )
+            upload_result = cloudinary.uploader.upload(file, folder='community_reports', resource_type='image', use_filename=True, unique_filename=True)
+            media_url = upload_result.get('secure_url') or upload_result.get('url')
+            media_type = upload_result.get('resource_type', 'image')
+        else:
+            upload_folder = current_app.config.get('UPLOAD_FOLDER')
+            os.makedirs(upload_folder, exist_ok=True)
+            save_path = os.path.join(upload_folder, filename)
+            # Ensure unique filename
+            base, extension = os.path.splitext(filename)
+            counter = 1
+            while os.path.exists(save_path):
+                filename = f"{base}_{counter}{extension}"
+                save_path = os.path.join(upload_folder, filename)
+                counter += 1
+            file.save(save_path)
+            media_url = f"/api/community/uploads/{filename}"
+
+        media = CommunityReportMedia(report_id=report.id, media_url=media_url, media_type=media_type)
         db.session.add(media)
         db.session.commit()
         return jsonify({'message': 'Media uploaded', 'media': media.to_dict()}), 201
@@ -337,6 +362,119 @@ def serve_uploaded_media(filename):
         return send_from_directory(upload_folder, filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 404
+
+@community_bp.route('/reports/<int:report_id>/media/<int:media_id>', methods=['DELETE'])
+@token_required
+def delete_report_media(current_user, report_id, media_id):
+    """Admin-only: Delete a media attachment from a community report.
+    If the media is a locally uploaded file, also remove it from disk.
+    """
+    try:
+        if not getattr(current_user, 'is_admin', False):
+            return jsonify({'error': 'Admin privileges required'}), 403
+
+        media = CommunityReportMedia.query.filter_by(id=media_id, report_id=report_id).first()
+        if not media:
+            return jsonify({'error': 'Media not found'}), 404
+
+        deleted_file = False
+        media_url = media.media_url or ''
+        # If it's a locally stored file, remove from disk; if it's Cloudinary, delete via API
+        if media_url.startswith('/api/community/uploads/'):
+            try:
+                filename = media_url.split('/api/community/uploads/', 1)[1]
+                upload_folder = current_app.config.get('UPLOAD_FOLDER')
+                file_path = os.path.join(upload_folder, filename)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    deleted_file = True
+            except Exception:
+                pass
+        else:
+            # Attempt Cloudinary deletion if configured and URL looks like Cloudinary
+            if cloudinary and ('res.cloudinary.com' in media_url):
+                try:
+                    cloud_name = current_app.config.get('CLOUDINARY_CLOUD_NAME')
+                    api_key = current_app.config.get('CLOUDINARY_API_KEY')
+                    api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
+                    if cloud_name and api_key and api_secret:
+                        cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
+                        # Extract public_id by stripping extension and folder from URL path
+                        parsed = urlparse(media_url)
+                        # Example path: /<cloud_name>/image/upload/v1699999999/community_reports/abc123.jpg
+                        parts = parsed.path.split('/')
+                        # Find index of 'upload' and take the rest as public_id (without extension)
+                        if 'upload' in parts:
+                            upload_idx = parts.index('upload')
+                            public_parts = parts[upload_idx+2:]  # skip 'v<timestamp>'
+                            public_id_with_ext = '/'.join(public_parts)
+                            if public_id_with_ext:
+                                public_id = os.path.splitext(public_id_with_ext)[0]
+                                cloudinary.uploader.destroy(public_id)
+                except Exception:
+                    pass
+
+        db.session.delete(media)
+        db.session.commit()
+        return jsonify({'message': 'Media deleted', 'deleted_file': deleted_file}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@community_bp.route('/media/migrate-to-cloudinary', methods=['POST'])
+@token_required
+def migrate_local_media_to_cloudinary(current_user):
+    """Admin-only: migrate locally stored media files to Cloudinary and update DB URLs.
+    Useful when moving from ephemeral storage to Cloudinary.
+    """
+    try:
+        if not getattr(current_user, 'is_admin', False):
+            return jsonify({'error': 'Admin privileges required'}), 403
+
+        cloud_name = current_app.config.get('CLOUDINARY_CLOUD_NAME')
+        api_key = current_app.config.get('CLOUDINARY_API_KEY')
+        api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
+        if not (cloudinary and cloud_name and api_key and api_secret):
+            return jsonify({'error': 'Cloudinary not configured'}), 400
+
+        cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
+
+        migrated = []
+        failed = []
+
+        # Find media with local URLs
+        local_media = CommunityReportMedia.query.filter(CommunityReportMedia.media_url.like('/api/community/uploads/%')).all()
+        upload_folder = current_app.config.get('UPLOAD_FOLDER')
+
+        for m in local_media:
+            try:
+                filename = m.media_url.split('/api/community/uploads/', 1)[1]
+                file_path = os.path.join(upload_folder, filename)
+                if not os.path.exists(file_path):
+                    failed.append({'media_id': m.id, 'reason': 'file_missing', 'path': file_path})
+                    continue
+                result = cloudinary.uploader.upload(file_path, folder='community_reports', resource_type='image', use_filename=True, unique_filename=True)
+                new_url = result.get('secure_url') or result.get('url')
+                if new_url:
+                    m.media_url = new_url
+                    m.media_type = result.get('resource_type', m.media_type)
+                    db.session.add(m)
+                    migrated.append({'media_id': m.id, 'old': filename, 'new': new_url})
+                    # Optionally delete local file
+                    try:
+                        os.remove(file_path)
+                    except Exception:
+                        pass
+                else:
+                    failed.append({'media_id': m.id, 'reason': 'upload_no_url'})
+            except Exception as ex:
+                failed.append({'media_id': m.id, 'reason': str(ex)})
+
+        db.session.commit()
+        return jsonify({'migrated': migrated, 'failed': failed, 'count': {'migrated': len(migrated), 'failed': len(failed)}}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @community_bp.route('/leaderboard', methods=['GET'])
 @token_required
