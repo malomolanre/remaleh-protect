@@ -645,6 +645,38 @@ export default function LearnHub({ setActiveTab }) {
 
 
 function LessonContent({ lesson }) {
+  const sanitizeHtml = (html) => {
+    if (!html) return ''
+    // Remove script/style and on* attributes
+    let safe = html.replace(/<\/(?:script|style)>/gi, '\n')
+    safe = safe.replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    safe = safe.replace(/ on[a-z]+\s*=\s*"[^"]*"/gi, '')
+    safe = safe.replace(/ on[a-z]+\s*=\s*'[^']*'/gi, '')
+    safe = safe.replace(/ on[a-z]+\s*=\s*[^\s>]+/gi, '')
+    return safe
+  }
+
+  const markdownToHtml = (md) => {
+    if (!md) return ''
+    let out = md
+    // Escape HTML first
+    out = out.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // Headings
+    out = out.replace(/^### (.*)$/gm, '<h4 class="font-semibold text-gray-900 mb-2">$1</h4>')
+             .replace(/^## (.*)$/gm, '<h3 class="font-semibold text-gray-900 mb-2">$1</h3>')
+             .replace(/^# (.*)$/gm, '<h2 class="font-bold text-gray-900 mb-2">$1</h2>')
+    // Bold
+    out = out.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // Links [text](url)
+    out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-[#21a1ce] underline">$1</a>')
+    // Bullet lines starting with - or *
+    out = out.replace(/^(?:- |\* )(.*)$/gm, '<li>$1</li>')
+    // Wrap consecutive <li> into <ul>
+    out = out.replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul class="list-disc list-inside space-y-1">${m}\n</ul>`) 
+    // Line breaks
+    out = out.replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>')
+    return out
+  }
   const getContentStyle = (style) => {
     switch (style) {
       case 'blue':
@@ -768,6 +800,20 @@ function LessonContent({ lesson }) {
           </div>
         )
       
+      case 'markdown':
+        return (
+          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
+            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(markdownToHtml(lesson.content)) }} />
+          </div>
+        )
+
+      case 'html':
+        return (
+          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
+            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.content) }} />
+          </div>
+        )
+
       default:
         return (
           <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>

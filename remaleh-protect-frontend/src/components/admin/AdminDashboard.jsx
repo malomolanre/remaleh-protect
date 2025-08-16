@@ -1776,10 +1776,19 @@ export default function AdminDashboard({ setActiveTab }) {
                       onChange={(e) => setNewLessonData(prev => ({ ...prev, contentType: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent"
                     >
-                      <option value="info">Text</option>
-                      <option value="html">HTML</option>
+                      <option value="info">Plain Text</option>
+                      <option value="tips">Tips (title + description list)</option>
+                      <option value="warning-signs">Warning Signs</option>
+                      <option value="steps">Steps (numbered)</option>
+                      <option value="list">Bullet List</option>
+                      <option value="warning">Warning Box</option>
+                      <option value="warning-list">Warning Box + List</option>
+                      <option value="action-list">Actions To Take</option>
+                      <option value="example">Real-world Example</option>
                       <option value="markdown">Markdown</option>
+                      <option value="html">HTML (sanitized)</option>
                     </select>
+                    <p className="text-xs text-gray-500 mt-1">This controls how the lesson renders in the Learn Hub.</p>
                   </div>
                   
                   <div>
