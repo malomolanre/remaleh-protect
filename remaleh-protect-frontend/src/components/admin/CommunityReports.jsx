@@ -214,7 +214,8 @@ const CommunityReports = ({ initialFilters }) => {
               <option value="" disabled>Actions</option>
               {report.status === 'PENDING' && (
                 <>
-                  <option value="verify">Approve</option>
+                  <option value="approve">Approve</option>
+                  <option value="verify">Verify</option>
                   <option value="reject">Reject</option>
                   <option value="escalate">Flag</option>
                 </>
@@ -314,10 +315,19 @@ const CommunityReports = ({ initialFilters }) => {
                 <>
                   <button
                     onClick={() => {
-                      handleReportAction(selectedReport.id, 'verify');
+                      handleReportAction(selectedReport.id, 'approve');
                       setShowReportModal(false);
                     }}
                     className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleReportAction(selectedReport.id, 'verify');
+                      setShowReportModal(false);
+                    }}
+                    className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
                   >
                     Verify
                   </button>

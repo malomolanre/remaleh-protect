@@ -78,7 +78,7 @@ export const useCommunity = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const params = new URLSearchParams({ per_page: 10, sort: 'newest' }).toString();
+      const params = new URLSearchParams({ per_page: 10, sort: 'newest', verified_only: 'true' }).toString();
       const response = await apiGet(`${API_ENDPOINTS.COMMUNITY.REPORTS}?${params}`);
       if (response.ok) {
         const data = await response.json();
