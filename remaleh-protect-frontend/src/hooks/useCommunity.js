@@ -6,6 +6,7 @@ export const useCommunity = () => {
   const [trendingThreats, setTrendingThreats] = useState([]);
   const [communityStats, setCommunityStats] = useState(null);
   const [alerts, setAlerts] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -43,7 +44,8 @@ export const useCommunity = () => {
       const response = await apiGet(API_ENDPOINTS.COMMUNITY.TRENDING);
       if (response.ok) {
         const data = await response.json();
-        setTrendingThreats(data.trending || data);
+        // Backend returns { trending_threats: [...] }
+        setTrendingThreats(data.trending_threats || data);
         return data;
       } else {
         throw new Error('Failed to fetch trending threats');
@@ -87,6 +89,7 @@ export const useCommunity = () => {
       const response = await apiGet(API_ENDPOINTS.COMMUNITY.ALERTS);
       if (response.ok) {
         const data = await response.json();
+        // Backend returns { alerts: [...], pagination: { ... } }
         setAlerts(data.alerts || data);
         return data;
       } else {
@@ -100,17 +103,45 @@ export const useCommunity = () => {
     }
   }, []);
 
+  // Fetch leaderboard
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await apiGet(API_ENDPOINTS.COMMUNITY.LEADERBOARD);
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data.leaderboard || data);
+        return data;
+      } else {
+        throw new Error('Failed to fetch leaderboard');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching leaderboard:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Create new report
   const createReport = useCallback(async (reportData) => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const response = await apiPost(API_ENDPOINTS.COMMUNITY.REPORTS, reportData);
+      // Map UI fields to backend expected payload
+      const payload = {
+        threat_type: reportData.threat_type,
+        description: reportData.description,
+        location: reportData.location,
+        urgency: reportData.urgency || 'MEDIUM'
+      };
+      const response = await apiPost(API_ENDPOINTS.COMMUNITY.REPORTS, payload);
       if (response.ok) {
-        const newReport = await response.json();
-        setReports(prev => [newReport, ...prev]);
-        return { success: true, report: newReport };
+        const { report } = await response.json();
+        setReports(prev => [report, ...prev]);
+        return { success: true, report };
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create report');
@@ -129,16 +160,18 @@ export const useCommunity = () => {
       setIsLoading(true);
       setError(null);
       
+      // voteType should be 'up' | 'down'
       const response = await apiPost(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/vote`, {
         vote_type: voteType
       });
       if (response.ok) {
         const data = await response.json();
+        const updatedReport = data.report || data;
         // Update the report in the list
         setReports(prev => prev.map(r => 
-          r.id === reportId ? { ...r, votes: data.votes, user_vote: voteType } : r
+          r.id === reportId ? { ...updatedReport } : r
         ));
-        return { success: true, data };
+        return { success: true, data: updatedReport };
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to vote on report');
@@ -160,11 +193,12 @@ export const useCommunity = () => {
       const response = await apiPost(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/verify`, verificationData);
       if (response.ok) {
         const data = await response.json();
+        const updatedReport = data.report || data;
         // Update the report in the list
         setReports(prev => prev.map(r => 
-          r.id === reportId ? { ...r, verification_status: data.verification_status, verified_by: data.verified_by } : r
+          r.id === reportId ? { ...updatedReport } : r
         ));
-        return { success: true, data };
+        return { success: true, data: updatedReport };
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to verify report');
@@ -185,8 +219,9 @@ export const useCommunity = () => {
       
       const response = await apiPost(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/comment`, commentData);
       if (response.ok) {
-        const newComment = await response.json();
-        // Update the report in the list
+        const result = await response.json();
+        const newComment = { id: result.comment_id, comment: commentData.comment };
+        // Update the report in the list (UI may render simple comments)
         setReports(prev => prev.map(r => 
           r.id === reportId ? { ...r, comments: [...(r.comments || []), newComment] } : r
         ));
@@ -208,12 +243,17 @@ export const useCommunity = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await apiPost(API_ENDPOINTS.COMMUNITY.ALERTS, alertData);
+      // Map UI fields to backend expected payload
+      const payload = {
+        message: alertData.message,
+        severity: (alertData.priority || 'medium').toUpperCase(),
+        threat_type: alertData.title
+      };
+      const response = await apiPost(API_ENDPOINTS.COMMUNITY.ALERTS, payload);
       if (response.ok) {
-        const newAlert = await response.json();
-        setAlerts(prev => [newAlert, ...prev]);
-        return { success: true, alert: newAlert };
+        const { alert } = await response.json();
+        setAlerts(prev => [alert, ...prev]);
+        return { success: true, alert };
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create alert');
@@ -232,9 +272,10 @@ export const useCommunity = () => {
       fetchReports(),
       fetchTrendingThreats(),
       fetchCommunityStats(),
-      fetchAlerts()
+      fetchAlerts(),
+      fetchLeaderboard()
     ]);
-  }, [fetchReports, fetchTrendingThreats, fetchCommunityStats, fetchAlerts]);
+  }, [fetchReports, fetchTrendingThreats, fetchCommunityStats, fetchAlerts, fetchLeaderboard]);
 
   // Clear error
   const clearError = useCallback(() => setError(null), []);
@@ -244,12 +285,14 @@ export const useCommunity = () => {
     trendingThreats,
     communityStats,
     alerts,
+    leaderboard,
     isLoading,
     error,
     fetchReports,
     fetchTrendingThreats,
     fetchCommunityStats,
     fetchAlerts,
+    fetchLeaderboard,
     createReport,
     voteOnReport,
     verifyReport,

@@ -8,12 +8,10 @@ import {
   AlertTriangle, 
   TrendingUp, 
   Users, 
-  Shield, 
   MessageSquare, 
   ThumbsUp, 
   ThumbsDown,
   CheckCircle,
-  Clock,
   Star,
   Lock,
   ArrowLeft
@@ -42,12 +40,10 @@ export default function CommunityReporting({ setActiveTab }) {
   const [showNewReport, setShowNewReport] = useState(false);
   const [showNewAlert, setShowNewAlert] = useState(false);
   const [newReport, setNewReport] = useState({
-    title: '',
     description: '',
-    threat_type: 'phishing',
-    severity: 'medium',
-    location: '',
-    evidence: ''
+    threat_type: 'SCAM',
+    urgency: 'MEDIUM',
+    location: ''
   });
   const [newAlert, setNewAlert] = useState({
     title: '',
@@ -68,12 +64,10 @@ export default function CommunityReporting({ setActiveTab }) {
     if (result.success) {
       setShowNewReport(false);
       setNewReport({
-        title: '',
         description: '',
-        threat_type: 'phishing',
-        severity: 'medium',
-        location: '',
-        evidence: ''
+        threat_type: 'SCAM',
+        urgency: 'MEDIUM',
+        location: ''
       });
     }
   };
@@ -190,15 +184,6 @@ export default function CommunityReporting({ setActiveTab }) {
             <MobileCardHeader className="flex items-center">
               <Users className="h-8 w-8 text-blue-600 mr-3" />
               <div>
-                <p className="text-sm text-gray-600">Active Members</p>
-                <p className="text-2xl font-bold text-gray-900">{communityStats.active_members || 0}</p>
-              </div>
-            </MobileCardHeader>
-          </MobileCard>
-          <MobileCard className="p-4">
-            <MobileCardHeader className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
-              <div>
                 <p className="text-sm text-gray-600">Total Reports</p>
                 <p className="text-2xl font-bold text-gray-900">{communityStats.total_reports || 0}</p>
               </div>
@@ -206,19 +191,28 @@ export default function CommunityReporting({ setActiveTab }) {
           </MobileCard>
           <MobileCard className="p-4">
             <MobileCardHeader className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
+              <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
               <div>
-                <p className="text-sm text-gray-600">Verified Threats</p>
-                <p className="text-2xl font-bold text-gray-900">{communityStats.verified_threats || 0}</p>
+                <p className="text-sm text-gray-600">Verified</p>
+                <p className="text-2xl font-bold text-gray-900">{(communityStats.status_breakdown && communityStats.status_breakdown.VERIFIED) || 0}</p>
               </div>
             </MobileCardHeader>
           </MobileCard>
           <MobileCard className="p-4">
             <MobileCardHeader className="flex items-center">
-              <Shield className="h-8 w-8 text-purple-600 mr-3" />
+              <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
               <div>
-                <p className="text-sm text-gray-600">Protected Users</p>
-                <p className="text-2xl font-bold text-gray-900">{communityStats.protected_users || 0}</p>
+                <p className="text-sm text-gray-600">Pending</p>
+                <p className="text-2xl font-bold text-gray-900">{(communityStats.status_breakdown && communityStats.status_breakdown.PENDING) || 0}</p>
+              </div>
+            </MobileCardHeader>
+          </MobileCard>
+          <MobileCard className="p-4">
+            <MobileCardHeader className="flex items-center">
+              <Users className="h-8 w-8 text-purple-600 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Top Reporter</p>
+                <p className="text-2xl font-bold text-gray-900">{(communityStats.top_contributors && communityStats.top_contributors[0]?.name) || '—'}</p>
               </div>
             </MobileCardHeader>
           </MobileCard>
@@ -234,18 +228,15 @@ export default function CommunityReporting({ setActiveTab }) {
         <MobileCardContent>
           <div className="space-y-3">
             {trendingThreats && trendingThreats.length > 0 ? (
-              trendingThreats.map((threat) => (
-                <div key={threat.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              trendingThreats.map((threat, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <Star className="h-4 w-4 text-yellow-500" />
                     <div>
-                      <p className="font-medium text-gray-900">{threat.title}</p>
-                      <p className="text-sm text-gray-600">{threat.description}</p>
+                      <p className="font-medium text-gray-900">{threat.threat_type}</p>
+                      <p className="text-sm text-gray-600">Reports: {threat.report_count} • Trend: {threat.trend} • Urgency score: {threat.urgency_score}</p>
                     </div>
                   </div>
-                  <Badge variant={threat.severity === 'high' ? 'destructive' : threat.severity === 'medium' ? 'default' : 'secondary'}>
-                    {threat.severity}
-                  </Badge>
                 </div>
               ))
             ) : (
@@ -270,19 +261,16 @@ export default function CommunityReporting({ setActiveTab }) {
                 <div key={report.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-medium text-gray-900">{report.title}</h3>
+                      <h3 className="font-medium text-gray-900">{report.threat_type}</h3>
                       <p className="text-sm text-gray-600 mb-2">{report.description}</p>
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Type: {report.threat_type}</span>
-                        <span>Location: {report.location}</span>
-                        <span>Reported: {new Date(report.created_at).toLocaleDateString()}</span>
+                        <span>Urgency: {report.urgency}</span>
+                        <span>Location: {report.location || 'N/A'}</span>
+                        <span>Reported: {report.created_at ? new Date(report.created_at).toLocaleDateString() : 'N/A'}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={report.severity === 'high' ? 'destructive' : report.severity === 'medium' ? 'default' : 'secondary'}>
-                        {report.severity}
-                      </Badge>
-                      {report.verification_status === 'verified' && (
+                      {report.verified && (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       )}
                     </div>
@@ -292,25 +280,26 @@ export default function CommunityReporting({ setActiveTab }) {
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <Button
-                          onClick={() => handleVote(report.id, 'upvote')}
+                          onClick={() => handleVote(report.id, 'up')}
                           variant="ghost"
                           size="sm"
-                          className={report.user_vote === 'upvote' ? 'text-green-600' : ''}
+                          className={report.user_vote === 'up' ? 'text-green-600' : ''}
                         >
                           <ThumbsUp className="h-4 w-4 mr-1" />
-                          {report.votes?.upvotes || 0}
+                          {report.votes_up || 0}
                         </Button>
                         <Button
-                          onClick={() => handleVote(report.id, 'downvote')}
+                          onClick={() => handleVote(report.id, 'down')}
                           variant="ghost"
                           size="sm"
-                          className={report.user_vote === 'downvote' ? 'text-red-600' : ''}
+                          className={report.user_vote === 'down' ? 'text-red-600' : ''}
                         >
                           <ThumbsDown className="h-4 w-4 mr-1" />
-                          {report.votes?.downvotes || 0}
+                          {report.votes_down || 0}
                         </Button>
                       </div>
-                      {report.verification_status !== 'verified' && (
+                      {/* Show verify button only for admins */}
+                      {user?.is_admin && !report.verified && (
                         <Button
                           onClick={() => handleVerify(report.id)}
                           variant="outline"
@@ -322,7 +311,7 @@ export default function CommunityReporting({ setActiveTab }) {
                       )}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {report.reporter_name || 'Anonymous'}
+                      {report.creator?.name || 'Anonymous'}
                     </div>
                   </div>
 
@@ -379,11 +368,11 @@ export default function CommunityReporting({ setActiveTab }) {
                 <div key={alert.id} className="flex items-start space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div className="flex-1">
-                    <h4 className="font-medium text-blue-900">{alert.title}</h4>
+                    <h4 className="font-medium text-blue-900">{alert.threat_type || 'Community Alert'}</h4>
                     <p className="text-sm text-blue-800">{alert.message}</p>
                     <div className="flex items-center space-x-4 mt-2 text-xs text-blue-600">
-                      <span>Priority: {alert.priority}</span>
-                      <span>{new Date(alert.created_at).toLocaleDateString()}</span>
+                      <span>Severity: {alert.severity}</span>
+                      <span>{alert.created_at ? new Date(alert.created_at).toLocaleDateString() : ''}</span>
                     </div>
                   </div>
                 </div>

@@ -4,6 +4,8 @@ import { apiPost, API_ENDPOINTS, API } from './lib/api'
 import PasswordGenerator from './components/PasswordGenerator'
 import ChatAssistant from './components/ChatAssistant'
 import LearnHub from './components/LearnHub'
+import CommunityHub from './components/CommunityHub'
+import CommunityReporting from './components/CommunityReporting'
 import AdminDashboard from './components/admin/AdminDashboard'
 import ProfileSettings from './components/ProfileSettings'
 import Login from './components/Login'
@@ -1668,29 +1670,9 @@ function App() {
       case 'profile':
         return <ProfileSettings setActiveTab={setActiveTab} />
       case 'community':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h1 className="text-2xl font-bold text-black mb-4">👥 Community Hub</h1>
-              <p className="text-gray-700 mb-6">Report scams and stay updated on the latest threats.</p>
-              
-              <div className="space-y-4">
-                <div className="bg-[#21a1ce] bg-opacity-10 p-4 rounded-xl border border-[#21a1ce] border-opacity-20">
-                  <h3 className="font-semibold text-black mb-2">Community features:</h3>
-                  <ul className="text-gray-700 space-y-1">
-                    <li>• Report suspicious activity</li>
-                    <li>• View latest scams</li>
-                    <li>• Top reporter leaderboard</li>
-                  </ul>
-                </div>
-                
-                <button className="w-full bg-[#21a1ce] text-white py-4 px-6 rounded-xl font-medium hover:bg-[#1a8bb8] transition-colors shadow-sm">
-                  Join Community
-                </button>
-              </div>
-            </div>
-          </div>
-        )
+        return <CommunityHub setActiveTab={setActiveTab} />
+      case 'community_reports':
+        return <CommunityReporting setActiveTab={setActiveTab} />
       default:
         return (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

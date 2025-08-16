@@ -1,41 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Flag, Trophy, AlertTriangle, TrendingUp, Plus, Star } from 'lucide-react';
+import { Users, Flag, Trophy, TrendingUp, Plus, Star } from 'lucide-react';
 import { MobileCard } from './ui/mobile-card';
 import { MobileButton } from './ui/mobile-button';
 import { useAuth } from '../hooks/useAuth';
+import { useCommunity } from '../hooks/useCommunity';
 
 export default function CommunityHub({ setActiveTab }) {
   const [activeTab, setActiveTabLocal] = useState('reports');
-  const [scamReports, setScamReports] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [latestScams, setLatestScams] = useState([]);
+  const { leaderboard, trendingThreats, loadAllData, isLoading } = useCommunity();
   const { user, isAuthenticated } = useAuth();
 
-  // Mock data - in real app this would come from API
   useEffect(() => {
-    // Mock leaderboard data
-    setLeaderboard([
-      { id: 1, username: 'SecurityGuard', reports: 47, points: 235, rank: 1 },
-      { id: 2, username: 'CyberVigilante', reports: 32, points: 180, rank: 2 },
-      { id: 3, username: 'SafeNet', reports: 28, points: 156, rank: 3 },
-      { id: 4, username: 'PhishBuster', reports: 25, points: 142, rank: 4 },
-      { id: 5, username: 'ScamHunter', reports: 22, points: 128, rank: 5 },
-      { id: 6, username: 'DigitalShield', reports: 19, points: 115, rank: 6 },
-      { id: 7, username: 'AlertUser', reports: 17, points: 98, rank: 7 },
-      { id: 8, username: 'SecureMind', reports: 15, points: 87, rank: 8 },
-      { id: 9, username: 'WatchDog', reports: 12, points: 76, rank: 9 },
-      { id: 10, username: 'Guardian', reports: 10, points: 65, rank: 10 }
-    ]);
-
-    // Mock latest scams data
-    setLatestScams([
-      { id: 1, title: 'Fake Bank SMS Scam', description: 'SMS claiming to be from major banks asking for account verification', reports: 156, severity: 'high', date: '2024-01-15' },
-      { id: 2, title: 'Amazon Prime Renewal Fraud', description: 'Fake emails about Prime membership renewal with suspicious links', reports: 89, severity: 'medium', date: '2024-01-14' },
-      { id: 3, title: 'Tax Refund Scam', description: 'Calls claiming to be from IRS about tax refunds', reports: 67, severity: 'high', date: '2024-01-13' },
-      { id: 4, title: 'Tech Support Scam', description: 'Pop-up claiming computer is infected, asking for remote access', reports: 45, severity: 'medium', date: '2024-01-12' },
-      { id: 5, title: 'Romance Scam', description: 'Fake dating profiles asking for money or gift cards', reports: 34, severity: 'medium', date: '2024-01-11' }
-    ]);
-  }, []);
+    if (isAuthenticated) {
+      loadAllData();
+    }
+  }, [isAuthenticated, loadAllData]);
 
   const tabs = [
     { id: 'reports', label: 'Report Scam', icon: Flag },
@@ -83,7 +62,7 @@ export default function CommunityHub({ setActiveTab }) {
             </MobileCard>
 
             <MobileButton
-              onClick={() => {/* TODO: Open scam report form */}}
+              onClick={() => setActiveTab('community_reports')}
               className="w-full bg-red-600 hover:bg-red-700 text-white py-3"
             >
               <Plus className="w-5 h-5 mr-2" />
@@ -115,8 +94,8 @@ export default function CommunityHub({ setActiveTab }) {
                           {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : user.rank}
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900">{user.username}</div>
-                          <div className="text-xs text-gray-600">{user.reports} reports • {user.points} points</div>
+                          <div className="font-semibold text-gray-900">{user.username || user.name}</div>
+                          <div className="text-xs text-gray-600">{user.reports} reports</div>
                         </div>
                       </div>
                       {index < 3 && (
@@ -139,23 +118,15 @@ export default function CommunityHub({ setActiveTab }) {
             </div>
             
             <div className="space-y-3">
-              {latestScams.map((scam) => (
-                <MobileCard key={scam.id} className="border-gray-200">
+              {trendingThreats.map((trend, idx) => (
+                <MobileCard key={idx} className="border-gray-200">
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-gray-900">{scam.title}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        scam.severity === 'high' ? 'bg-red-100 text-red-800' :
-                        scam.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {scam.severity}
-                      </span>
+                      <h4 className="font-semibold text-gray-900">{trend.threat_type}</h4>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">{scam.description}</p>
+                    <p className="text-sm text-gray-600 mb-3">Reports: {trend.report_count} • Trend: {trend.trend}</p>
                     <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>{scam.reports} reports</span>
-                      <span>{scam.date}</span>
+                      <span>Urgency score: {trend.urgency_score}</span>
                     </div>
                   </div>
                 </MobileCard>

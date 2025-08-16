@@ -78,7 +78,8 @@ export const API_ENDPOINTS = {
     REPORTS: '/api/community/reports',
     TRENDING: '/api/community/trending',
     STATS: '/api/community/stats',
-    ALERTS: '/api/community/alerts'
+    ALERTS: '/api/community/alerts',
+    LEADERBOARD: '/api/community/leaderboard'
   },
   
   // Existing endpoints

@@ -142,6 +142,7 @@ class CommunityReport(db.Model):
     
     # Relationships
     votes = db.relationship('ReportVote', backref='report', lazy=True)
+    media = db.relationship('CommunityReportMedia', backref='report', lazy=True)
     
     def to_dict(self):
         return {
@@ -168,6 +169,24 @@ class ReportVote(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     __table_args__ = (db.UniqueConstraint('report_id', 'user_id'),)
+
+class CommunityReportMedia(db.Model):
+    __tablename__ = 'community_report_media'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id'), nullable=False)
+    media_url = db.Column(db.String(512), nullable=False)
+    media_type = db.Column(db.String(50))  # image, video, other
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'report_id': self.report_id,
+            'media_url': self.media_url,
+            'media_type': self.media_type,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 class LearningModule(db.Model):
     __tablename__ = 'learning_modules'

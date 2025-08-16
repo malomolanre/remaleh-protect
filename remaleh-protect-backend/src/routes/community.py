@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
 try:
-    from ..models import db, User, CommunityReport, ReportVote, CommunityAlert
+    from ..models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia
     from ..auth import token_required, get_current_user_id
 except ImportError:
-    from models import db, User, CommunityReport, ReportVote, CommunityAlert
+    from models import db, User, CommunityReport, ReportVote, CommunityAlert, CommunityReportMedia
     from auth import token_required, get_current_user_id
 from datetime import datetime, timedelta
 from sqlalchemy import func, desc, case
@@ -55,6 +55,8 @@ def get_community_reports(current_user):
                 'id': report.user.id,
                 'name': f"{report.user.first_name} {report.user.last_name}".strip() or 'Anonymous'
             }
+            # Attach media
+            report_data['media'] = [m.to_dict() for m in getattr(report, 'media', [])]
             formatted_reports.append(report_data)
         
         return jsonify({
@@ -119,6 +121,7 @@ def get_report(current_user, report_id):
             'id': report.user.id,
             'name': f"{report.user.first_name} {report.user.last_name}".strip() or 'Anonymous'
         }
+        report_data['media'] = [m.to_dict() for m in getattr(report, 'media', [])]
         
         return jsonify(report_data), 200
         
@@ -209,6 +212,52 @@ def verify_report(current_user, report_id):
         
     except Exception as e:
         db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@community_bp.route('/reports/<int:report_id>/media', methods=['POST'])
+@token_required
+def upload_report_media(current_user, report_id):
+    """Attach media to a community report (expects JSON with media_url and optional media_type)"""
+    try:
+        report = CommunityReport.query.get_or_404(report_id)
+        data = request.get_json() or {}
+        media_url = data.get('media_url')
+        media_type = data.get('media_type', 'image')
+        if not media_url:
+            return jsonify({'error': 'media_url is required'}), 400
+        media = CommunityReportMedia(report_id=report.id, media_url=media_url, media_type=media_type)
+        db.session.add(media)
+        db.session.commit()
+        return jsonify({'message': 'Media uploaded', 'media': media.to_dict()}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@community_bp.route('/leaderboard', methods=['GET'])
+@token_required
+def get_leaderboard(current_user):
+    """Get top reporters leaderboard"""
+    try:
+        results = db.session.query(
+            User.id,
+            User.first_name,
+            User.last_name,
+            func.count(CommunityReport.id).label('report_count')
+        ).join(CommunityReport).group_by(User.id, User.first_name, User.last_name).order_by(desc('report_count')).limit(20).all()
+
+        leaderboard = []
+        rank = 1
+        for r in results:
+            leaderboard.append({
+                'id': r.id,
+                'name': f"{r.first_name} {r.last_name}".strip() or 'Anonymous',
+                'reports': r.report_count,
+                'rank': rank
+            })
+            rank += 1
+
+        return jsonify({'leaderboard': leaderboard}), 200
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @community_bp.route('/trending', methods=['GET'])
