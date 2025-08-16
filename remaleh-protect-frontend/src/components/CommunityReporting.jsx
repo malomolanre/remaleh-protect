@@ -14,10 +14,13 @@ import {
   CheckCircle,
   Star,
   Lock,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from 'lucide-react';
 import { useCommunity } from '../hooks/useCommunity';
 import { useAuth } from '../hooks/useAuth';
+import { API } from '../lib/api';
+import MobileModal from './MobileModal';
 
 export default function CommunityReporting({ setActiveTab }) {
   const { isAuthenticated, user } = useAuth();
@@ -46,13 +49,18 @@ export default function CommunityReporting({ setActiveTab }) {
     urgency: 'MEDIUM',
     location: ''
   });
-  const [newReportFiles, setNewReportFiles] = useState([]);
   const [newAlert, setNewAlert] = useState({
     title: '',
     message: '',
     priority: 'medium'
   });
   const [commentText, setCommentText] = useState('');
+  const [newReportFiles, setNewReportFiles] = useState([]);
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]); // [{src, id}]
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -116,6 +124,21 @@ export default function CommunityReporting({ setActiveTab }) {
     if (commentText.trim()) {
       await addComment(reportId, { comment: commentText });
       setCommentText('');
+    }
+  };
+
+  const openLightbox = (mediaList, startIndex = 0) => {
+    const images = (mediaList || [])
+      .filter(m => !m.media_type || m.media_type === 'image')
+      .map(m => ({
+        id: m.id,
+        src: m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`)
+      }))
+      .filter(i => !!i.src);
+    if (images.length > 0) {
+      setLightboxImages(images);
+      setLightboxIndex(Math.max(0, Math.min(startIndex, images.length - 1)));
+      setLightboxOpen(true);
     }
   };
 
@@ -287,6 +310,37 @@ export default function CommunityReporting({ setActiveTab }) {
                     <div>
                       <h3 className="font-medium text-gray-900">{report.threat_type}</h3>
                       <p className="text-sm text-gray-600 mb-2">{report.description}</p>
+                      {report.media && report.media.length > 0 && (
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          {(report.media.filter(m => !m.media_type || m.media_type === 'image').slice(0, 3)).map((m, idx, arr) => {
+                            const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
+                            const extraCount = report.media.length - 3;
+                            const src = m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`);
+                            return (
+                              <button
+                                key={m.id || idx}
+                                type="button"
+                                onClick={() => openLightbox(report.media, idx)}
+                                className="relative w-full h-20 bg-gray-100 rounded overflow-hidden focus:outline-none"
+                              >
+                                {src && (
+                                  <img
+                                    src={src}
+                                    alt="report media"
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                  />
+                                )}
+                                {isLastAndExtra && extraCount > 0 && (
+                                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                                    <span className="text-white text-sm font-semibold">+{extraCount}</span>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <span>Urgency: {report.urgency}</span>
                         <span>Location: {report.location || 'N/A'}</span>
@@ -525,6 +579,40 @@ export default function CommunityReporting({ setActiveTab }) {
           </div>
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      <MobileModal isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} title="Preview" fullScreen>
+        {lightboxImages.length > 0 && (
+          <div className="flex flex-col items-center">
+            <div className="w-full h-[60vh] bg-black flex items-center justify-center mb-3">
+              <img
+                src={lightboxImages[lightboxIndex].src}
+                alt="preview"
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+            <div className="flex items-center justify-between w-full">
+              <Button
+                onClick={() => setLightboxIndex(i => Math.max(0, i - 1))}
+                disabled={lightboxIndex === 0}
+                variant="outline"
+                size="sm"
+              >
+                Prev
+              </Button>
+              <div className="text-sm text-gray-600">{lightboxIndex + 1} / {lightboxImages.length}</div>
+              <Button
+                onClick={() => setLightboxIndex(i => Math.min(lightboxImages.length - 1, i + 1))}
+                disabled={lightboxIndex >= lightboxImages.length - 1}
+                variant="outline"
+                size="sm"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+      </MobileModal>
     </div>
   );
 }
