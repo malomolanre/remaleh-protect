@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import MobileModal from '../MobileModal';
 
-const CommunityReports = () => {
+const CommunityReports = ({ initialFilters }) => {
   const [reports, setReports] = useState([]);
   const [pagination, setPagination] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +22,14 @@ const CommunityReports = () => {
     threat_type: '',
     verified: ''
   });
+
+  // Apply initial filters on mount
+  useEffect(() => {
+    if (initialFilters && Object.keys(initialFilters).length > 0) {
+      setFilters(prev => ({ ...prev, ...initialFilters, page: 1 }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchReports();

@@ -19,6 +19,8 @@ import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
 import { createModule, getAllModules, updateModule, deleteModule, addLesson, updateLesson, deleteLesson } from '../../utils/contentManager'
 import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword, restoreUser, getDeletedUsers } from '../../utils/userManager'
+import CommunityReports from './CommunityReports'
+import { apiGet } from '../../lib/api'
 
 export default function AdminDashboard({ setActiveTab }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
@@ -65,11 +67,8 @@ export default function AdminDashboard({ setActiveTab }) {
   const [error, setError] = useState(null)
   const [dbConnectionStatus, setDbConnectionStatus] = useState('checking')
   
-  // Mock data for reports (can be enhanced later)
-  const [reports] = useState([
-    { id: 1, type: 'scam', description: 'Suspicious email', status: 'pending', reporter: 'user@example.com' },
-    { id: 2, type: 'phishing', description: 'Fake login page', status: 'investigating', reporter: 'admin@example.com' }
-  ])
+  // Admin stats (includes reports totals)
+  const [adminStats, setAdminStats] = useState(null)
   
   // Lesson management state
   const [selectedModuleForLessons, setSelectedModuleForLessons] = useState(null)
@@ -729,6 +728,18 @@ export default function AdminDashboard({ setActiveTab }) {
     loadDeletedUsers()
     loadUserStats()
     checkDatabaseConnection() // Check DB connection on mount
+    // Load admin dashboard stats (includes reports totals)
+    ;(async () => {
+      try {
+        const res = await apiGet('/api/admin/stats')
+        if (res.ok) {
+          const data = await res.json()
+          setAdminStats(data)
+        }
+      } catch (e) {
+        // ignore
+      }
+    })()
   }, [])
   
   // Authentication check
@@ -863,8 +874,32 @@ export default function AdminDashboard({ setActiveTab }) {
             <MobileCard>
               <div className="text-center p-4">
                 <MessageSquare className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                <h3 className="text-lg font-semibold text-gray-900">{reports.length}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{adminStats?.reports?.total ?? 0}</h3>
                 <p className="text-sm text-gray-600">Community Reports</p>
+                {adminStats?.reports && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {adminStats.reports.pending} pending, {adminStats.reports.approved} approved
+                  </div>
+                )}
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <MobileButton
+                    onClick={() => setActiveSection('reports')}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 text-xs"
+                  >
+                    Go to Reports
+                  </MobileButton>
+                  {adminStats?.reports?.pending > 0 && (
+                    <MobileButton
+                      onClick={() => {
+                        setActiveSection('reports');
+                        window.__ADMIN_REPORTS_INITIAL_FILTERS__ = { status: 'PENDING' };
+                      }}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 text-xs"
+                    >
+                      Review Pending
+                    </MobileButton>
+                  )}
+                </div>
               </div>
             </MobileCard>
             <MobileCard>
@@ -1299,7 +1334,17 @@ export default function AdminDashboard({ setActiveTab }) {
           {renderDeletedUsers()}
         </>
       )}
-      {activeSection === 'reports' && renderCommunityReports()}
+      {activeSection === 'reports' && (
+        window.__ADMIN_REPORTS_INITIAL_FILTERS__ ? (
+          (() => {
+            const filters = window.__ADMIN_REPORTS_INITIAL_FILTERS__
+            delete window.__ADMIN_REPORTS_INITIAL_FILTERS__
+            return <CommunityReports initialFilters={filters} />
+          })()
+        ) : (
+          <CommunityReports />
+        )
+      )}
 
       {/* Add Module Modal */}
       {showAddModule && (
