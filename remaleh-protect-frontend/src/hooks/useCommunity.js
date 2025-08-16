@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { API, API_ENDPOINTS, apiGet, apiPost, apiPut, apiDelete } from '../lib/api';
+import { cloudinaryUnsignedUpload } from '../lib/utils';
 
 export const useCommunity = () => {
   const [reports, setReports] = useState([]);
@@ -283,15 +284,11 @@ export const useCommunity = () => {
 
       let response;
       if (fileOrUrl instanceof File) {
-        const token = localStorage.getItem('authToken');
-        const formData = new FormData();
-        formData.append('file', fileOrUrl);
-        response = await fetch(`${API}${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/media`, {
-          method: 'POST',
-          headers: {
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          },
-          body: formData
+        // Direct-to-Cloudinary to avoid server size limits
+        const uploaded = await cloudinaryUnsignedUpload(fileOrUrl, { folder: 'community_reports' });
+        response = await apiPost(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/media`, {
+          media_url: uploaded.url,
+          media_type: uploaded.resource_type === 'video' ? 'video' : 'image'
         });
       } else {
         response = await apiPost(`${API_ENDPOINTS.COMMUNITY.REPORTS}/${reportId}/media`, {

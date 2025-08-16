@@ -4,6 +4,7 @@
  */
 
 import { API, apiPost, apiGet, apiPut, apiDelete } from '../lib/api'
+import { cloudinaryUnsignedUpload } from '../lib/utils'
 
 // Backend API endpoints
 const API_ENDPOINTS = {
@@ -462,30 +463,9 @@ export const addLesson = async (moduleId, lessonData) => {
 
 export const uploadLessonMedia = async (file) => {
   try {
-    const token = localStorage.getItem('authToken')
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await fetch(`${API}${API_ENDPOINTS.LEARNING_MEDIA}`, {
-      method: 'POST',
-      headers: {
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      },
-      body: formData
-    })
-
-    const text = await res.text()
-    let data = null
-    try { data = text ? JSON.parse(text) : null } catch {}
-
-    if (!res.ok) {
-      const message = (data && (data.error || data.message)) || `Upload failed (HTTP ${res.status})`
-      throw new Error(message)
-    }
-
-    if (!data || !data.url) {
-      throw new Error('Upload failed: unexpected response')
-    }
-    return data
+    // Prefer direct Cloudinary unsigned upload to avoid server size limits
+    const data = await cloudinaryUnsignedUpload(file, { folder: 'learning_content' })
+    return { url: data.url, public_id: data.public_id, resource_type: data.resource_type }
   } catch (error) {
     console.error('❌ Error uploading lesson media:', error)
     throw error
