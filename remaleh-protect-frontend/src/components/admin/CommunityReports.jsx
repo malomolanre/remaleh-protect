@@ -35,9 +35,10 @@ const CommunityReports = () => {
         if (value) params.append(key, value);
       });
 
-      const response = await api.get(`/api/admin/community-reports?${params}`);
-      setReports(response.data.reports);
-      setPagination(response.data.pagination);
+      const response = await api.get(`/api/admin/reports?${params}`);
+      const data = await response.json();
+      setReports(data.reports || []);
+      setPagination(data.pagination || {});
       setError(null);
     } catch (err) {
       setError('Failed to load community reports');
@@ -49,31 +50,23 @@ const CommunityReports = () => {
 
   const handleReportAction = async (reportId, action) => {
     try {
-      let endpoint = '';
-      let method = 'POST';
+      const actionMap = {
+        verify: 'APPROVED',
+        reject: 'REJECTED',
+        escalate: 'FLAGGED'
+      };
+      const mapped = actionMap[action];
+      if (!mapped) return;
 
-      switch (action) {
-        case 'verify':
-          endpoint = `/api/admin/community-reports/${reportId}/verify`;
-          break;
-        case 'reject':
-          endpoint = `/api/admin/community-reports/${reportId}/reject`;
-          break;
-        case 'escalate':
-          endpoint = `/api/admin/community-reports/${reportId}/escalate`;
-          break;
-        case 'delete':
-          endpoint = `/api/admin/community-reports/${reportId}`;
-          method = 'DELETE';
-          break;
-        default:
-          return;
-      }
-
-      await api.request({
-        method,
-        url: endpoint
+      const response = await api.request({
+        method: 'PUT',
+        url: `/api/admin/reports/${reportId}/moderate`,
+        data: { action: mapped }
       });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Failed to ${action} report`);
+      }
 
       // Refresh reports list
       fetchReports();
@@ -88,10 +81,26 @@ const CommunityReports = () => {
     if (!bulkAction || selectedReports.length === 0) return;
 
     try {
-      await api.post('/api/admin/community-reports/bulk-action', {
-        report_ids: selectedReports,
-        action: bulkAction
-      });
+      const actionMap = {
+        verify: 'APPROVED',
+        reject: 'REJECTED',
+        escalate: 'FLAGGED'
+      };
+      const mapped = actionMap[bulkAction];
+      if (!mapped) return;
+
+      // Execute in parallel
+      await Promise.all(selectedReports.map(async (id) => {
+        const response = await api.request({
+          method: 'PUT',
+          url: `/api/admin/reports/${id}/moderate`,
+          data: { action: mapped }
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed to ${bulkAction} report ${id}`);
+        }
+      }));
 
       // Refresh reports list
       fetchReports();
@@ -186,12 +195,11 @@ const CommunityReports = () => {
               <option value="" disabled>Actions</option>
               {report.status === 'PENDING' && (
                 <>
-                  <option value="verify">Verify</option>
+                  <option value="verify">Approve</option>
                   <option value="reject">Reject</option>
-                  <option value="escalate">Escalate</option>
+                  <option value="escalate">Flag</option>
                 </>
               )}
-              <option value="delete">Delete</option>
             </select>
           </div>
         </div>
@@ -319,10 +327,9 @@ const CommunityReports = () => {
             className="w-full border rounded-lg px-3 py-2"
           >
             <option value="">Select action...</option>
-            <option value="verify">Verify</option>
+            <option value="verify">Approve</option>
             <option value="reject">Reject</option>
-            <option value="escalate">Escalate</option>
-            <option value="delete">Delete</option>
+            <option value="escalate">Flag</option>
           </select>
         </div>
         

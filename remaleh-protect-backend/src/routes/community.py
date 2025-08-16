@@ -8,7 +8,7 @@ except ImportError:
 from datetime import datetime, timedelta
 import os
 from werkzeug.utils import secure_filename
-from sqlalchemy import func, desc, case
+from sqlalchemy import func, desc, case, or_
 import json
 
 community_bp = Blueprint('community', __name__)
@@ -24,6 +24,8 @@ def get_community_reports(current_user):
         urgency = request.args.get('urgency')
         status = request.args.get('status')
         verified_only = request.args.get('verified_only', 'false').lower() == 'true'
+        include_all = request.args.get('include_all', 'false').lower() == 'true'
+        include_own = request.args.get('include_own', 'false').lower() == 'true'
         
         query = CommunityReport.query
         
@@ -31,10 +33,22 @@ def get_community_reports(current_user):
             query = query.filter(CommunityReport.threat_type == threat_type)
         if urgency:
             query = query.filter(CommunityReport.urgency == urgency)
+        # Visibility logic
         if status:
-            query = query.filter(CommunityReport.status == status)
+            base_filter = (CommunityReport.status == status)
+        elif not include_all:
+            base_filter = (CommunityReport.status.in_(['APPROVED', 'VERIFIED']))
+        else:
+            base_filter = None
+
         if verified_only:
-            query = query.filter(CommunityReport.verified == True)
+            base_filter = (CommunityReport.verified == True) if base_filter is None else (base_filter & (CommunityReport.verified == True))
+
+        if base_filter is not None:
+            if include_own:
+                query = query.filter(or_(CommunityReport.user_id == current_user.id, base_filter))
+            else:
+                query = query.filter(base_filter)
         
         reports = query.order_by(CommunityReport.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
@@ -325,7 +339,7 @@ def get_trending_threats(current_user):
             ).label('avg_urgency')
         ).filter(
             CommunityReport.created_at >= thirty_days_ago,
-            CommunityReport.status.in_(['PENDING', 'VERIFIED'])
+            CommunityReport.status.in_(['PENDING', 'VERIFIED', 'APPROVED'])
         ).group_by(
             CommunityReport.threat_type
         ).order_by(
