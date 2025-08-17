@@ -50,6 +50,27 @@ def create_app():
         try:
             db.create_all()
             logger.info("✓ Database tables created successfully")
+            # Ensure new user email verification columns exist before any queries that select them
+            try:
+                from sqlalchemy import text
+                with db.engine.connect() as conn:
+                    # PostgreSQL supports IF NOT EXISTS; SQLite may ignore or error, so wrap in try/except
+                    try:
+                        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE"))
+                    except Exception as e:
+                        logger.debug(f"email_verified add (IF NOT EXISTS) failed/ignored: {e}")
+                    try:
+                        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_code VARCHAR(12)"))
+                    except Exception as e:
+                        logger.debug(f"email_verification_code add (IF NOT EXISTS) failed/ignored: {e}")
+                    try:
+                        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires_at TIMESTAMP"))
+                    except Exception as e:
+                        logger.debug(f"email_verification_expires_at add (IF NOT EXISTS) failed/ignored: {e}")
+                    conn.commit()
+                logger.info("✓ Ensured email verification columns on users table")
+            except Exception as e:
+                logger.warning(f"Could not ensure email verification columns: {e}")
             
             # Create admin user if it doesn't exist
             try:
