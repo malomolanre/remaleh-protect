@@ -662,7 +662,6 @@ function App() {
 
             {/* For You Today Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-black mb-4">From the Remaleh Blog</h2>
               
               {/* Horizontal Carousel Container */}
               <div className="relative">
@@ -684,7 +683,7 @@ function App() {
                         />
                       )}
                       <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{post.title || 'Blog post'}</h3>
+                        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{post.title}</h3>
                         {post.excerpt && (
                           <p className="text-gray-600 text-sm mb-3 line-clamp-3">{post.excerpt}</p>
                         )}
@@ -737,11 +736,6 @@ function App() {
                 </div>
               </div>
               
-              <div className="mt-4 text-center">
-                <button onClick={() => setActiveTab('community')} className="text-[#21a1ce] text-sm font-medium hover:underline">
-                  View All Reports →
-                </button>
-              </div>
             </div>
 
             {/* Quick Action Icons */}
