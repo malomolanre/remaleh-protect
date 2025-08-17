@@ -152,7 +152,14 @@ export const apiCall = async (endpoint, options = {}) => {
         // Don't redirect - let the component handle authentication failures
         // window.location.href = '/login';
       }
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // Convert to friendly message
+      let friendly = 'Something went wrong. Please try again.';
+      try {
+        const ej = await response.json();
+        const msg = ej && (ej.error || ej.message);
+        if (msg) friendly = msg;
+      } catch (_) {}
+      throw new Error(friendly);
     }
     
     return response;

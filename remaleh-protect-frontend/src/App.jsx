@@ -323,7 +323,7 @@ function App() {
       if (error.message.includes('Failed to fetch')) {
         setScamError('Unable to connect to security APIs. Please check your internet connection and try again.')
       } else if (error.message.includes('HTTP error')) {
-        setScamError('Security API temporarily unavailable. Please try again later.')
+        setScamError('Security service temporarily unavailable. Please try again later.')
       } else {
         setScamError('Analysis failed. Please try again.')
       }
@@ -344,7 +344,7 @@ function App() {
       })
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error('Service temporarily unavailable')
       }
       
       const data = await response.json()
@@ -387,7 +387,7 @@ function App() {
       })
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error('Service temporarily unavailable')
       }
       
       const data = await response.json()
@@ -460,7 +460,7 @@ function App() {
       })
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error('Service temporarily unavailable')
       }
       
       const data = await response.json()

@@ -451,9 +451,13 @@ export const addLesson = async (moduleId, lessonData) => {
       return data
     } else {
       console.log('❌ Response not ok, status:', response.status)
-      const errorData = await response.text()
-      console.log('❌ Error response body:', errorData)
-      throw new Error(`Failed to add lesson: ${response.status}`)
+      let msg = 'Failed to add lesson'
+      try {
+        const errorData = await response.json()
+        console.log('❌ Error response body:', errorData)
+        msg = errorData.error || errorData.message || msg
+      } catch (_) {}
+      throw new Error(msg)
     }
   } catch (error) {
     console.error('❌ Error in addLesson:', error)

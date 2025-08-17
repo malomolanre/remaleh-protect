@@ -36,7 +36,7 @@ export const getAllUsers = async (filters = {}) => {
         success: true
       }
     } else {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error('Request failed. Please try again.')
     }
   } catch (error) {
     console.error('Error fetching users:', error)
@@ -61,7 +61,7 @@ export const getDeletedUsers = async () => {
         success: true
       }
     } else {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error('Request failed. Please try again.')
     }
   } catch (error) {
     console.error('Error fetching deleted users:', error)
@@ -85,7 +85,7 @@ export const getUserById = async (userId) => {
         success: true
       }
     } else {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error('Request failed. Please try again.')
     }
   } catch (error) {
     console.error('Error fetching user:', error)
@@ -122,7 +122,7 @@ export const updateUserStatus = async (userId, newStatus) => {
       console.log('❌ Response not ok, status:', response.status)
       const errorData = await response.json()
       console.log('❌ Error response body:', errorData)
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      throw new Error(errorData.error || errorData.message || 'Request failed. Please try again.')
     }
   } catch (error) {
     console.error('❌ Error in updateUserStatus:', error)
@@ -158,7 +158,7 @@ export const updateUserRole = async (userId, newRole) => {
       console.log('❌ Response not ok, status:', response.status)
       const errorData = await response.json()
       console.log('❌ Error response body:', errorData)
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      throw new Error(errorData.error || errorData.message || 'Request failed. Please try again.')
     }
   } catch (error) {
     console.error('❌ Error in updateUserRole:', error)
@@ -183,7 +183,7 @@ export const updateUserInfo = async (userId, userData) => {
       }
     } else {
       const errorData = await response.json()
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      throw new Error(errorData.error || errorData.message || 'Request failed. Please try again.')
     }
   } catch (error) {
     console.error('Error updating user information:', error)
@@ -209,7 +209,7 @@ export const updateUserPassword = async (userId, newPassword) => {
       }
     } else {
       const errorData = await response.json()
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      throw new Error(errorData.error || errorData.message || 'Request failed. Please try again.')
     }
   } catch (error) {
     console.error('Error updating user password:', error)
@@ -233,7 +233,7 @@ export const deleteUser = async (userId) => {
       }
     } else {
       const errorData = await response.json()
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      throw new Error(errorData.error || errorData.message || 'Request failed. Please try again.')
     }
   } catch (error) {
     console.error('Error deleting user:', error)
@@ -258,7 +258,7 @@ export const createUser = async (userData) => {
       }
     } else {
       const errorData = await response.json()
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      throw new Error(errorData.error || errorData.message || 'Request failed. Please try again.')
     }
   } catch (error) {
     console.error('Error creating user:', error)
@@ -293,7 +293,7 @@ export const getUserStats = async () => {
         success: true
       }
     } else {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error('Request failed. Please try again.')
     }
   } catch (error) {
     console.error('Error fetching user stats:', error)
@@ -336,7 +336,7 @@ export const restoreUser = async (userId) => {
       console.log('❌ Response not ok, status:', response.status)
       const errorData = await response.json()
       console.log('❌ Error response body:', errorData)
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      throw new Error(errorData.error || errorData.message || 'Request failed. Please try again.')
     }
   } catch (error) {
     console.error('❌ Error in restoreUser:', error)
