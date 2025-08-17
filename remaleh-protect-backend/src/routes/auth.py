@@ -7,6 +7,7 @@ import random
 import string
 import smtplib
 from email.mime.text import MIMEText
+import re
 try:
     from ..models import db, User
     from ..auth import create_tokens, token_required, get_current_user_id, update_user_login
@@ -48,19 +49,61 @@ def _send_email(subject, to_email, html_body):
     return False, 'Email provider not configured'
 
 
+_DISPOSABLE_DOMAINS_DEFAULT = {
+    'mailinator.com', '10minutemail.com', 'tempmail.com', 'guerrillamail.com',
+    'trashmail.com', 'yopmail.com', 'emailtemp.org', 'maildrop.cc',
+    'dispostable.com', 'fakeinbox.com', 'temp-mail.org', 'moakt.com'
+}
+
+def _is_disposable_domain(domain: str) -> bool:
+    if not domain:
+        return False
+    domain = domain.lower()
+    # Allow runtime extension via env var (comma-separated)
+    extra = current_app.config.get('DISPOSABLE_EMAIL_DOMAINS') or os.getenv('DISPOSABLE_EMAIL_DOMAINS')
+    disposable = set(_DISPOSABLE_DOMAINS_DEFAULT)
+    if extra:
+        for d in str(extra).split(','):
+            d = d.strip().lower()
+            if d:
+                disposable.add(d)
+    return domain in disposable
+
+def _validate_email_input(email: str):
+    if not email:
+        return 'Email is required'
+    email = email.strip().lower()
+    # Basic RFC-like format check
+    if len(email) > 254:
+        return 'Email is too long'
+    pattern = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+    if not re.match(pattern, email):
+        return 'Please enter a valid email address so we can send you a verification code.'
+    try:
+        domain = email.split('@', 1)[1]
+    except Exception:
+        return 'Please enter a valid email address so we can send you a verification code.'
+    if _is_disposable_domain(domain):
+        return 'This email domain is not accepted. Please use your personal or work email address.'
+    return None
+
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """User registration endpoint"""
     try:
         data = request.get_json()
         
-        # Validate required fields
+        # Validate required fields + email quality
         if not data or not data.get('email') or not data.get('password'):
             return jsonify({'error': 'Email and password are required'}), 400
+        email_err = _validate_email_input(data.get('email'))
+        if email_err:
+            return jsonify({'error': email_err, 'field': 'email'}), 400
         
         # Check if user already exists
-        if User.query.filter_by(email=data['email']).first():
-            return jsonify({'error': 'User with this email already exists'}), 409
+        if User.query.filter_by(email=data['email'].strip().lower()).first():
+            return jsonify({'error': 'An account with this email already exists. Try signing in or reset your password.'}), 409
         
         # Create new user
         user = User(
@@ -88,7 +131,9 @@ def register():
                 <h2 style='letter-spacing:4px'>{code}</h2>
                 <p>This code expires in 15 minutes.</p>
             """
-            _send_email(subject, user.email, html)
+            ok, err = _send_email(subject, user.email, html)
+            if not ok:
+                return jsonify({'error': 'We could not send the verification email. Please check your address or try again later.'}), 502
         
         # If verification required, do not issue tokens yet
         if require_verification:
@@ -122,7 +167,7 @@ def login():
         user = User.query.filter_by(email=data['email']).first()
         
         if not user:
-            return jsonify({'error': 'Invalid email or password', 'debug': 'User not found'}), 401
+            return jsonify({'error': 'Invalid email or password'}), 401
         
         if not user.is_active:
             return jsonify({'error': 'Account is deactivated'}), 403
@@ -130,13 +175,7 @@ def login():
         # Test password verification
         password_valid = user.check_password(data['password'])
         if not password_valid:
-            return jsonify({
-                'error': 'Invalid email or password', 
-                'debug': 'Password verification failed',
-                'user_found': True,
-                'user_active': user.is_active,
-                'user_admin': user.is_admin
-            }), 401
+            return jsonify({'error': 'Invalid email or password'}), 401
         
         # Enforce email verification if required
         if current_app.config.get('REQUIRE_EMAIL_VERIFICATION', False) and not user.email_verified:

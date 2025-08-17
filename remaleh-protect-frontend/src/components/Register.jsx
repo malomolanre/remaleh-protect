@@ -76,6 +76,9 @@ const Register = ({ onRegisterSuccess }) => {
       if (!result.success) {
         // Error is already set in useAuth hook
         console.error('Registration failed:', result.error);
+        if (result.error && result.error.toLowerCase().includes('email')) {
+          setFormErrors((prev) => ({ ...prev, email: result.error }));
+        }
       } else if (result.requires_verification) {
         setNeedsVerification(true);
         setVerifyMsg('We sent a 6-digit code to your email. Enter it below to verify your account.');

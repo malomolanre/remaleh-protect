@@ -116,9 +116,21 @@ export const useAuth = () => {
         window.dispatchEvent(new Event('remaleh-auth-changed'));
         return { success: true };
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Login failed');
-        return { success: false, error: errorData.message };
+        let friendly = 'Login failed. Please check your email and password.';
+        try {
+          const errorData = await response.json();
+          const apiMsg = errorData.error || errorData.message || '';
+          // Map backend signals to friendlier copy
+          if (apiMsg.toLowerCase().includes('email not verified')) {
+            friendly = 'Please verify your email to sign in. Check your inbox for the code.';
+          } else if (apiMsg.toLowerCase().includes('invalid email or password')) {
+            friendly = 'Incorrect email or password. Please try again.';
+          } else if (apiMsg.toLowerCase().includes('deactivated')) {
+            friendly = 'Your account is deactivated. Contact support for assistance.';
+          }
+        } catch (_) {}
+        setError(friendly);
+        return { success: false, error: friendly };
       }
     } catch (err) {
       console.error('Login error details:', err);
@@ -160,9 +172,13 @@ export const useAuth = () => {
         window.dispatchEvent(new Event('remaleh-auth-changed'));
         return { success: true };
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Registration failed');
-        return { success: false, error: errorData.message };
+        let errorText = 'Registration failed';
+        try {
+          const errorData = await response.json();
+          errorText = errorData.error || errorData.message || errorText;
+        } catch (_) {}
+        setError(errorText);
+        return { success: false, error: errorText };
       }
     } catch (err) {
       setError('Network error occurred');
