@@ -88,6 +88,17 @@ function App() {
     loadBlog()
   }, [])
   
+  const formatDate = (dateStr) => {
+    try {
+      if (!dateStr) return ''
+      const d = new Date(dateStr)
+      if (isNaN(d)) return ''
+      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    } catch (e) {
+      return ''
+    }
+  }
+  
   // Get user initials for profile icon
   const getUserInitials = () => {
     if (user?.name) {
@@ -662,20 +673,32 @@ function App() {
                       href={post.link || 'https://www.remaleh.com.au/blog'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-shrink-0 w-80 bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-400 p-4 rounded-xl hover:shadow-md transition-all duration-200"
+                      className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
                     >
-                      <div className="flex items-start justify-between h-full">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{post.title || 'Blog post'}</h3>
-                          {post.pubDate && (
-                            <span className="text-gray-500 text-xs">{post.pubDate}</span>
-                          )}
+                      {post.image && (
+                        <img
+                          src={post.image}
+                          alt={post.title || 'Blog image'}
+                          className="w-full h-40 object-cover"
+                          onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        />
+                      )}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{post.title || 'Blog post'}</h3>
+                        {post.excerpt && (
+                          <p className="text-gray-600 text-sm mb-3 line-clamp-3">{post.excerpt}</p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{formatDate(post.pubDate)}</span>
+                          {post.author && <span className="ml-2">By {post.author}</span>}
                         </div>
-                        <div className="text-blue-400 ml-3">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0L17 8.586a1 1 0 010 1.414l-5.293 5.293a1 1 0 01-1.414-1.414L13.586 10H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </div>
+                        {Array.isArray(post.categories) && post.categories.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {post.categories.slice(0, 3).map((cat, i) => (
+                              <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs">{cat}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </a>
                   ))}
@@ -684,17 +707,19 @@ function App() {
                       href="https://www.remaleh.com.au/blog"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-shrink-0 w-80 bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-400 p-4 rounded-xl hover:shadow-md transition-all duration-200"
+                      className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
                     >
-                      <div className="flex items-start justify-between h-full">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800 mb-2">Visit the Remaleh Blog</h3>
-                          <span className="text-gray-500 text-xs">Latest insights and security tips</span>
-                        </div>
-                        <div className="text-blue-400 ml-3">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0L17 8.586a1 1 0 010 1.414l-5.293 5.293a1 1 0 01-1.414-1.414L13.586 10H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
+                      <div className="p-4">
+                        <div className="flex items-start justify-between h-full">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-800 mb-2">Visit the Remaleh Blog</h3>
+                            <span className="text-gray-500 text-xs">Latest insights and security tips</span>
+                          </div>
+                          <div className="text-blue-400 ml-3">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0L17 8.586a1 1 0 010 1.414l-5.293 5.293a1 1 0 01-1.414-1.414L13.586 10H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </div>
                         </div>
                       </div>
                     </a>

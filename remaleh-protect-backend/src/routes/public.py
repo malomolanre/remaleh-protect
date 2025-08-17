@@ -2,12 +2,14 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 import urllib.request
 import xml.etree.ElementTree as ET
+import re
+import html as html_lib
 
 public_bp = Blueprint('public', __name__)
 
 @public_bp.route('/blog-feed', methods=['GET'])
 def blog_feed():
-    """Fetch and return Remaleh blog RSS feed as JSON (titles and links)."""
+    """Fetch and return Remaleh blog RSS/Atom feed as JSON with rich fields."""
     limit = request.args.get('limit', 6, type=int)
     # Prefer the provided blog RSS; fallback to legacy path
     feed_candidates = [
@@ -22,6 +24,12 @@ def blog_feed():
             # Parse RSS XML
             root = ET.fromstring(data)
             items = []
+            ns = {
+                'atom': 'http://www.w3.org/2005/Atom',
+                'dc': 'http://purl.org/dc/elements/1.1/',
+                'media': 'http://search.yahoo.com/mrss/',
+                'content': 'http://purl.org/rss/1.0/modules/content/'
+            }
             # Try RSS 2.0 (rss/channel/item)
             channel = root.find('channel') if root is not None else None
             entries = []
@@ -30,10 +38,66 @@ def blog_feed():
             else:
                 # Try Atom (feed/entry)
                 entries = root.findall('{http://www.w3.org/2005/Atom}entry')
+
+            def text_or_none(el):
+                return el.text.strip() if el is not None and el.text else None
+
+            def strip_html(text):
+                if not text:
+                    return None
+                no_tags = re.sub(r'<[^>]+>', '', text)
+                return html_lib.unescape(no_tags).strip()
+
+            def extract_image(item_el):
+                thumb = item_el.find('media:thumbnail', ns)
+                if thumb is not None and thumb.attrib.get('url'):
+                    return thumb.attrib.get('url')
+                media_content = item_el.find('media:content', ns)
+                if media_content is not None and media_content.attrib.get('url'):
+                    url = media_content.attrib.get('url')
+                    m_type = media_content.attrib.get('type', '')
+                    if not m_type or m_type.startswith('image/'):
+                        return url
+                enclosure = item_el.find('enclosure')
+                if enclosure is not None:
+                    url = enclosure.attrib.get('url')
+                    m_type = enclosure.attrib.get('type', '')
+                    if url and (not m_type or m_type.startswith('image/')):
+                        return url
+                desc_html = text_or_none(item_el.find('description')) or text_or_none(item_el.find('content:encoded', ns))
+                if not desc_html:
+                    atom_summary = item_el.find('atom:summary', ns)
+                    if atom_summary is not None and atom_summary.text:
+                        desc_html = atom_summary.text
+                    atom_content = item_el.find('atom:content', ns)
+                    if not desc_html and atom_content is not None and atom_content.text:
+                        desc_html = atom_content.text
+                if desc_html:
+                    m = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', desc_html, re.IGNORECASE)
+                    if m:
+                        return m.group(1)
+                return None
+
+            def extract_categories(item_el):
+                cats = []
+                for c in item_el.findall('category'):
+                    t = text_or_none(c)
+                    if t:
+                        cats.append(t)
+                for c in item_el.findall('atom:category', ns):
+                    term = c.attrib.get('term')
+                    if term:
+                        cats.append(term)
+                return cats
             for item in entries[:limit]:
                 title_el = item.find('title') or item.find('{http://www.w3.org/2005/Atom}title')
                 link_el = item.find('link') or item.find('{http://www.w3.org/2005/Atom}link')
-                date_el = item.find('pubDate') or item.find('{http://www.w3.org/2005/Atom}updated')
+                date_el = (
+                    item.find('pubDate') or
+                    item.find('{http://www.w3.org/2005/Atom}updated') or
+                    item.find('{http://www.w3.org/2005/Atom}published') or
+                    item.find('dc:date', ns)
+                )
                 title = title_el.text.strip() if title_el is not None and title_el.text else ''
                 # Atom link may be attribute href
                 link = ''
@@ -43,7 +107,34 @@ def blog_feed():
                     if href:
                         link = href.strip()
                 pub_date = date_el.text.strip() if date_el is not None and date_el.text else None
-                items.append({'title': title, 'link': link, 'pubDate': pub_date})
+
+                desc_html = text_or_none(item.find('description'))
+                if not desc_html:
+                    desc_html = text_or_none(item.find('content:encoded', ns))
+                if not desc_html:
+                    desc_html = text_or_none(item.find('atom:summary', ns)) or text_or_none(item.find('atom:content', ns))
+                excerpt = strip_html(desc_html) if desc_html else None
+                if excerpt and len(excerpt) > 240:
+                    excerpt = excerpt[:237].rstrip() + '...'
+
+                author = text_or_none(item.find('dc:creator', ns))
+                if not author:
+                    atom_author = item.find('atom:author', ns)
+                    if atom_author is not None:
+                        author = text_or_none(atom_author.find('atom:name', ns)) or text_or_none(atom_author.find('name'))
+
+                categories = extract_categories(item)
+                image = extract_image(item)
+
+                items.append({
+                    'title': title,
+                    'link': link,
+                    'pubDate': pub_date,
+                    'excerpt': excerpt,
+                    'author': author,
+                    'categories': categories,
+                    'image': image
+                })
             return jsonify({'items': items, 'source': feed_url}), 200
         except Exception as e:
             last_error = str(e)
