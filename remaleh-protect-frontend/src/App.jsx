@@ -687,9 +687,8 @@ function App() {
                         {post.excerpt && (
                           <p className="text-gray-600 text-sm mb-3 line-clamp-3">{post.excerpt}</p>
                         )}
-                        <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center text-xs text-gray-500">
                           <span>{formatDate(post.pubDate)}</span>
-                          {post.author && <span className="ml-2">By {post.author}</span>}
                         </div>
                         {Array.isArray(post.categories) && post.categories.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
