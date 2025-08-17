@@ -176,6 +176,11 @@ def create_admin_user():
             admin_user.set_password(admin_password)
             
             # Add to session and commit
+            # Ensure admin is marked as email verified
+            try:
+                setattr(admin_user, 'email_verified', True)
+            except Exception:
+                pass
             db.session.add(admin_user)
             db.session.commit()
             
@@ -195,6 +200,14 @@ def create_admin_user():
                 admin_user.is_admin = True
                 admin_user.role = 'ADMIN'
                 logger.info("Existing user upgraded to admin")
+            # Always mark admin as verified (for preexisting accounts after enabling verification)
+            try:
+                if getattr(admin_user, 'email_verified', False) is not True:
+                    setattr(admin_user, 'email_verified', True)
+                    db.session.commit()
+                    logger.info("✓ Admin user marked email_verified=True")
+            except Exception as _:
+                logger.debug("email_verified field not present or update skipped")
             
             # ALWAYS update password if ADMIN_PASSWORD environment variable is set
             if admin_password:
