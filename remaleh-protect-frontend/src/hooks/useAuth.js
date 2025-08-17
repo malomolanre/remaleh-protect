@@ -147,11 +147,14 @@ export const useAuth = () => {
       const response = await apiPost(API_ENDPOINTS.AUTH.REGISTER, userData);
       
       if (response.ok) {
-        const { access_token, refresh_token, user: newUser } = await response.json();
-        
+        const resp = await response.json();
+        // If backend requires verification, it will not include tokens
+        if (resp.requires_verification) {
+          return { success: true, requires_verification: true, user: resp.user };
+        }
+        const { access_token, refresh_token, user: newUser } = resp;
         localStorage.setItem('authToken', access_token);
         localStorage.setItem('refreshToken', refresh_token);
-        
         setUser(newUser);
         setIsAuthenticated(true);
         window.dispatchEvent(new Event('remaleh-auth-changed'));
@@ -166,6 +169,50 @@ export const useAuth = () => {
       return { success: false, error: 'Network error occurred' };
     } finally {
       setIsLoading(false);
+    }
+  }, []);
+
+  const verifyEmail = useCallback(async (email, code) => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      const response = await apiPost(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { email, code });
+      if (response.ok) {
+        const resp = await response.json();
+        const { access_token, refresh_token, user: verifiedUser } = resp;
+        localStorage.setItem('authToken', access_token);
+        localStorage.setItem('refreshToken', refresh_token);
+        setUser(verifiedUser);
+        setIsAuthenticated(true);
+        window.dispatchEvent(new Event('remaleh-auth-changed'));
+        return { success: true };
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || errorData.message || 'Verification failed');
+        return { success: false, error: errorData.error || errorData.message };
+      }
+    } catch (err) {
+      setError('Network error occurred');
+      return { success: false, error: 'Network error occurred' };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const resendVerification = useCallback(async (email) => {
+    try {
+      setError(null);
+      const response = await apiPost(API_ENDPOINTS.AUTH.RESEND_VERIFICATION, { email });
+      if (response.ok) {
+        return { success: true };
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || errorData.message || 'Resend failed');
+        return { success: false, error: errorData.error || errorData.message };
+      }
+    } catch (err) {
+      setError('Network error occurred');
+      return { success: false, error: 'Network error occurred' };
     }
   }, []);
 
@@ -272,6 +319,8 @@ export const useAuth = () => {
     error,
     login,
     register,
+    verifyEmail,
+    resendVerification,
     logout,
     updateProfile,
     changePassword,

@@ -11,7 +11,10 @@ const Register = ({ onRegisterSuccess }) => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const { register, error, user, isAuthenticated } = useAuth();
+  const { register, verifyEmail, resendVerification, error, user, isAuthenticated } = useAuth();
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verifyMsg, setVerifyMsg] = useState('');
 
   // Watch for authentication changes and redirect accordingly
   useEffect(() => {
@@ -73,6 +76,9 @@ const Register = ({ onRegisterSuccess }) => {
       if (!result.success) {
         // Error is already set in useAuth hook
         console.error('Registration failed:', result.error);
+      } else if (result.requires_verification) {
+        setNeedsVerification(true);
+        setVerifyMsg('We sent a 6-digit code to your email. Enter it below to verify your account.');
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -116,6 +122,7 @@ const Register = ({ onRegisterSuccess }) => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {!needsVerification && (
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
@@ -277,6 +284,56 @@ const Register = ({ onRegisterSuccess }) => {
               </button>
             </div>
           </form>
+          )}
+
+          {needsVerification && (
+            <div className="space-y-4">
+              {verifyMsg && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-sm text-blue-800">{verifyMsg}</p>
+                </div>
+              )}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Verification code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  className="mt-1 appearance-none block w-full px-3 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm border-gray-300"
+                  placeholder="Enter 6-digit code"
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  if (!formData.email || verificationCode.length !== 6) return;
+                  const res = await verifyEmail(formData.email.trim().toLowerCase(), verificationCode);
+                  if (res.success && onRegisterSuccess) onRegisterSuccess();
+                }}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+              >
+                Verify and continue
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!formData.email) return;
+                  await resendVerification(formData.email.trim().toLowerCase());
+                  setVerifyMsg('A new code has been sent to your email.');
+                }}
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Resend code
+              </button>
+            </div>
+          )}
 
           <div className="mt-6">
             <div className="relative">

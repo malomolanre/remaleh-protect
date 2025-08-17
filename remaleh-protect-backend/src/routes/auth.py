@@ -1,16 +1,52 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt
 import os
+import random
+import string
+import smtplib
+from email.mime.text import MIMEText
 try:
     from ..models import db, User
     from ..auth import create_tokens, token_required, get_current_user_id, update_user_login
+    from ..cache import cache
 except ImportError:
     from models import db, User
     from auth import create_tokens, token_required, get_current_user_id, update_user_login
+    from cache import cache
 
 auth_bp = Blueprint('auth', __name__)
+def _generate_code(length=6):
+    return ''.join(random.choices(string.digits, k=length))
+
+def _send_email(subject, to_email, html_body):
+    provider = current_app.config.get('EMAIL_PROVIDER', 'SMTP')
+    sender = current_app.config.get('EMAIL_SENDER') or 'no-reply@remalehprotect.remaleh.com.au'
+    if provider == 'SMTP':
+        host = current_app.config.get('SMTP_HOST')
+        username = current_app.config.get('SMTP_USERNAME')
+        password = current_app.config.get('SMTP_PASSWORD')
+        port = current_app.config.get('SMTP_PORT', 587)
+        use_tls = current_app.config.get('SMTP_USE_TLS', True)
+        if not host or not username or not password:
+            return False, 'SMTP not configured'
+        msg = MIMEText(html_body, 'html')
+        msg['Subject'] = subject
+        msg['From'] = sender
+        msg['To'] = to_email
+        try:
+            with smtplib.SMTP(host, port, timeout=10) as server:
+                if use_tls:
+                    server.starttls()
+                server.login(username, password)
+                server.sendmail(sender, [to_email], msg.as_string())
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    # Future: add RESEND/SENDGRID if configured
+    return False, 'Email provider not configured'
+
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -35,18 +71,40 @@ def register():
         )
         user.set_password(data['password'])
         
+        # If email verification required, generate code and send email
+        require_verification = current_app.config.get('REQUIRE_EMAIL_VERIFICATION', False)
+        if require_verification:
+            code = _generate_code(6)
+            user.email_verified = False
+            user.email_verification_code = code
+            user.email_verification_expires_at = datetime.utcnow() + timedelta(minutes=15)
         db.session.add(user)
         db.session.commit()
+        if require_verification:
+            subject = 'Verify your Remaleh Protect account'
+            html = f"""
+                <p>Welcome to Remaleh Protect!</p>
+                <p>Your verification code is:</p>
+                <h2 style='letter-spacing:4px'>{code}</h2>
+                <p>This code expires in 15 minutes.</p>
+            """
+            _send_email(subject, user.email, html)
         
-        # Create tokens
-        access_token, refresh_token = create_tokens(user.id)
-        
-        return jsonify({
-            'message': 'User registered successfully',
-            'user': user.to_dict(),
-            'access_token': access_token,
-            'refresh_token': refresh_token
-        }), 201
+        # If verification required, do not issue tokens yet
+        if require_verification:
+            return jsonify({
+                'message': 'User registered. Verification code sent to email.',
+                'user': user.to_dict(),
+                'requires_verification': True
+            }), 201
+        else:
+            access_token, refresh_token = create_tokens(user.id)
+            return jsonify({
+                'message': 'User registered successfully',
+                'user': user.to_dict(),
+                'access_token': access_token,
+                'refresh_token': refresh_token
+            }), 201
         
     except Exception as e:
         db.session.rollback()
@@ -80,6 +138,9 @@ def login():
                 'user_admin': user.is_admin
             }), 401
         
+        # Enforce email verification if required
+        if current_app.config.get('REQUIRE_EMAIL_VERIFICATION', False) and not user.email_verified:
+            return jsonify({'error': 'Email not verified', 'requires_verification': True}), 403
         # Update last login
         update_user_login(user.id)
         
@@ -92,6 +153,96 @@ def login():
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 200
+@auth_bp.route('/verify-email', methods=['POST'])
+def verify_email():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        code = data.get('code')
+        # Rate limit: 10 attempts per hour per email and IP
+        rl_key_ip = f"verify_attempts:ip:{request.remote_addr}"
+        rl_key_email = f"verify_attempts:email:{(email or '').lower()}"
+        if cache and cache.redis_client:
+            attempts_ip = cache.redis_client.incr(rl_key_ip)
+            if attempts_ip == 1:
+                cache.redis_client.expire(rl_key_ip, 3600)
+            attempts_email = cache.redis_client.incr(rl_key_email)
+            if attempts_email == 1:
+                cache.redis_client.expire(rl_key_email, 3600)
+            if attempts_ip > 50 or attempts_email > 10:
+                return jsonify({'error': 'Too many verification attempts. Please try again later.'}), 429
+        if not email or not code:
+            return jsonify({'error': 'Email and code are required'}), 400
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        if user.email_verified:
+            return jsonify({'message': 'Already verified'}), 200
+        if not user.email_verification_code or user.email_verification_code != code:
+            return jsonify({'error': 'Invalid verification code'}), 400
+        if user.email_verification_expires_at and datetime.utcnow() > user.email_verification_expires_at:
+            return jsonify({'error': 'Verification code expired'}), 400
+        user.email_verified = True
+        user.email_verification_code = None
+        user.email_verification_expires_at = None
+        db.session.commit()
+        # Issue tokens after successful verification
+        access_token, refresh_token = create_tokens(user.id)
+        return jsonify({
+            'message': 'Email verified successfully',
+            'user': user.to_dict(),
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/resend-verification', methods=['POST'])
+def resend_verification():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        # Rate limit: 1/min and 5/day per email and IP
+        rl_ip_min = f"resend:min:ip:{request.remote_addr}"
+        rl_email_min = f"resend:min:email:{(email or '').lower()}"
+        rl_ip_day = f"resend:day:ip:{request.remote_addr}"
+        rl_email_day = f"resend:day:email:{(email or '').lower()}"
+        if cache and cache.redis_client:
+            if cache.redis_client.exists(rl_ip_min) or cache.redis_client.exists(rl_email_min):
+                return jsonify({'error': 'Please wait before requesting another code.'}), 429
+            day_ip = cache.redis_client.incr(rl_ip_day)
+            if day_ip == 1:
+                cache.redis_client.expire(rl_ip_day, 86400)
+            day_email = cache.redis_client.incr(rl_email_day)
+            if day_email == 1:
+                cache.redis_client.expire(rl_email_day, 86400)
+            if day_ip > 20 or day_email > 5:
+                return jsonify({'error': 'Daily resend limit reached. Try again tomorrow.'}), 429
+            cache.redis_client.setex(rl_ip_min, 60, 1)
+            cache.redis_client.setex(rl_email_min, 60, 1)
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        if user.email_verified:
+            return jsonify({'message': 'Already verified'}), 200
+        code = _generate_code(6)
+        user.email_verification_code = code
+        user.email_verification_expires_at = datetime.utcnow() + timedelta(minutes=15)
+        db.session.commit()
+        subject = 'Verify your Remaleh Protect account'
+        html = f"""
+            <p>Your verification code is:</p>
+            <h2 style='letter-spacing:4px'>{code}</h2>
+            <p>This code expires in 15 minutes.</p>
+        """
+        _send_email(subject, user.email, html)
+        return jsonify({'message': 'Verification code resent'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

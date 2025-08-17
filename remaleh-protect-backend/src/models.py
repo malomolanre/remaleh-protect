@@ -23,6 +23,10 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     role = db.Column(db.String(20), default='USER')  # USER, MODERATOR, ADMIN
     account_status = db.Column(db.String(20), default='ACTIVE')  # ACTIVE, SUSPENDED, BANNED
+    # Email verification
+    email_verified = db.Column(db.Boolean, default=False)
+    email_verification_code = db.Column(db.String(12))
+    email_verification_expires_at = db.Column(db.DateTime)
     
     # Relationships
     scans = db.relationship('UserScan', backref='user', lazy=True)
@@ -51,7 +55,8 @@ class User(db.Model):
             'is_active': self.is_active,
             'is_admin': self.is_admin,
             'role': self.role,
-            'account_status': self.account_status
+            'account_status': self.account_status,
+            'email_verified': self.email_verified
         }
 
 class UserScan(db.Model):

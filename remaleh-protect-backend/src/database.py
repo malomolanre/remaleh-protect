@@ -107,6 +107,22 @@ class DatabaseManager:
                 except Exception as e:
                     # Ignore if column already exists or ALTER not needed
                     logger.debug(f"Bio column add skipped/failed (likely exists): {e}")
+                # Ensure email verification columns exist
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE"))
+                    logger.info("Added missing 'email_verified' column to users table")
+                except Exception as e:
+                    logger.debug(f"email_verified column add skipped/failed (likely exists): {e}")
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN email_verification_code VARCHAR(12)"))
+                    logger.info("Added missing 'email_verification_code' column to users table")
+                except Exception as e:
+                    logger.debug(f"email_verification_code column add skipped/failed (likely exists): {e}")
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN email_verification_expires_at TIMESTAMP"))
+                    logger.info("Added missing 'email_verification_expires_at' column to users table")
+                except Exception as e:
+                    logger.debug(f"email_verification_expires_at column add skipped/failed (likely exists): {e}")
                 
                 # LearningProgress table indexes
                 conn.execute(text("""

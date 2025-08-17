@@ -23,7 +23,9 @@ export const API_ENDPOINTS = {
     PROFILE: '/api/auth/profile',
     REFRESH: '/api/auth/refresh',
     LOGOUT: '/api/auth/logout',
-    CHANGE_PASSWORD: '/api/auth/change-password'
+    CHANGE_PASSWORD: '/api/auth/change-password',
+    VERIFY_EMAIL: '/api/auth/verify-email',
+    RESEND_VERIFICATION: '/api/auth/resend-verification'
   },
   
   // Admin

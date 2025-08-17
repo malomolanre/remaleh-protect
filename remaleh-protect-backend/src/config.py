@@ -75,6 +75,19 @@ class Config:
     CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY')
     CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET')
 
+    # Email (verification/notifications)
+    EMAIL_SENDER = os.getenv('EMAIL_SENDER')
+    # Choice of provider; default to SMTP for flexibility on Render
+    EMAIL_PROVIDER = os.getenv('EMAIL_PROVIDER', 'SMTP')  # SMTP, RESEND, SENDGRID
+    SMTP_HOST = os.getenv('SMTP_HOST')
+    SMTP_PORT = int(os.getenv('SMTP_PORT', 587)) if os.getenv('SMTP_PORT') else 587
+    SMTP_USERNAME = os.getenv('SMTP_USERNAME')
+    SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
+    SMTP_USE_TLS = os.getenv('SMTP_USE_TLS', 'true').lower() == 'true'
+    RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+    SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+    REQUIRE_EMAIL_VERIFICATION = os.getenv('REQUIRE_EMAIL_VERIFICATION', 'false').lower() == 'true'
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
