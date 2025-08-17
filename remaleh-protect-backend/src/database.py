@@ -100,29 +100,44 @@ class DatabaseManager:
                     CREATE INDEX IF NOT EXISTS idx_learning_modules_is_active ON learning_modules(is_active);
                 """))
                 
-                # Lightweight schema migration: ensure 'bio' column exists on users
+                # Lightweight schema migration: ensure new user columns exist
+                # Use IF NOT EXISTS where supported (PostgreSQL). If an error occurs, rollback to clear aborted txn.
                 try:
-                    conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
-                    logger.info("Added missing 'bio' column to users table")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT"))
+                    logger.info("Ensured 'bio' column on users table")
                 except Exception as e:
-                    # Ignore if column already exists or ALTER not needed
-                    logger.debug(f"Bio column add skipped/failed (likely exists): {e}")
-                # Ensure email verification columns exist
+                    logger.debug(f"Bio column add skipped/failed: {e}")
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
                 try:
-                    conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE"))
-                    logger.info("Added missing 'email_verified' column to users table")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE"))
+                    logger.info("Ensured 'email_verified' column on users table")
                 except Exception as e:
-                    logger.debug(f"email_verified column add skipped/failed (likely exists): {e}")
+                    logger.debug(f"email_verified column add skipped/failed: {e}")
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
                 try:
-                    conn.execute(text("ALTER TABLE users ADD COLUMN email_verification_code VARCHAR(12)"))
-                    logger.info("Added missing 'email_verification_code' column to users table")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_code VARCHAR(12)"))
+                    logger.info("Ensured 'email_verification_code' column on users table")
                 except Exception as e:
-                    logger.debug(f"email_verification_code column add skipped/failed (likely exists): {e}")
+                    logger.debug(f"email_verification_code column add skipped/failed: {e}")
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
                 try:
-                    conn.execute(text("ALTER TABLE users ADD COLUMN email_verification_expires_at TIMESTAMP"))
-                    logger.info("Added missing 'email_verification_expires_at' column to users table")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires_at TIMESTAMP"))
+                    logger.info("Ensured 'email_verification_expires_at' column on users table")
                 except Exception as e:
-                    logger.debug(f"email_verification_expires_at column add skipped/failed (likely exists): {e}")
+                    logger.debug(f"email_verification_expires_at column add skipped/failed: {e}")
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
                 
                 # LearningProgress table indexes
                 conn.execute(text("""
