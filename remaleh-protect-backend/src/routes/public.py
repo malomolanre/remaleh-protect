@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timezone
 import urllib.request
 import xml.etree.ElementTree as ET
 import re
 import html as html_lib
+import email.utils as email_utils
 
 public_bp = Blueprint('public', __name__)
 
@@ -135,6 +136,31 @@ def blog_feed():
                     'categories': categories,
                     'image': image
                 })
+            # Sort items by pubDate desc if available
+            def _parse_date(value):
+                if not value:
+                    return 0
+                try:
+                    # Try RFC 2822/RSS style
+                    dt = email_utils.parsedate_to_datetime(value)
+                    if dt is None:
+                        raise ValueError('unparsed')
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    return int(dt.timestamp())
+                except Exception:
+                    try:
+                        # Try ISO 8601 (Atom)
+                        s = value.replace('Z', '+00:00')
+                        dt = datetime.fromisoformat(s)
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=timezone.utc)
+                        return int(dt.timestamp())
+                    except Exception:
+                        return 0
+
+            items.sort(key=lambda it: _parse_date(it.get('pubDate')), reverse=True)
+
             return jsonify({'items': items, 'source': feed_url}), 200
         except Exception as e:
             last_error = str(e)

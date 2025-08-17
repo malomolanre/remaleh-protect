@@ -690,13 +690,7 @@ function App() {
                         <div className="flex items-center text-xs text-gray-500">
                           <span>{formatDate(post.pubDate)}</span>
                         </div>
-                        {Array.isArray(post.categories) && post.categories.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {post.categories.slice(0, 3).map((cat, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs">{cat}</span>
-                            ))}
-                          </div>
-                        )}
+                        
                       </div>
                     </a>
                   ))}
