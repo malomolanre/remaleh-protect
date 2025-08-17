@@ -243,9 +243,6 @@ def resend_verification():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @auth_bp.route('/profile', methods=['GET'])
 @token_required
