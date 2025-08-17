@@ -153,6 +153,8 @@ def login():
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 @auth_bp.route('/verify-email', methods=['POST'])
 def verify_email():
     try:
