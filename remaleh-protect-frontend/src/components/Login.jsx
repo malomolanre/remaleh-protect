@@ -7,7 +7,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { login, error, user, isAuthenticated } = useAuth();
+  const { login, error, user, isAuthenticated, requestPasswordReset } = useAuth();
+  const [infoMsg, setInfoMsg] = useState('');
 
   // Watch for authentication changes and redirect accordingly
   useEffect(() => {
@@ -135,11 +136,27 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!formData.email.trim()) {
+                      setInfoMsg('Enter your email above, then click reset.');
+                      return;
+                    }
+                    const res = await requestPasswordReset(formData.email.trim());
+                    setInfoMsg(res.message || 'If this email exists, a temporary password has been sent.');
+                  }}
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
                   Forgot your password?
-                </a>
+                </button>
               </div>
             </div>
+            {infoMsg && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                {infoMsg}
+              </div>
+            )}
 
             <div>
               <button
@@ -192,3 +209,4 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
 };
 
 export default Login;
+

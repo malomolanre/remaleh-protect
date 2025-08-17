@@ -25,7 +25,8 @@ export const API_ENDPOINTS = {
     LOGOUT: '/api/auth/logout',
     CHANGE_PASSWORD: '/api/auth/change-password',
     VERIFY_EMAIL: '/api/auth/verify-email',
-    RESEND_VERIFICATION: '/api/auth/resend-verification'
+    RESEND_VERIFICATION: '/api/auth/resend-verification',
+    REQUEST_PASSWORD_RESET: '/api/auth/request-password-reset'
   },
   
   // Admin

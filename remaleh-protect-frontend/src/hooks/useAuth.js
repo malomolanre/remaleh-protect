@@ -232,6 +232,28 @@ export const useAuth = () => {
     }
   }, []);
 
+  const requestPasswordReset = useCallback(async (email) => {
+    try {
+      setError(null);
+      const response = await apiPost(API_ENDPOINTS.AUTH.REQUEST_PASSWORD_RESET, { email });
+      if (response.ok) {
+        const resp = await response.json();
+        return { success: true, message: resp.message || 'If this email exists, a temporary password has been sent.' };
+      } else {
+        let msg = 'Please wait before trying again.';
+        try {
+          const err = await response.json();
+          msg = err.error || err.message || msg;
+        } catch (_) {}
+        setError(msg);
+        return { success: false, error: msg };
+      }
+    } catch (err) {
+      setError('Network error occurred');
+      return { success: false, error: 'Network error occurred' };
+    }
+  }, []);
+
   // Logout function
   const logout = useCallback(async () => {
     try {
@@ -337,6 +359,7 @@ export const useAuth = () => {
     register,
     verifyEmail,
     resendVerification,
+    requestPasswordReset,
     logout,
     updateProfile,
     changePassword,

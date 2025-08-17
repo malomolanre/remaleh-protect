@@ -285,6 +285,65 @@ def resend_verification():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@auth_bp.route('/request-password-reset', methods=['POST'])
+def request_password_reset():
+    try:
+        data = request.get_json()
+        email = (data.get('email') or '').strip().lower()
+        # Basic email validation and domain check
+        err = _validate_email_input(email)
+        if err:
+            # Do not leak enumeration details; return generic message
+            return jsonify({'message': 'If this email exists, a temporary password has been sent.'}), 200
+
+        # Rate limit: 1/min and 3/day per email; 10/day per IP
+        if cache and cache.redis_client:
+            rl_min_email = f"pwdreset:min:email:{email}"
+            rl_min_ip = f"pwdreset:min:ip:{request.remote_addr}"
+            rl_day_email = f"pwdreset:day:email:{email}"
+            rl_day_ip = f"pwdreset:day:ip:{request.remote_addr}"
+            if cache.redis_client.exists(rl_min_email) or cache.redis_client.exists(rl_min_ip):
+                return jsonify({'error': 'Please wait before requesting another reset.'}), 429
+            day_email = cache.redis_client.incr(rl_day_email)
+            if day_email == 1:
+                cache.redis_client.expire(rl_day_email, 86400)
+            day_ip = cache.redis_client.incr(rl_day_ip)
+            if day_ip == 1:
+                cache.redis_client.expire(rl_day_ip, 86400)
+            if day_email > 3 or day_ip > 10:
+                return jsonify({'error': 'Daily reset limit reached. Try again tomorrow.'}), 429
+            cache.redis_client.setex(rl_min_email, 60, 1)
+            cache.redis_client.setex(rl_min_ip, 60, 1)
+
+        user = User.query.filter_by(email=email).first()
+        # Always return success-style message to avoid user enumeration
+        if not user or not user.is_active:
+            return jsonify({'message': 'If this email exists, a temporary password has been sent.'}), 200
+
+        # Generate a temporary password
+        alphabet = string.ascii_letters + string.digits
+        temp_password = ''.join(random.choices(alphabet, k=12))
+        user.set_password(temp_password)
+        db.session.commit()
+
+        # Email the temporary password
+        subject = 'Your Remaleh Protect temporary password'
+        html = f"""
+            <p>Hello,</p>
+            <p>Your temporary password is:</p>
+            <h2 style='letter-spacing:2px'>{temp_password}</h2>
+            <p>Please sign in and change your password immediately from Profile Settings.</p>
+        """
+        ok, err_send = _send_email(subject, user.email, html)
+        if not ok:
+            # Still avoid enumeration; generic success response
+            return jsonify({'message': 'If this email exists, a temporary password has been sent.'}), 200
+
+        return jsonify({'message': 'If this email exists, a temporary password has been sent.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @auth_bp.route('/profile', methods=['GET'])
 @token_required
 def get_profile(current_user):
