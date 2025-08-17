@@ -1144,6 +1144,27 @@ export default function AdminDashboard({ setActiveTab }) {
                     <option value="MODERATOR">Moderator</option>
                     <option value="ADMIN">Admin</option>
                   </select>
+
+                  {/* Email Verified Toggle */}
+                  <label className="flex items-center space-x-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={!!user.email_verified}
+                      onChange={async (e) => {
+                        try {
+                          setActionLoading(true)
+                          await updateUserInfo(user.id, { email_verified: e.target.checked })
+                          await loadUsers()
+                        } catch (err) {
+                          alert('Failed to update verification flag: ' + (err.message || 'Unknown error'))
+                        } finally {
+                          setActionLoading(false)
+                        }
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <span>Email verified</span>
+                  </label>
                 </div>
               </div>
             </MobileCard>

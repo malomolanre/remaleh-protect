@@ -369,6 +369,15 @@ def update_user(current_user, user_id):
                 return jsonify({'error': 'Invalid status'}), 400
             user.account_status = new_status
             logger.info(f"Admin {current_user.email} updated user {user.email} status to {new_status}")
+
+        # Update email verification flag if provided
+        if 'email_verified' in data:
+            try:
+                user.email_verified = bool(data['email_verified'])
+                logger.info(f"Admin {current_user.email} set user {user.email} email_verified={user.email_verified}")
+            except Exception:
+                # Column might not exist on legacy DB; ignore gracefully
+                pass
         
         db.session.commit()
         
