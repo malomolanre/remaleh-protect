@@ -141,6 +141,7 @@ def get_users(current_user):
                 'role': user.role,
                 'status': user.account_status,
                 'is_admin': user.is_admin,
+                'email_verified': getattr(user, 'email_verified', None),
                 'created_at': user.created_at.isoformat() if user.created_at else None,
                 'last_login': user.last_login.isoformat() if user.last_login else None,
                 'report_count': report_count
@@ -247,6 +248,7 @@ def get_user(current_user, user_id):
             'role': user.role,
             'status': user.account_status,
             'is_admin': user.is_admin,
+            'email_verified': getattr(user, 'email_verified', None),
             'created_at': user.created_at.isoformat() if user.created_at else None,
             'last_login': user.last_login.isoformat() if user.last_login else None,
             'report_count': report_count,
