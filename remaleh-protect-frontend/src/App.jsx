@@ -1773,6 +1773,12 @@ function App() {
                     >
                       Sign Out
                     </button>
+                    <a
+                      href="/privacy.html"
+                      className="block w-full text-left px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                    >
+                      Privacy Policy
+                    </a>
                   </>
                 ) : (
                   <>
@@ -1795,6 +1801,12 @@ function App() {
                     >
                       Create Account
                     </button>
+                    <a
+                      href="/privacy.html"
+                      className="block w-full text-left px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                    >
+                      Privacy Policy
+                    </a>
                   </>
                 )}
               </div>
@@ -1808,10 +1820,7 @@ function App() {
         {renderContent()}
       </main>
 
-      {/* Footer - Legal Links */}
-      <footer className="px-6 pb-28 text-center text-xs text-gray-500">
-        <a href="/privacy.html" className="underline">Privacy Policy</a>
-      </footer>
+      {/* Footer intentionally minimal (no legal links shown) */}
 
       {/* Password Generator Modal */}
       {showPasswordGenerator && (
