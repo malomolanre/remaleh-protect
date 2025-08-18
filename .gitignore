@@ -1,0 +1,6 @@
+# Ignore iOS vendored gems (Bundler)
+remaleh-protect-frontend/ios/App/vendor/
+# Ignore iOS Pods
+remaleh-protect-frontend/ios/App/Pods/
+# Ignore frontend env files
+remaleh-protect-frontend/.env*
