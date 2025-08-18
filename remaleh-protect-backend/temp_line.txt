@@ -1,0 +1,1 @@
+        print(f"✅ App environment: {app.config.get(\"ENV\", \"production\")}")
