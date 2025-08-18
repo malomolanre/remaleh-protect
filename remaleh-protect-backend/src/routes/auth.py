@@ -470,7 +470,7 @@ def oauth_apple_start():
         url = (
             'https://appleid.apple.com/auth/authorize'
             f'?response_type=code'
-            f'&response_mode=query'
+            f'&response_mode=form_post'
             f'&client_id={requests.utils.quote(client_id)}'
             f'&redirect_uri={requests.utils.quote(redirect_uri)}'
             f'&scope={requests.utils.quote(scope)}'
