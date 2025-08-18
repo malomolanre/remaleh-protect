@@ -88,6 +88,16 @@ class Config:
     SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
     REQUIRE_EMAIL_VERIFICATION = os.getenv('REQUIRE_EMAIL_VERIFICATION', 'false').lower() == 'true'
 
+    # OAuth (Google / Apple)
+    FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+    GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+    GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI')  # e.g., https://api.example.com/api/auth/oauth/google/callback
+    APPLE_CLIENT_ID = os.getenv('APPLE_CLIENT_ID')  # services id
+    APPLE_TEAM_ID = os.getenv('APPLE_TEAM_ID')
+    APPLE_KEY_ID = os.getenv('APPLE_KEY_ID')
+    APPLE_PRIVATE_KEY = os.getenv('APPLE_PRIVATE_KEY')  # contents of .p8 key
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True

@@ -9,6 +9,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { login, error, user, isAuthenticated, requestPasswordReset } = useAuth();
   const [infoMsg, setInfoMsg] = useState('');
+  const [oauthLoading, setOauthLoading] = useState(false);
 
   // Watch for authentication changes and redirect accordingly
   useEffect(() => {
@@ -151,6 +152,50 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                   Forgot your password?
                 </button>
               </div>
+            </div>
+            {infoMsg && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                {infoMsg}
+              </div>
+            )}
+
+            {/* OAuth Divider */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">or</span>
+              </div>
+            </div>
+
+            {/* Google Sign-in */}
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setOauthLoading(true)
+                    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
+                    const resp = await fetch(`${apiBase}/api/auth/oauth/google/start`)
+                    if (resp.ok) {
+                      const data = await resp.json()
+                      if (data.auth_url) window.location.href = data.auth_url
+                    } else {
+                      setInfoMsg('Google sign-in is not available right now.')
+                    }
+                  } catch (e) {
+                    setInfoMsg('Google sign-in is not available right now.')
+                  } finally {
+                    setOauthLoading(false)
+                  }
+                }}
+                disabled={oauthLoading}
+                className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4 mr-2" />
+                Continue with Google
+              </button>
             </div>
             {infoMsg && (
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">

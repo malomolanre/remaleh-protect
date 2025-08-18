@@ -61,6 +61,23 @@ function App() {
     };
   }, []);
 
+  // Capture OAuth redirect tokens
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const oauth = params.get('oauth')
+      const access = params.get('access_token')
+      const refresh = params.get('refresh_token')
+      if (oauth && access && refresh) {
+        localStorage.setItem('authToken', access)
+        localStorage.setItem('refreshToken', refresh)
+        window.history.replaceState({}, document.title, window.location.pathname)
+        window.dispatchEvent(new Event('remaleh-auth-changed'))
+        setActiveTab('home')
+      }
+    } catch (_) {}
+  }, [])
+
   // Dynamic greeting based on time of day
   useEffect(() => {
     const getGreeting = () => {

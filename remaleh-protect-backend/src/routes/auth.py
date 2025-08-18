@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt
@@ -8,6 +8,7 @@ import string
 import smtplib
 from email.mime.text import MIMEText
 import re
+import requests
 try:
     from ..models import db, User
     from ..auth import create_tokens, token_required, get_current_user_id, update_user_login
@@ -343,6 +344,91 @@ def request_password_reset():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/oauth/google/start', methods=['GET'])
+def oauth_google_start():
+    try:
+        client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+        redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
+        if not client_id or not redirect_uri:
+            return jsonify({'error': 'Google OAuth not configured'}), 400
+        scope = 'openid email profile'
+        state = 'secure'  # TODO: generate and persist CSRF token in session or Redis
+        url = (
+            'https://accounts.google.com/o/oauth2/v2/auth'
+            f'?client_id={client_id}'
+            f'&redirect_uri={redirect_uri}'
+            f'&response_type=code'
+            f'&scope={requests.utils.quote(scope)}'
+            f'&state={state}'
+            f'&prompt=consent'
+        )
+        return jsonify({ 'auth_url': url })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/oauth/google/callback', methods=['GET'])
+def oauth_google_callback():
+    try:
+        code = request.args.get('code')
+        if not code:
+            return jsonify({'error': 'Missing code'}), 400
+        client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+        client_secret = current_app.config.get('GOOGLE_CLIENT_SECRET')
+        redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
+        if not client_id or not client_secret or not redirect_uri:
+            return jsonify({'error': 'Google OAuth not configured'}), 400
+        # Exchange code for tokens
+        token_resp = requests.post('https://oauth2.googleapis.com/token', data={
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'code': code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': redirect_uri
+        }, timeout=10)
+        if token_resp.status_code != 200:
+            return jsonify({'error': 'Token exchange failed'}), 400
+        tokens = token_resp.json()
+        id_token = tokens.get('id_token')
+        # Get user info
+        userinfo_resp = requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers={
+            'Authorization': f"Bearer {tokens.get('access_token')}"
+        }, timeout=10)
+        if userinfo_resp.status_code != 200:
+            return jsonify({'error': 'Failed to fetch user info'}), 400
+        profile = userinfo_resp.json()
+        email = (profile.get('email') or '').lower()
+        if not email:
+            return jsonify({'error': 'Email not available from provider'}), 400
+        # Find or create user
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                email=email,
+                first_name=profile.get('given_name') or '',
+                last_name=profile.get('family_name') or '',
+                is_active=True,
+                role='USER'
+            )
+            # Mark email verified for social sign-in
+            try:
+                user.email_verified = True
+            except Exception:
+                pass
+            # Set a random password (not used for social login)
+            user.set_password(_generate_code(12))
+            db.session.add(user)
+            db.session.commit()
+        # Issue tokens
+        access_token, refresh_token = create_tokens(user.id)
+        # Redirect back to frontend with tokens for the SPA to capture
+        frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
+        redirect_url = f"{frontend}/?oauth=google&access_token={access_token}&refresh_token={refresh_token}"
+        return redirect(redirect_url, code=302)
+    except Exception as e:
+        db.session.rollback()
+        frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
+        return redirect(f"{frontend}/?oauth=google&error=oauth_failed", code=302)
 
 @auth_bp.route('/profile', methods=['GET'])
 @token_required
