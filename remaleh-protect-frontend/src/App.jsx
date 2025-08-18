@@ -1808,6 +1808,11 @@ function App() {
         {renderContent()}
       </main>
 
+      {/* Footer - Legal Links */}
+      <footer className="px-6 pb-28 text-center text-xs text-gray-500">
+        <a href="/privacy.html" className="underline">Privacy Policy</a>
+      </footer>
+
       {/* Password Generator Modal */}
       {showPasswordGenerator && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

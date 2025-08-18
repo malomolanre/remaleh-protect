@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy - Remaleh Protect</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 2rem; color: #111827; }
+      a { color: #2563eb; }
+      h1 { font-size: 1.875rem; margin-bottom: .5rem; }
+      h2 { font-size: 1.25rem; margin-top: 1.5rem; }
+      p, li { color: #374151; }
+      .muted { color: #6b7280; font-size: .875rem; }
+      .container { max-width: 820px; margin: 0 auto; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Privacy Policy</h1>
+      <p class="muted">Last updated: <span id="pp-date"></span></p>
+      <p>
+        Remaleh Protect respects your privacy. This policy explains what information we collect,
+        how we use it, and your choices. We collect only what is necessary to provide our services
+        (e.g., account email, reports you submit) and never sell personal data.
+      </p>
+      <h2>Information We Collect</h2>
+      <ul>
+        <li>Account information: email, name (if provided), role.</li>
+        <li>Community reports and associated media you upload.</li>
+        <li>Learning progress and interactions within the app.</li>
+        <li>Diagnostic logs for performance and error monitoring.</li>
+      </ul>
+      <h2>How We Use Information</h2>
+      <ul>
+        <li>To operate and improve Remaleh Protect features.</li>
+        <li>To moderate community content and keep users safe.</li>
+        <li>To send essential notifications (e.g., verification, password reset).</li>
+        <li>To comply with legal obligations.</li>
+      </ul>
+      <h2>Third-Party Services</h2>
+      <p>
+        We use trusted providers like Amazon SES (email), Cloudinary (media storage), and Google/Apple
+        (OAuth). These providers process data only to deliver our services and under their policies.
+      </p>
+      <h2>Your Choices</h2>
+      <ul>
+        <li>You may access, update, or delete your account data from Profile Settings.</li>
+        <li>You can delete your own community reports and associated media.</li>
+        <li>Contact us to request data export or deletion.</li>
+      </ul>
+      <h2>Contact</h2>
+      <p>
+        For privacy questions or requests, contact: <a href="mailto:support@remaleh.com.au">support@remaleh.com.au</a>.
+      </p>
+      <p class="muted">© <span id="pp-year"></span> Remaleh. All rights reserved.</p>
+    </div>
+    <script>
+      const d = new Date();
+      document.getElementById('pp-year').textContent = d.getFullYear();
+      document.getElementById('pp-date').textContent = d.toISOString().slice(0,10);
+    </script>
+  </body>
+  </html>
+
+
