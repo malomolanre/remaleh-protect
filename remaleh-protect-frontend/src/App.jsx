@@ -233,7 +233,7 @@ function App() {
       }
     } catch (error) {
       console.error('Breach check error:', error)
-      setBreachError('Network error. Please try again.')
+      setBreachError('We couldn\'t reach the breach service. Please check your connection and try again.')
     } finally {
       setIsChecking(false)
     }

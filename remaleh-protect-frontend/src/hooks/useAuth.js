@@ -136,7 +136,7 @@ export const useAuth = () => {
       console.error('Login error details:', err);
       
       // Provide more specific error messages
-      let errorMessage = 'Network error occurred';
+      let errorMessage = 'We couldn\'t reach the server. Please check your connection and try again.';
       if (err.name === 'TypeError' && err.message.includes('fetch')) {
         errorMessage = 'Cannot connect to server. Please check your internet connection or server status.';
       } else if (err.message) {
@@ -181,8 +181,9 @@ export const useAuth = () => {
         return { success: false, error: errorText };
       }
     } catch (err) {
-      setError('Network error occurred');
-      return { success: false, error: 'Network error occurred' };
+      const msg = 'We couldn\'t reach the server. Please check your connection and try again.';
+      setError(msg);
+      return { success: false, error: msg };
     } finally {
       setIsLoading(false);
     }
@@ -208,8 +209,9 @@ export const useAuth = () => {
         return { success: false, error: errorData.error || errorData.message };
       }
     } catch (err) {
-      setError('Network error occurred');
-      return { success: false, error: 'Network error occurred' };
+      const msg = 'We couldn\'t reach the server. Please check your connection and try again.';
+      setError(msg);
+      return { success: false, error: msg };
     } finally {
       setIsLoading(false);
     }
@@ -227,8 +229,9 @@ export const useAuth = () => {
         return { success: false, error: errorData.error || errorData.message };
       }
     } catch (err) {
-      setError('Network error occurred');
-      return { success: false, error: 'Network error occurred' };
+      const msg = 'We couldn\'t reach the server. Please check your connection and try again.';
+      setError(msg);
+      return { success: false, error: msg };
     }
   }, []);
 
@@ -249,8 +252,9 @@ export const useAuth = () => {
         return { success: false, error: msg };
       }
     } catch (err) {
-      setError('Network error occurred');
-      return { success: false, error: 'Network error occurred' };
+      const msg = 'We couldn\'t reach the server. Please check your connection and try again.';
+      setError(msg);
+      return { success: false, error: msg };
     }
   }, []);
 
@@ -302,8 +306,9 @@ export const useAuth = () => {
         return { success: false, error: errorData.message };
       }
     } catch (err) {
-      setError('Network error occurred');
-      return { success: false, error: 'Network error occurred' };
+      const msg = 'We couldn\'t reach the server. Please check your connection and try again.';
+      setError(msg);
+      return { success: false, error: msg };
     } finally {
       setIsLoading(false);
     }
@@ -330,8 +335,9 @@ export const useAuth = () => {
         return { success: false, error: errorData.message };
       }
     } catch (err) {
-      setError('Network error occurred');
-      return { success: false, error: 'Network error occurred' };
+      const msg = 'We couldn\'t reach the server. Please check your connection and try again.';
+      setError(msg);
+      return { success: false, error: msg };
     } finally {
       setIsLoading(false);
     }
