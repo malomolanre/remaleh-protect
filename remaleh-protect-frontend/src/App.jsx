@@ -1684,7 +1684,7 @@ function App() {
       case 'login':
         return <Login onLoginSuccess={() => setActiveTab('home')} onSwitchToRegister={() => setActiveTab('register')} />
       case 'register':
-        return <Register onRegisterSuccess={() => setActiveTab('home')} />
+        return <Register onRegisterSuccess={() => setActiveTab('home')} onSwitchToLogin={() => setActiveTab('login')} />
       case 'profile':
         return <ProfileSettings setActiveTab={setActiveTab} />
       case 'community':
