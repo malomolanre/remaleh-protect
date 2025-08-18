@@ -194,6 +194,9 @@ def create_app():
         "http://localhost:5174",  # Vite dev server alternative
         "http://localhost:5175",  # Vite dev server alternative
         "http://localhost:3000",  # Alternative dev server
+        "http://localhost",       # Generic localhost (some simulators)
+        "capacitor://localhost",  # Capacitor iOS/Android WebView origin
+        "ionic://localhost",      # Ionic/Capacitor legacy origin
         "https://app.remalehprotect.remaleh.com.au",  # Production Render frontend
         "https://api.remalehprotect.remaleh.com.au"   # Production Render backend
     ]
