@@ -430,6 +430,112 @@ def oauth_google_callback():
         frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
         return redirect(f"{frontend}/?oauth=google&error=oauth_failed", code=302)
 
+def _create_apple_client_secret():
+    try:
+        team_id = current_app.config.get('APPLE_TEAM_ID')
+        client_id = current_app.config.get('APPLE_CLIENT_ID')
+        key_id = current_app.config.get('APPLE_KEY_ID')
+        private_key = current_app.config.get('APPLE_PRIVATE_KEY')
+        if not all([team_id, client_id, key_id, private_key]):
+            return None
+        # Normalize private key newlines if provided via env
+        private_key = private_key.replace('\\n', '\n')
+        now = int(datetime.utcnow().timestamp())
+        payload = {
+            'iss': team_id,
+            'iat': now,
+            'exp': now + 3600,  # 1 hour
+            'aud': 'https://appleid.apple.com',
+            'sub': client_id,
+        }
+        headers = { 'kid': key_id }
+        client_secret = jwt.encode(payload, private_key, algorithm='ES256', headers=headers)
+        if isinstance(client_secret, bytes):
+            client_secret = client_secret.decode('utf-8')
+        return client_secret
+    except Exception:
+        return None
+
+@auth_bp.route('/oauth/apple/start', methods=['GET'])
+def oauth_apple_start():
+    try:
+        client_id = current_app.config.get('APPLE_CLIENT_ID')
+        redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')  # reuse pattern; set APPLE redirect if desired
+        # Prefer APPLE_REDIRECT_URI if provided
+        redirect_uri = current_app.config.get('APPLE_REDIRECT_URI', redirect_uri)
+        if not client_id or not redirect_uri:
+            return jsonify({'error': 'Apple OAuth not configured'}), 400
+        scope = 'name email'
+        state = 'secure'  # TODO: generate and persist CSRF token
+        url = (
+            'https://appleid.apple.com/auth/authorize'
+            f'?response_type=code'
+            f'&response_mode=query'
+            f'&client_id={requests.utils.quote(client_id)}'
+            f'&redirect_uri={requests.utils.quote(redirect_uri)}'
+            f'&scope={requests.utils.quote(scope)}'
+            f'&state={state}'
+        )
+        return jsonify({ 'auth_url': url })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/oauth/apple/callback', methods=['GET', 'POST'])
+def oauth_apple_callback():
+    try:
+        code = request.args.get('code') or request.form.get('code')
+        if not code:
+            return jsonify({'error': 'Missing code'}), 400
+        client_id = current_app.config.get('APPLE_CLIENT_ID')
+        redirect_uri = current_app.config.get('APPLE_REDIRECT_URI', current_app.config.get('GOOGLE_REDIRECT_URI'))
+        client_secret = _create_apple_client_secret()
+        if not client_id or not client_secret or not redirect_uri:
+            return jsonify({'error': 'Apple OAuth not configured'}), 400
+        token_resp = requests.post('https://appleid.apple.com/auth/token', data={
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'code': code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': redirect_uri
+        }, timeout=10)
+        if token_resp.status_code != 200:
+            frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
+            return redirect(f"{frontend}/?oauth=apple&error=token_exchange_failed", code=302)
+        tokens = token_resp.json()
+        id_token = tokens.get('id_token')
+        # Decode id_token to extract email and sub; skip signature verification for simplicity here
+        profile = jwt.decode(id_token, options={"verify_signature": False, "verify_aud": False}) if id_token else {}
+        email = (profile.get('email') or '').lower()
+        sub = profile.get('sub')
+        if not email and sub:
+            email = f"{sub}@apple.local"
+        if not email:
+            frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
+            return redirect(f"{frontend}/?oauth=apple&error=email_unavailable", code=302)
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                email=email,
+                first_name='',
+                last_name='',
+                is_active=True,
+                role='USER'
+            )
+            try:
+                user.email_verified = True
+            except Exception:
+                pass
+            user.set_password(_generate_code(12))
+            db.session.add(user)
+            db.session.commit()
+        access_token, refresh_token = create_tokens(user.id)
+        frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
+        return redirect(f"{frontend}/?oauth=apple&access_token={access_token}&refresh_token={refresh_token}", code=302)
+    except Exception:
+        db.session.rollback()
+        frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
+        return redirect(f"{frontend}/?oauth=apple&error=oauth_failed", code=302)
+
 @auth_bp.route('/profile', methods=['GET'])
 @token_required
 def get_profile(current_user):

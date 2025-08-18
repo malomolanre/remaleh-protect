@@ -97,6 +97,7 @@ class Config:
     APPLE_TEAM_ID = os.getenv('APPLE_TEAM_ID')
     APPLE_KEY_ID = os.getenv('APPLE_KEY_ID')
     APPLE_PRIVATE_KEY = os.getenv('APPLE_PRIVATE_KEY')  # contents of .p8 key
+    APPLE_REDIRECT_URI = os.getenv('APPLE_REDIRECT_URI')
 
 class DevelopmentConfig(Config):
     """Development configuration"""
