@@ -263,9 +263,10 @@ def delete_report(current_user, report_id):
                 try:
                     filename = media_url.split('/api/community/uploads/', 1)[1]
                     upload_folder = current_app.config.get('UPLOAD_FOLDER')
-                    file_path = os.path.join(upload_folder, filename)
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
+                    if upload_folder:
+                        file_path = os.path.join(upload_folder, filename)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
                 except Exception:
                     pass
             else:
@@ -287,6 +288,13 @@ def delete_report(current_user, report_id):
                                     cloudinary.uploader.destroy(public_id)
                     except Exception:
                         pass
+
+        # Clean up related point logs referencing this report to avoid FK constraint
+        try:
+            from ..models import UserPointLog
+        except ImportError:
+            from models import UserPointLog
+        db.session.query(UserPointLog).filter_by(report_id=report.id).delete(synchronize_session=False)
 
         db.session.delete(report)
         db.session.commit()
