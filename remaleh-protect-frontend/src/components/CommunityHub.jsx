@@ -44,6 +44,7 @@ export default function CommunityHub({ setActiveTab }) {
   const [commentTexts, setCommentTexts] = useState({}); // { [reportId]: text }
 
   const [pointsPeriod, setPointsPeriod] = useState('90d'); // '90d' | 'all'
+  const [myStatusFilter, setMyStatusFilter] = useState('ALL'); // ALL | PENDING | APPROVED | VERIFIED | REJECTED
 
   // Feed filters/search
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,6 +57,15 @@ export default function CommunityHub({ setActiveTab }) {
       loadAllData({ period: pointsPeriod });
     }
   }, [isAuthenticated, loadAllData, pointsPeriod]);
+
+  // Ensure My Reports includes own reports regardless of approval/verification status
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (activeTab === 'my_reports') {
+      // include_own=true causes backend to include user's reports of any status
+      fetchReports({ include_own: 'true' }, false);
+    }
+  }, [activeTab, isAuthenticated, fetchReports]);
 
   
 
@@ -586,10 +596,51 @@ export default function CommunityHub({ setActiveTab }) {
               <p className="text-sm text-gray-600">See the status of your submitted reports</p>
             </div>
 
+            {/* Status breakdown */}
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="p-2 bg-green-50 rounded">
+                <div className="text-base font-semibold text-green-700">{myStats?.approved_count ?? 0}</div>
+                <div className="text-xs text-green-700">Approved</div>
+              </div>
+              <div className="p-2 bg-blue-50 rounded">
+                <div className="text-base font-semibold text-blue-700">{myStats?.verified_count ?? 0}</div>
+                <div className="text-xs text-blue-700">Verified</div>
+              </div>
+              <div className="p-2 bg-yellow-50 rounded">
+                <div className="text-base font-semibold text-yellow-700">{myStats?.pending_count ?? 0}</div>
+                <div className="text-xs text-yellow-700">Pending</div>
+              </div>
+              <div className="p-2 bg-red-50 rounded">
+                <div className="text-base font-semibold text-red-700">{myStats?.rejected_count ?? 0}</div>
+                <div className="text-xs text-red-700">Rejected</div>
+              </div>
+            </div>
+
+            {/* Quick filters */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'ALL', label: 'All' },
+                { id: 'PENDING', label: 'Pending' },
+                { id: 'APPROVED', label: 'Approved' },
+                { id: 'VERIFIED', label: 'Verified' },
+                { id: 'REJECTED', label: 'Rejected' }
+              ].map((opt) => (
+                <Button
+                  key={opt.id}
+                  size="sm"
+                  variant={myStatusFilter === opt.id ? 'default' : 'outline'}
+                  onClick={() => setMyStatusFilter(opt.id)}
+                >
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
+
             <div className="space-y-3">
               {reports && reports.length > 0 ? (
                 reports
                   .filter(r => r.user_id === user?.id)
+                  .filter(r => myStatusFilter === 'ALL' ? true : (r.status === myStatusFilter))
                   .map((report) => (
                   <MobileCard key={report.id} className="border-gray-200">
                     <div className="p-4">
