@@ -261,20 +261,23 @@ const CommunityReports = ({ initialFilters }) => {
   );
 
   const ReportDetailModal = () => {
+    const reporterObj = selectedReport && selectedReport.reporter && typeof selectedReport.reporter === 'object' ? selectedReport.reporter : null;
     const reporterName = selectedReport ? (
       (selectedReport.creator && (selectedReport.creator.username || selectedReport.creator.name)) ||
       selectedReport.creator_name ||
       selectedReport.user_name ||
-      selectedReport.reporter ||
+      (reporterObj && (reporterObj.username || reporterObj.email || reporterObj.name)) ||
       (selectedReport.user && (selectedReport.user.username || selectedReport.user.name)) ||
       selectedReport.user_email ||
       selectedReport.email ||
+      (typeof selectedReport.reporter === 'string' ? selectedReport.reporter : '') ||
       'Anonymous'
     ) : '';
     const reporterTier = selectedReport ? (
       (selectedReport.creator && selectedReport.creator.tier) ||
       selectedReport.creator_tier ||
       (selectedReport.user && selectedReport.user.tier) ||
+      (reporterObj && reporterObj.tier) ||
       selectedReport.tier ||
       ''
     ) : '';
