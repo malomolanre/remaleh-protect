@@ -426,7 +426,7 @@ export default function LearnHub({ setActiveTab }) {
           />
         </div>
         
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <MobileButton
             onClick={() => setDifficultyFilter('all')}
             variant={difficultyFilter === 'all' ? 'primary' : 'secondary'}
