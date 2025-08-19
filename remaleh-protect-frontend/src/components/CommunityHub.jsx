@@ -376,7 +376,45 @@ export default function CommunityHub({ setActiveTab }) {
                             <span className="text-xs text-gray-500">{report.created_at ? new Date(report.created_at).toLocaleDateString() : ''}</span>
                             {report.verified && <CheckCircle className="w-3.5 h-3.5 text-green-600" />}
                           </div>
-                          <div className="text-xs text-gray-500 mb-1">by {report.creator?.name || 'Anonymous'}{report.creator?.tier ? ` • ${report.creator.tier}` : ''}</div>
+                          <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
+                            <span>by {report.creator?.name || 'Anonymous'}</span>
+                            {(() => {
+                              const tierRaw = (report.creator?.tier || '').toString();
+                              if (!tierRaw) return null;
+                              const t = tierRaw.toLowerCase();
+                              let badgeBg = 'bg-gray-100 text-gray-700';
+                              let iconColor = 'text-gray-600';
+                              let iconEl = null;
+                              if (t.includes('helper')) {
+                                badgeBg = 'bg-blue-100 text-blue-700';
+                                iconColor = 'text-blue-600';
+                                iconEl = <HelpingHand className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('ally')) {
+                                badgeBg = 'bg-purple-100 text-purple-700';
+                                iconColor = 'text-purple-600';
+                                iconEl = <Shield className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('champion')) {
+                                badgeBg = 'bg-yellow-100 text-yellow-700';
+                                iconColor = 'text-yellow-600';
+                                iconEl = <Trophy className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('guardian')) {
+                                badgeBg = 'bg-emerald-100 text-emerald-700';
+                                iconColor = 'text-emerald-600';
+                                iconEl = (
+                                  <span className="relative inline-block w-4 h-4">
+                                    <Shield className={`w-4 h-4 absolute inset-0 ${iconColor}`} />
+                                    <Eye className="w-2.5 h-2.5 absolute bottom-0 right-0 text-emerald-700" />
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${badgeBg}`}>
+                                  {iconEl}
+                                  <span className="text-[10px] font-medium leading-none">{tierRaw}</span>
+                                </span>
+                              );
+                            })()}
+                          </div>
                           {report.creator?.bio && (
                             <div className="text-xs text-gray-500 italic mb-1">{report.creator.bio}</div>
                           )}
@@ -569,7 +607,46 @@ export default function CommunityHub({ setActiveTab }) {
                               <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">Verified</span>
                             )}
                           </div>
-                          <div className="text-xs text-gray-500 mb-1">Submitted {new Date(report.created_at).toLocaleString()}</div>
+                          <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
+                            <span>by {report.creator?.name || 'You'}</span>
+                            {(() => {
+                              const tierRaw = (report.creator?.tier || user?.tier || '').toString();
+                              if (!tierRaw) return null;
+                              const t = tierRaw.toLowerCase();
+                              let badgeBg = 'bg-gray-100 text-gray-700';
+                              let iconColor = 'text-gray-600';
+                              let iconEl = null;
+                              if (t.includes('helper')) {
+                                badgeBg = 'bg-blue-100 text-blue-700';
+                                iconColor = 'text-blue-600';
+                                iconEl = <HelpingHand className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('ally')) {
+                                badgeBg = 'bg-purple-100 text-purple-700';
+                                iconColor = 'text-purple-600';
+                                iconEl = <Shield className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('champion')) {
+                                badgeBg = 'bg-yellow-100 text-yellow-700';
+                                iconColor = 'text-yellow-600';
+                                iconEl = <Trophy className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('guardian')) {
+                                badgeBg = 'bg-emerald-100 text-emerald-700';
+                                iconColor = 'text-emerald-600';
+                                iconEl = (
+                                  <span className="relative inline-block w-4 h-4">
+                                    <Shield className={`w-4 h-4 absolute inset-0 ${iconColor}`} />
+                                    <Eye className="w-2.5 h-2.5 absolute bottom-0 right-0 text-emerald-700" />
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${badgeBg}`}>
+                                  {iconEl}
+                                  <span className="text-[10px] font-medium leading-none">{tierRaw}</span>
+                                </span>
+                              );
+                            })()}
+                            <span>• Submitted {new Date(report.created_at).toLocaleString()}</span>
+                          </div>
                           <p className="text-sm text-gray-800">{report.description}</p>
 
                           {report.media && report.media.length > 0 && (
@@ -647,8 +724,46 @@ export default function CommunityHub({ setActiveTab }) {
                           {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : user.rank}
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900">{user.username || user.name}</div>
-                          <div className="text-xs text-gray-600">{user.points ?? 0} pts • {user.tier || 'Helper'}</div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900">{user.username || user.name}</span>
+                            {(() => {
+                              const tierRaw = (user.tier || '').toString();
+                              if (!tierRaw) return null;
+                              const t = tierRaw.toLowerCase();
+                              let badgeBg = 'bg-gray-100 text-gray-700';
+                              let iconColor = 'text-gray-600';
+                              let iconEl = null;
+                              if (t.includes('helper')) {
+                                badgeBg = 'bg-blue-100 text-blue-700';
+                                iconColor = 'text-blue-600';
+                                iconEl = <HelpingHand className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('ally')) {
+                                badgeBg = 'bg-purple-100 text-purple-700';
+                                iconColor = 'text-purple-600';
+                                iconEl = <Shield className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('champion')) {
+                                badgeBg = 'bg-yellow-100 text-yellow-700';
+                                iconColor = 'text-yellow-600';
+                                iconEl = <Trophy className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('guardian')) {
+                                badgeBg = 'bg-emerald-100 text-emerald-700';
+                                iconColor = 'text-emerald-600';
+                                iconEl = (
+                                  <span className="relative inline-block w-4 h-4">
+                                    <Shield className={`w-4 h-4 absolute inset-0 ${iconColor}`} />
+                                    <Eye className="w-2.5 h-2.5 absolute bottom-0 right-0 text-emerald-700" />
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${badgeBg}`}>
+                                  {iconEl}
+                                  <span className="text-[10px] font-medium leading-none">{tierRaw}</span>
+                                </span>
+                              );
+                            })()}
+                          </div>
+                          <div className="text-xs text-gray-600">{user.points ?? 0} pts</div>
                         </div>
                       </div>
                       {index < 3 && (
@@ -689,7 +804,46 @@ export default function CommunityHub({ setActiveTab }) {
                               <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">Verified</span>
                             )}
                           </div>
-                          <div className="text-xs text-gray-500 mb-1">by {report.creator?.name || 'Anonymous'} • {new Date(report.created_at).toLocaleString()}</div>
+                          <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
+                            <span>by {report.creator?.name || 'Anonymous'}</span>
+                            {(() => {
+                              const tierRaw = (report.creator?.tier || '').toString();
+                              if (!tierRaw) return null;
+                              const t = tierRaw.toLowerCase();
+                              let badgeBg = 'bg-gray-100 text-gray-700';
+                              let iconColor = 'text-gray-600';
+                              let iconEl = null;
+                              if (t.includes('helper')) {
+                                badgeBg = 'bg-blue-100 text-blue-700';
+                                iconColor = 'text-blue-600';
+                                iconEl = <HelpingHand className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('ally')) {
+                                badgeBg = 'bg-purple-100 text-purple-700';
+                                iconColor = 'text-purple-600';
+                                iconEl = <Shield className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('champion')) {
+                                badgeBg = 'bg-yellow-100 text-yellow-700';
+                                iconColor = 'text-yellow-600';
+                                iconEl = <Trophy className={`w-3.5 h-3.5 ${iconColor}`} />;
+                              } else if (t.includes('guardian')) {
+                                badgeBg = 'bg-emerald-100 text-emerald-700';
+                                iconColor = 'text-emerald-600';
+                                iconEl = (
+                                  <span className="relative inline-block w-4 h-4">
+                                    <Shield className={`w-4 h-4 absolute inset-0 ${iconColor}`} />
+                                    <Eye className="w-2.5 h-2.5 absolute bottom-0 right-0 text-emerald-700" />
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${badgeBg}`}>
+                                  {iconEl}
+                                  <span className="text-[10px] font-medium leading-none">{tierRaw}</span>
+                                </span>
+                              );
+                            })()}
+                            <span>• {new Date(report.created_at).toLocaleString()}</span>
+                          </div>
                           <p className="text-sm text-gray-800">{report.description}</p>
 
                           {report.media && report.media.length > 0 && (
