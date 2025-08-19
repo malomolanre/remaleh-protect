@@ -959,9 +959,6 @@ export default function CommunityHub({ setActiveTab }) {
               </MobileButton>
             </div>
           </MobileCard>
-          <div className="max-w-md mx-auto">
-            <Login onLoginSuccess={() => setActiveTab('community')} onSwitchToRegister={() => setActiveTab('register')} />
-          </div>
         </div>
       ) : (
         <>
