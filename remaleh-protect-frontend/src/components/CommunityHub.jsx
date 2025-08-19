@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle, ThumbsUp, ThumbsDown, MessageSquare, Trash2 } from 'lucide-react';
 import { MobileCard } from './ui/mobile-card';
 import { MobileButton } from './ui/mobile-button';
@@ -7,9 +7,11 @@ import { useCommunity } from '../hooks/useCommunity';
 import { Button } from './ui/button';
 import { MobileInput } from './ui/mobile-input';
 import { MobileTextarea } from './ui/mobile-input';
+import { MobileSelect, MobileSearchInput } from './ui/mobile-input';
 import { API } from '../lib/api';
 import MobileModal from './MobileModal';
 import Login from './Login';
+import MobilePullToRefresh from './MobilePullToRefresh';
 
 export default function CommunityHub({ setActiveTab }) {
   const [activeTab, setActiveTabLocal] = useState('reports');
@@ -43,6 +45,12 @@ export default function CommunityHub({ setActiveTab }) {
 
   const [pointsPeriod, setPointsPeriod] = useState('90d'); // '90d' | 'all'
 
+  // Feed filters/search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterThreatType, setFilterThreatType] = useState('ALL');
+  const [filterUrgency, setFilterUrgency] = useState('ALL');
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+
   useEffect(() => {
     if (isAuthenticated) {
       loadAllData({ period: pointsPeriod });
@@ -66,6 +74,21 @@ export default function CommunityHub({ setActiveTab }) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeTab, isLoading, hasMore, pagination, fetchReports]);
+
+  const filteredFeedReports = useMemo(() => {
+    if (!reports || reports.length === 0) return [];
+    return reports.filter((r) => {
+      const matchesSearch = searchQuery
+        ? (r.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (r.location || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (r.threat_type || '').toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+      const matchesType = filterThreatType === 'ALL' ? true : (r.threat_type === filterThreatType);
+      const matchesUrgency = filterUrgency === 'ALL' ? true : (r.urgency === filterUrgency);
+      const matchesVerified = verifiedOnly ? !!r.verified : true;
+      return matchesSearch && matchesType && matchesUrgency && matchesVerified;
+    });
+  }, [reports, searchQuery, filterThreatType, filterUrgency, verifiedOnly]);
 
   const resolveMediaUrl = (url) => {
     if (!url) return '';
@@ -209,38 +232,105 @@ export default function CommunityHub({ setActiveTab }) {
       case 'feed':
         return (
           <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-center flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">Community Reports</h3>
-                <p className="text-sm text-gray-600">Approved and verified reports from the community</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-center flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">Community Reports</h3>
+                  <p className="text-sm text-gray-600">Approved and verified reports from the community</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => fetchReports({ sort: e.target.value }, false)}
+                    className="text-xs border border-gray-300 rounded px-2 py-1"
+                    defaultValue="newest"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="top">Top</option>
+                    <option value="verified">Verified first</option>
+                  </select>
+                  <Button onClick={() => fetchReports({}, false)} variant="outline" size="sm">Refresh</Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <select
-                  onChange={(e) => fetchReports({ sort: e.target.value }, false)}
-                  className="text-xs border border-gray-300 rounded px-2 py-1"
-                  defaultValue="newest"
-                >
-                  <option value="newest">Newest</option>
-                  <option value="top">Top</option>
-                  <option value="verified">Verified first</option>
-                </select>
-                <Button onClick={() => fetchReports({}, false)} variant="outline" size="sm">Refresh</Button>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <MobileSearchInput
+                  placeholder="Search reports..."
+                  onSearch={(q) => setSearchQuery(q)}
+                />
+                <div className="flex items-center gap-2">
+                  <MobileSelect
+                    value={filterThreatType}
+                    onChange={(e) => setFilterThreatType(e.target.value)}
+                    options={[
+                      { value: 'ALL', label: 'All types' },
+                      { value: 'PHISHING', label: 'Phishing' },
+                      { value: 'MALWARE', label: 'Malware' },
+                      { value: 'SCAM', label: 'Scam' },
+                      { value: 'SOCIAL_ENGINEERING', label: 'Social Eng.' },
+                      { value: 'OTHER', label: 'Other' }
+                    ]}
+                    className="flex-1"
+                  />
+                  <MobileSelect
+                    value={filterUrgency}
+                    onChange={(e) => setFilterUrgency(e.target.value)}
+                    options={[
+                      { value: 'ALL', label: 'All urgency' },
+                      { value: 'LOW', label: 'Low' },
+                      { value: 'MEDIUM', label: 'Medium' },
+                      { value: 'HIGH', label: 'High' }
+                    ]}
+                    className="flex-1"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-xs text-gray-700">
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={verifiedOnly}
+                      onChange={(e) => setVerifiedOnly(e.target.checked)}
+                    />
+                    Verified only
+                  </label>
+                  {(searchQuery || verifiedOnly || filterThreatType !== 'ALL' || filterUrgency !== 'ALL') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setFilterThreatType('ALL');
+                        setFilterUrgency('ALL');
+                        setVerifiedOnly(false);
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-            {/* Pagination info */}
-            {pagination && (
-              <div className="text-center text-xs text-gray-500 mb-2">
-                Showing {reports?.length || 0} of {pagination.total} reports
-                {hasMore && <span className="ml-2">• Scroll to load more</span>}
-              </div>
-            )}
-            <div className="space-y-3">
-              {reports && reports.length > 0 ? (
-                reports.map((report) => (
-                  <MobileCard key={report.id} className="border-gray-200">
-                    <div className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+            {/* Pull-to-refresh container around feed list */}
+            <MobilePullToRefresh
+              onRefresh={async () => {
+                await fetchReports({}, false);
+              }}
+              className="h-[60vh] sm:h-[65vh] md:h-[70vh]"
+            >
+              {/* Pagination info */}
+              {pagination && (
+                <div className="text-center text-xs text-gray-500 mb-2">
+                  Showing {filteredFeedReports.length} of {pagination.total} reports
+                  {hasMore && <span className="ml-2">• Scroll to load more</span>}
+                </div>
+              )}
+              <div className="space-y-3">
+                {filteredFeedReports && filteredFeedReports.length > 0 ? (
+                  filteredFeedReports.map((report) => (
+                    <MobileCard key={report.id} className="border-gray-200">
+                      <div className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{report.threat_type}</span>
                             <span className="text-xs text-gray-500">{report.created_at ? new Date(report.created_at).toLocaleDateString() : ''}</span>
@@ -372,23 +462,41 @@ export default function CommunityHub({ setActiveTab }) {
                               </Button>
                             </div>
                           )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </MobileCard>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-6">No reports to display yet.</p>
-              )}
-              
-              {/* Loading indicator for pagination */}
-              {isLoading && hasMore && (
-                <div className="text-center py-4">
-                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <p className="text-sm text-gray-500 mt-2">Loading more reports...</p>
-                </div>
-              )}
-            </div>
+                    </MobileCard>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-6">No reports to display yet.</p>
+                )}
+
+                {/* Loading indicator for pagination */}
+                {isLoading && hasMore && (
+                  <div className="text-center py-4">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <p className="text-sm text-gray-500 mt-2">Loading more reports...</p>
+                  </div>
+                )}
+
+                {/* Fallback Load More button */}
+                {hasMore && !isLoading && (
+                  <div className="text-center py-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (pagination?.next_num) {
+                          fetchReports({ page: pagination.next_num }, true);
+                        }
+                      }}
+                    >
+                      Load more
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </MobilePullToRefresh>
           </div>
         );
 
@@ -588,7 +696,7 @@ export default function CommunityHub({ setActiveTab }) {
   };
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4 max-w-3xl mx-auto">
       {!isAuthenticated ? (
         <div className="space-y-6">
           <MobileCard>
@@ -807,7 +915,11 @@ export default function CommunityHub({ setActiveTab }) {
                         <div className="text-sm text-gray-800"><span className="font-medium">{c.user_name || 'Anonymous'}:</span> {c.comment}</div>
                         <div className="text-xs text-gray-500 mt-1">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</div>
                       </div>
-                      {/* Deletion allowed only if backend returns user_id; optional */}
+                      {(user?.id === c.user_id || user?.is_admin) && (
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteComment(c.id)} title="Delete comment">
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </Button>
+                      )}
                     </div>
                   ))
                 ) : (

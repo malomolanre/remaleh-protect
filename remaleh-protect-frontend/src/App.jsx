@@ -1264,9 +1264,7 @@ function App() {
                   <span className="text-purple-800 text-sm">Instant results and notifications</span>
                 </div>
               </div>
-              <div className="mt-3 text-center">
-                <p className="text-xs text-gray-500">Sometimes our scanners miss the mark, so double check to stay safe.</p>
-              </div>
+              
             </div>
           </div>
         )
@@ -1446,6 +1444,9 @@ function App() {
                     )}
                   </button>
                 )}
+              </div>
+              <div className="mt-3 text-center">
+                <p className="text-xs text-gray-500">Sometimes our scanners miss the mark, so double check to stay safe.</p>
               </div>
             </div>
 

@@ -21,6 +21,8 @@ import { useCommunity } from '../hooks/useCommunity';
 import { useAuth } from '../hooks/useAuth';
 import { API } from '../lib/api';
 import MobileModal from './MobileModal';
+import MobilePullToRefresh from './MobilePullToRefresh';
+import { MobileSelect, MobileSearchInput } from './ui/mobile-input';
 
 export default function CommunityReporting({ setActiveTab }) {
   const { isAuthenticated, user } = useAuth();
@@ -50,6 +52,11 @@ export default function CommunityReporting({ setActiveTab }) {
   const [newAlert, setNewAlert] = useState({ title: '', message: '', priority: 'medium' });
   const [commentText, setCommentText] = useState('');
   const [newReportFiles, setNewReportFiles] = useState([]);
+  // Filters/search for the recent reports list
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterThreatType, setFilterThreatType] = useState('ALL');
+  const [filterUrgency, setFilterUrgency] = useState('ALL');
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
 
   // Lightbox
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -78,6 +85,18 @@ export default function CommunityReporting({ setActiveTab }) {
       }
     }
   }, [loadAllData, isAuthenticated]);
+  
+  const filteredReports = (reports || []).filter((r) => {
+    const matchesSearch = searchQuery
+      ? (r.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.location || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.threat_type || '').toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    const matchesType = filterThreatType === 'ALL' ? true : (r.threat_type === filterThreatType);
+    const matchesUrgency = filterUrgency === 'ALL' ? true : (r.urgency === filterUrgency);
+    const matchesVerified = verifiedOnly ? !!r.verified : true;
+    return matchesSearch && matchesType && matchesUrgency && matchesVerified;
+  });
 
   const handleSubmitReport = async (e) => {
     e.preventDefault();
@@ -228,7 +247,7 @@ export default function CommunityReporting({ setActiveTab }) {
   }
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 max-w-3xl mx-auto">
       {/* Header with Back Button */}
       <div className="flex items-center mb-6">
         <button
@@ -326,139 +345,195 @@ export default function CommunityReporting({ setActiveTab }) {
           </div>
         </MobileCardHeader>
         <MobileCardContent>
-          <div className="space-y-4">
-            {reports && reports.length > 0 ? (
-              reports.map((report) => (
-                <div key={report.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{report.threat_type}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{report.description}</p>
-                      {report.media && report.media.length > 0 && (
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                          {(report.media.filter(m => !m.media_type || m.media_type === 'image').slice(0, 3)).map((m, idx, arr) => {
-                            const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
-                            const extraCount = report.media.length - 3;
-                            const src = m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`);
-                            return (
-                              <button
-                                key={m.id || idx}
-                                type="button"
-                                onClick={() => openLightbox(report.media, idx)}
-                                className="relative w-full h-20 bg-gray-100 rounded overflow-hidden focus:outline-none"
-                              >
-                                {src && (
-                                  <img
-                                    src={src}
-                                    alt="report media"
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                  />
-                                )}
-                                {isLastAndExtra && extraCount > 0 && (
-                                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                                    <span className="text-white text-sm font-semibold">+{extraCount}</span>
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          })}
+          <div className="space-y-3">
+            {/* Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <MobileSearchInput placeholder="Search reports..." onSearch={(q) => setSearchQuery(q)} />
+              <div className="flex items-center gap-2">
+                <MobileSelect
+                  value={filterThreatType}
+                  onChange={(e) => setFilterThreatType(e.target.value)}
+                  options={[
+                    { value: 'ALL', label: 'All types' },
+                    { value: 'PHISHING', label: 'Phishing' },
+                    { value: 'MALWARE', label: 'Malware' },
+                    { value: 'SCAM', label: 'Scam' },
+                    { value: 'SOCIAL_ENGINEERING', label: 'Social Eng.' },
+                    { value: 'OTHER', label: 'Other' }
+                  ]}
+                  className="flex-1"
+                />
+                <MobileSelect
+                  value={filterUrgency}
+                  onChange={(e) => setFilterUrgency(e.target.value)}
+                  options={[
+                    { value: 'ALL', label: 'All urgency' },
+                    { value: 'LOW', label: 'Low' },
+                    { value: 'MEDIUM', label: 'Medium' },
+                    { value: 'HIGH', label: 'High' }
+                  ]}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-xs text-gray-700">
+                  <input type="checkbox" className="rounded" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />
+                  Verified only
+                </label>
+                {(searchQuery || verifiedOnly || filterThreatType !== 'ALL' || filterUrgency !== 'ALL') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilterThreatType('ALL');
+                      setFilterUrgency('ALL');
+                      setVerifiedOnly(false);
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Scrollable + pull-to-refresh list */}
+            <MobilePullToRefresh onRefresh={loadAllData} className="h-[60vh] sm:h-[65vh] md:h-[70vh]">
+              <div className="space-y-4">
+                {filteredReports && filteredReports.length > 0 ? (
+                  filteredReports.map((report) => (
+                    <div key={report.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-medium text-gray-900">{report.threat_type}</h3>
+                          <p className="text-sm text-gray-600 mb-2">{report.description}</p>
+                          {report.media && report.media.length > 0 && (
+                            <div className="mt-2 grid grid-cols-3 gap-2">
+                              {(report.media.filter(m => !m.media_type || m.media_type === 'image').slice(0, 3)).map((m, idx, arr) => {
+                                const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
+                                const extraCount = report.media.length - 3;
+                                const src = m.media_url && (m.media_url.startsWith('http') ? m.media_url : `${API}${m.media_url}`);
+                                return (
+                                  <button
+                                    key={m.id || idx}
+                                    type="button"
+                                    onClick={() => openLightbox(report.media, idx)}
+                                    className="relative w-full h-20 bg-gray-100 rounded overflow-hidden focus:outline-none"
+                                  >
+                                    {src && (
+                                      <img
+                                        src={src}
+                                        alt="report media"
+                                        className="w-full h-full object-cover"
+                                        loading="lazy"
+                                      />
+                                    )}
+                                    {isLastAndExtra && extraCount > 0 && (
+                                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                                        <span className="text-white text-sm font-semibold">+{extraCount}</span>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <span>Urgency: {report.urgency}</span>
+                            <span>Location: {report.location || 'N/A'}</span>
+                            <span>Reported: {report.created_at ? new Date(report.created_at).toLocaleDateString() : 'N/A'}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {report.verified && (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              onClick={() => handleVote(report.id, 'up')}
+                              variant="ghost"
+                              size="sm"
+                              className={report.user_vote === 'up' ? 'text-green-600' : ''}
+                            >
+                              <ThumbsUp className="h-4 w-4 mr-1" />
+                              {report.votes_up || 0}
+                            </Button>
+                            <Button
+                              onClick={() => handleVote(report.id, 'down')}
+                              variant="ghost"
+                              size="sm"
+                              className={report.user_vote === 'down' ? 'text-red-600' : ''}
+                            >
+                              <ThumbsDown className="h-4 w-4 mr-1" />
+                              {report.votes_down || 0}
+                            </Button>
+                          </div>
+                          {/* Show verify button only for admins */}
+                          {user?.is_admin && !report.verified && (
+                            <Button
+                              onClick={() => handleVerify(report.id)}
+                              variant="outline"
+                              size="sm"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Verify
+                            </Button>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {report.creator?.name || 'Anonymous'}
+                        </div>
+                      </div>
+
+                      {/* Comments */}
+                      {report.comments && report.comments.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Comments</h4>
+                          <div className="space-y-2">
+                            {report.comments.map((comment, index) => (
+                              <div key={index} className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                <span className="font-medium">{comment.user_name || 'Anonymous'}:</span> {comment.comment}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleViewAllComments(report.id)}>
+                              View all comments
+                            </Button>
+                          </div>
                         </div>
                       )}
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Urgency: {report.urgency}</span>
-                        <span>Location: {report.location || 'N/A'}</span>
-                        <span>Reported: {report.created_at ? new Date(report.created_at).toLocaleDateString() : 'N/A'}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {report.verified && (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          onClick={() => handleVote(report.id, 'up')}
-                          variant="ghost"
-                          size="sm"
-                          className={report.user_vote === 'up' ? 'text-green-600' : ''}
-                        >
-                          <ThumbsUp className="h-4 w-4 mr-1" />
-                          {report.votes_up || 0}
-                        </Button>
-                        <Button
-                          onClick={() => handleVote(report.id, 'down')}
-                          variant="ghost"
-                          size="sm"
-                          className={report.user_vote === 'down' ? 'text-red-600' : ''}
-                        >
-                          <ThumbsDown className="h-4 w-4 mr-1" />
-                          {report.votes_down || 0}
-                        </Button>
-                      </div>
-                      {/* Show verify button only for admins */}
-                      {user?.is_admin && !report.verified && (
-                        <Button
-                          onClick={() => handleVerify(report.id)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Verify
-                        </Button>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {report.creator?.name || 'Anonymous'}
-                    </div>
-                  </div>
 
-                  {/* Comments */}
-                  {report.comments && report.comments.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Comments</h4>
-                      <div className="space-y-2">
-                        {report.comments.map((comment, index) => (
-                          <div key={index} className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                            <span className="font-medium">{comment.user_name || 'Anonymous'}:</span> {comment.comment}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewAllComments(report.id)}>
-                          View all comments
-                        </Button>
+                      {/* Add Comment */}
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="flex space-x-2">
+                          <MobileInput
+                            placeholder="Add a comment..."
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={() => handleAddComment(report.id)}
+                            size="sm"
+                            disabled={!commentText.trim()}
+                          >
+                            Comment
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  )}
-
-                  {/* Add Comment */}
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <div className="flex space-x-2">
-                      <MobileInput
-                        placeholder="Add a comment..."
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button
-                        onClick={() => handleAddComment(report.id)}
-                        size="sm"
-                        disabled={!commentText.trim()}
-                      >
-                        Comment
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-8">No reports yet. Be the first to report a threat!</p>
-            )}
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8">No reports yet. Be the first to report a threat!</p>
+                )}
+              </div>
+            </MobilePullToRefresh>
           </div>
         </MobileCardContent>
       </MobileCard>
