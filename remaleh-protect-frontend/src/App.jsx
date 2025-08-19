@@ -1701,6 +1701,20 @@ function App() {
                           {item.preview && (
                             <div className="text-xs text-gray-600 mt-1 line-clamp-2">{item.preview}</div>
                           )}
+                          {Array.isArray(item.indicators) && item.indicators.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {item.indicators.map((ind, i) => (
+                                <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">{ind}</span>
+                              ))}
+                            </div>
+                          )}
+                          {Array.isArray(item.recommendations) && item.recommendations.length > 0 && (
+                            <ul className="mt-2 list-disc list-inside text-[11px] text-gray-600 space-y-0.5">
+                              {item.recommendations.map((r, i) => (
+                                <li key={i}>{r}</li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                         <span className={`text-xs px-2 py-1 rounded-full ${item.risk_level === 'SCAM' ? 'bg-red-100 text-red-700' : item.risk_level === 'SUSPICIOUS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
                           {item.risk_level} {typeof item.risk_score === 'number' ? `(${item.risk_score})` : ''}

@@ -344,12 +344,53 @@ def recent_scans(current_user):
         limit = 20
     q = UserScan.query.filter_by(user_id=current_user.id).order_by(UserScan.scanned_at.desc()).limit(limit)
     items = []
+
+    def compute_recommendations(risk_level: str, indicators: list[str] | None, patterns: list[str] | None):
+        recs: list[str] = []
+        lvl = (risk_level or '').upper()
+        if lvl == 'SCAM':
+            recs.extend([
+                'Do not respond or click any links',
+                'Block the sender/contact',
+                'Report and delete the email'
+            ])
+        elif lvl == 'SUSPICIOUS':
+            recs.extend([
+                'Verify sender authenticity before taking action',
+                'Do not open attachments or share personal info'
+            ])
+        else:
+            recs.append('Content appears low risk; proceed with normal caution')
+        patterns = patterns or []
+        inds = indicators or []
+        if any('url' in p for p in patterns):
+            recs.append('Hover to verify URLs; avoid shortened or unusual domains')
+        if any('suspicious_domain' in p for p in patterns):
+            recs.append('Domain looks suspicious; do not click any links')
+        if any('phone' in i.lower() for i in inds):
+            recs.append('Do not call numbers in unsolicited emails')
+        # Deduplicate and cap to 4
+        out = []
+        for r in recs:
+            if r not in out:
+                out.append(r)
+        return out[:4]
+
     for s in q.all():
+        result = s.analysis_result if isinstance(s.analysis_result, dict) else {}
+        dbg = result.get('debug_info') or {}
+        indicators = result.get('indicators') or []
+        patterns = result.get('patterns') or []
+        recs = compute_recommendations(s.risk_level, indicators, patterns)
         items.append({
             'id': s.id,
-            'subject': (s.analysis_result or {}).get('debug_info', {}).get('subject') if isinstance(s.analysis_result, dict) else None,
+            'subject': dbg.get('subject'),
+            'preview': dbg.get('preview'),
+            'attachments': dbg.get('attachments'),
             'risk_level': s.risk_level,
             'risk_score': s.risk_score,
+            'indicators': indicators[:3],
+            'recommendations': recs,
             'scanned_at': s.scanned_at.isoformat() if s.scanned_at else None
         })
     return jsonify({'items': items})
