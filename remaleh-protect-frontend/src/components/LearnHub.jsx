@@ -55,6 +55,31 @@ export default function LearnHub({ setActiveTab }) {
         return 'Information'
     }
   }
+
+  const formatDuration = (value) => {
+    try {
+      if (value === null || value === undefined) return '—'
+      if (typeof value === 'number') {
+        return `${Math.max(0, value)} min`
+      }
+      const str = String(value).trim()
+      const lower = str.toLowerCase()
+      // If it already includes a unit, return as-is
+      if (/[a-z]/.test(lower)) {
+        // Normalize common shorthand
+        if (/(^|\s)(m|mins?)($|\s)/.test(lower)) return str.replace(/\bm\b/i, 'min')
+        if (/(^|\s)(s|secs?)($|\s)/.test(lower)) return str.replace(/\bs\b/i, 'sec')
+        if (/(^|\s)(h|hrs?)($|\s)/.test(lower)) return str.replace(/\bh\b/i, 'hr')
+        return str
+      }
+      // If it's numeric text, append min
+      const num = parseInt(str, 10)
+      if (!isNaN(num)) return `${num} min`
+      return str
+    } catch {
+      return String(value)
+    }
+  }
   
   // Load data from backend APIs
   useEffect(() => {
@@ -569,7 +594,7 @@ export default function LearnHub({ setActiveTab }) {
                         )}
                         <div>
                           <h4 className="font-medium">{lesson.title}</h4>
-                          <p className="text-sm text-gray-600">{lesson.duration} • {getLessonTypeLabel(lesson)}</p>
+                          <p className="text-sm text-gray-600">{formatDuration(lesson.duration)} • {getLessonTypeLabel(lesson)}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -615,7 +640,7 @@ export default function LearnHub({ setActiveTab }) {
             <MobileCardHeader>
               <h2 className="text-xl font-bold text-gray-900">{selectedLesson.title}</h2>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span>{selectedLesson.duration}</span>
+                <span>{formatDuration(selectedLesson.duration)}</span>
                 <span>•</span>
                 <span>{getLessonTypeLabel(selectedLesson)}</span>
               </div>
