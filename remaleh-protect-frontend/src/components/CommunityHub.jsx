@@ -276,7 +276,7 @@ export default function CommunityHub({ setActiveTab }) {
               <div className="flex items-center justify-between">
                 <div className="text-center flex-1">
                   <h3 className="text-lg font-semibold text-gray-900">Community Reports</h3>
-                  <p className="text-sm text-gray-600">Approved and verified reports from the community</p>
+                  <p className="text-sm text-gray-600">See a scam? Share it.</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <select
@@ -766,7 +766,7 @@ export default function CommunityHub({ setActiveTab }) {
               </div>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Community Hub</h1>
-            <p className="text-sm text-gray-600">Report scams, track threats, and see top reporters</p>
+            <p className="text-sm text-gray-600">Spot it. Share it. Stay safe.</p>
           </div>
 
           {/* Navigation Tabs */}
