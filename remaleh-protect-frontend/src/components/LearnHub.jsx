@@ -677,6 +677,9 @@ function LessonContent({ lesson }) {
     safe = safe.replace(/ on[a-z]+\s*=\s*"[^"]*"/gi, '')
     safe = safe.replace(/ on[a-z]+\s*=\s*'[^']*'/gi, '')
     safe = safe.replace(/ on[a-z]+\s*=\s*[^\s>]+/gi, '')
+    // Disable anchor tags (make non-clickable spans)
+    safe = safe.replace(/<\s*a\b[^>]*>/gi, '<span class="text-[#21a1ce] underline cursor-default" data-role="educational-link">')
+    safe = safe.replace(/<\s*\/\s*a\s*>/gi, '</span>')
     return safe
   }
 
@@ -692,7 +695,7 @@ function LessonContent({ lesson }) {
     // Bold
     out = out.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     // Links [text](url)
-    out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-[#21a1ce] underline">$1</a>')
+    out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<span class="text-[#21a1ce] underline cursor-default" data-role="educational-link" data-url="$2">$1</span>')
     // Bullet lines starting with - or *
     out = out.replace(/^(?:- |\* )(.*)$/gm, '<li>$1</li>')
     // Wrap consecutive <li> into <ul>
