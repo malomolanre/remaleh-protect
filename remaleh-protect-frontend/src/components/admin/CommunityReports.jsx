@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { HelpingHand, Shield, Trophy, Eye } from 'lucide-react';
 import { api } from '../../lib/api';
 import MobileModal from '../MobileModal';
 import { API } from '../../lib/api';
@@ -8,6 +9,8 @@ const CommunityReports = ({ initialFilters }) => {
   const [pagination, setPagination] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null); // { type: 'success'|'error'|'info', message }
+  const [bulkErrors, setBulkErrors] = useState([]); // [{ id, error }]
   const [selectedReports, setSelectedReports] = useState([]);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
@@ -96,39 +99,62 @@ const CommunityReports = ({ initialFilters }) => {
   const handleBulkAction = async () => {
     if (!bulkAction || selectedReports.length === 0) return;
 
+    setBulkErrors([]);
     try {
-      if (bulkAction === 'verify') {
-        await Promise.all(selectedReports.map(async (id) => {
+      if (bulkAction === 'delete') {
+        if (!window.confirm(`Delete ${selectedReports.length} report(s)? This cannot be undone.`)) return;
+      }
+
+      const results = await Promise.allSettled(selectedReports.map(async (id) => {
+        if (bulkAction === 'verify') {
           const response = await api.request({ method: 'POST', url: `/api/community/reports/${id}/verify` });
           if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
             throw new Error(errData.error || `Failed to verify report ${id}`);
           }
-        }));
-      } else {
-        const actionMap = { reject: 'REJECTED', escalate: 'FLAGGED', approve: 'APPROVED' };
-        const mapped = actionMap[bulkAction] || actionMap['approve'];
-        await Promise.all(selectedReports.map(async (id) => {
-          const response = await api.request({
-            method: 'PUT',
-            url: `/api/admin/reports/${id}/moderate`,
-            data: { action: mapped }
-          });
+          return { id };
+        }
+        if (bulkAction === 'delete') {
+          const response = await api.request({ method: 'DELETE', url: `/api/admin/reports/${id}` });
           if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `Failed to ${bulkAction} report ${id}`);
+            throw new Error(errData.error || `Failed to delete report ${id}`);
           }
-        }));
-      }
+          return { id };
+        }
+        const actionMap = { reject: 'REJECTED', approve: 'APPROVED' };
+        const mapped = actionMap[bulkAction] || actionMap['approve'];
+        const response = await api.request({ method: 'PUT', url: `/api/admin/reports/${id}/moderate`, data: { action: mapped } });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed to ${bulkAction} report ${id}`);
+        }
+        return { id };
+      }));
 
-      // Refresh reports list
+      const failed = results
+        .map((r, idx) => ({ r, id: selectedReports[idx] }))
+        .filter(x => x.r.status === 'rejected')
+        .map(x => ({ id: x.id, error: x.r.reason?.message || 'Unknown error' }));
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+
+      // Refresh list
       fetchReports();
       setSelectedReports([]);
       setShowBulkModal(false);
       setBulkAction('');
+
+      if (failed.length > 0) {
+        setBulkErrors(failed);
+        setToast({ type: 'error', message: `Bulk ${bulkAction}: ${succeeded} succeeded, ${failed.length} failed` });
+      } else {
+        setToast({ type: 'success', message: `Bulk ${bulkAction}: ${succeeded} succeeded` });
+      }
+      setTimeout(() => setToast(null), 3500);
     } catch (err) {
       console.error('Bulk action error:', err);
-      alert(`Failed to perform bulk action: ${err.response?.data?.error || err.message}`);
+      setToast({ type: 'error', message: err.response?.data?.error || err.message || 'Bulk action failed' });
+      setTimeout(() => setToast(null), 4500);
     }
   };
 
@@ -234,19 +260,77 @@ const CommunityReports = ({ initialFilters }) => {
     </div>
   );
 
-  const ReportDetailModal = () => (
-    <MobileModal
-      isOpen={showReportModal}
-      onClose={() => setShowReportModal(false)}
-      title="Report Details"
-      hideOnDesktop={false}
-    >
-      {selectedReport && (
+  const ReportDetailModal = () => {
+    const reporterName = selectedReport ? (
+      (selectedReport.creator && (selectedReport.creator.username || selectedReport.creator.name)) ||
+      selectedReport.creator_name ||
+      selectedReport.user_name ||
+      selectedReport.reporter ||
+      (selectedReport.user && (selectedReport.user.username || selectedReport.user.name)) ||
+      selectedReport.user_email ||
+      selectedReport.email ||
+      'Anonymous'
+    ) : '';
+    const reporterTier = selectedReport ? (
+      (selectedReport.creator && selectedReport.creator.tier) ||
+      selectedReport.creator_tier ||
+      (selectedReport.user && selectedReport.user.tier) ||
+      selectedReport.tier ||
+      ''
+    ) : '';
+    return (
+      <MobileModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        title="Report Details"
+        hideOnDesktop={false}
+      >
+        {selectedReport && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Threat Type</label>
               <p className="text-gray-900">{selectedReport.threat_type}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Reporter</label>
+              <div className="flex items-center gap-2 text-gray-900">
+                <span>{reporterName}</span>
+                {reporterTier && (() => {
+                  const t = String(reporterTier).toLowerCase();
+                  let badgeBg = 'bg-gray-100 text-gray-700';
+                  let iconColor = 'text-gray-600';
+                  let iconEl = null;
+                  if (t.includes('helper')) {
+                    badgeBg = 'bg-blue-100 text-blue-700';
+                    iconColor = 'text-blue-600';
+                    iconEl = <HelpingHand className={`w-3.5 h-3.5 ${iconColor}`} />;
+                  } else if (t.includes('ally')) {
+                    badgeBg = 'bg-purple-100 text-purple-700';
+                    iconColor = 'text-purple-600';
+                    iconEl = <Shield className={`w-3.5 h-3.5 ${iconColor}`} />;
+                  } else if (t.includes('champion')) {
+                    badgeBg = 'bg-yellow-100 text-yellow-700';
+                    iconColor = 'text-yellow-600';
+                    iconEl = <Trophy className={`w-3.5 h-3.5 ${iconColor}`} />;
+                  } else if (t.includes('guardian')) {
+                    badgeBg = 'bg-emerald-100 text-emerald-700';
+                    iconColor = 'text-emerald-600';
+                    iconEl = (
+                      <span className="relative inline-block w-4 h-4">
+                        <Shield className={`w-4 h-4 absolute inset-0 ${iconColor}`} />
+                        <Eye className="w-2.5 h-2.5 absolute bottom-0 right-0 text-emerald-700" />
+                      </span>
+                    );
+                  }
+                  return (
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs ${badgeBg}`}>
+                      {iconEl}
+                      <span className="leading-none">{reporterTier}</span>
+                    </span>
+                  );
+                })()}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Urgency</label>
@@ -347,15 +431,6 @@ const CommunityReports = ({ initialFilters }) => {
                   >
                     Reject
                   </button>
-                  <button
-                    onClick={() => {
-                      handleReportAction(selectedReport.id, 'escalate');
-                      setShowReportModal(false);
-                    }}
-                    className="bg-yellow-600 text-white px-3 py-2 rounded text-sm hover:bg-yellow-700"
-                  >
-                    Escalate
-                  </button>
                 </>
               )}
               {selectedReport.status === 'APPROVED' && (
@@ -388,9 +463,10 @@ const CommunityReports = ({ initialFilters }) => {
             </div>
           </div>
         </div>
-      )}
-    </MobileModal>
-  );
+        )}
+      </MobileModal>
+    );
+  };
 
   const BulkActionModal = () => (
     <MobileModal
@@ -409,9 +485,10 @@ const CommunityReports = ({ initialFilters }) => {
             className="w-full border rounded-lg px-3 py-2"
           >
             <option value="">Select action...</option>
-            <option value="verify">Approve</option>
+            <option value="approve">Approve</option>
+            <option value="verify">Verify</option>
             <option value="reject">Reject</option>
-            <option value="escalate">Flag</option>
+            <option value="delete">Delete</option>
           </select>
         </div>
         
@@ -620,6 +697,27 @@ const CommunityReports = ({ initialFilters }) => {
       {/* Modals */}
       <ReportDetailModal />
       <BulkActionModal />
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg shadow-md text-sm z-50 ${
+          toast.type === 'success' ? 'bg-green-600 text-white' : toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-800 text-white'
+        }`}>
+          {toast.message}
+        </div>
+      )}
+
+      {/* Bulk error details */}
+      {bulkErrors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded">
+          <div className="font-medium mb-2">Some items failed:</div>
+          <ul className="list-disc pl-5 space-y-1 text-sm">
+            {bulkErrors.map(e => (
+              <li key={e.id}>#{e.id}: {e.error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
