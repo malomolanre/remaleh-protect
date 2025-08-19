@@ -441,7 +441,8 @@ export default function LearnHub({ setActiveTab }) {
               <p className="text-sm text-gray-500">Check back later for new content</p>
             </div>
           ) : (
-            filteredModules.map(module => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filteredModules.map(module => {
               const lessonCount = module.content?.lessons?.length || 0
               const completedLessonsInModule = module.content?.lessons?.filter(lesson => 
                 completedLessons.includes(`${String(module.id)}_${String(lesson.id)}`)
@@ -449,43 +450,46 @@ export default function LearnHub({ setActiveTab }) {
               const progressPercent = lessonCount > 0 ? (completedLessonsInModule / lessonCount) * 100 : 0
               
               return (
-                <MobileCard key={module.id} className="cursor-pointer hover:shadow-md transition-shadow" 
-                           onClick={() => setSelectedModule(module)}>
-                  <MobileCardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white`} 
-                             style={{ backgroundColor: module.color || '#21a1ce' }}>
-                          <BookOpen className="w-6 h-6" />
+                <MobileCard 
+                  key={module.id}
+                  className="cursor-pointer transition-colors hover:bg-gray-50"
+                  padding="p-3"
+                  onClick={() => setSelectedModule(module)}
+                >
+                  <MobileCardHeader className="mb-2">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-9 h-9 bg-[#21a1ce] rounded-lg flex items-center justify-center flex-shrink-0">
+                          <BookOpen className="w-4 h-4 text-white" />
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{module.title}</h3>
-                          <p className="text-sm text-gray-600">{module.description}</p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold text-gray-900 truncate">{module.title}</h3>
+                          <p className="text-xs text-gray-600 truncate">{module.description}</p>
+                          <div className="flex items-center space-x-3 text-[11px] text-gray-500 mt-1">
                             <span>{lessonCount} lessons</span>
                             <span>{module.estimated_time} min</span>
                             <span className="capitalize">{module.difficulty}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-[#21a1ce]">{Math.round(progressPercent)}%</div>
-                        <div className="text-xs text-gray-500">{completedLessonsInModule}/{lessonCount}</div>
+                      <div className="text-right ml-2 flex-shrink-0">
+                        <div className="text-xs font-medium text-[#21a1ce]">{Math.round(progressPercent)}%</div>
+                        <div className="text-[11px] text-gray-500">{completedLessonsInModule}/{lessonCount}</div>
                       </div>
                     </div>
                   </MobileCardHeader>
-                  
                   <MobileCardContent>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
                       <div 
-                        className="bg-[#21a1ce] h-2 rounded-full transition-all duration-300" 
+                        className="bg-[#21a1ce] h-1.5 rounded-full transition-all duration-300" 
                         style={{ width: `${progressPercent}%` }}
                       ></div>
                     </div>
                   </MobileCardContent>
                 </MobileCard>
               )
-            })
+              })}
+            </div>
           )}
         </div>
       ) : !selectedLesson ? (
