@@ -810,45 +810,7 @@ export default function AdminDashboard({ setActiveTab }) {
 
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* Database Connection Status */}
-      <MobileCard>
-        <div className="p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Database Status</h3>
-            <div className={`flex items-center space-x-2 ${
-              dbConnectionStatus === 'connected' ? 'text-green-600' : 
-              dbConnectionStatus === 'disconnected' ? 'text-red-600' : 'text-yellow-600'
-            }`}>
-              <div className={`w-3 h-3 rounded-full ${
-                dbConnectionStatus === 'connected' ? 'bg-green-500' : 
-                dbConnectionStatus === 'disconnected' ? 'bg-red-500' : 'bg-yellow-500'
-              }`}></div>
-              <span className="text-sm font-medium capitalize">
-                {dbConnectionStatus === 'connected' ? 'Connected' : 
-                 dbConnectionStatus === 'disconnected' ? 'Disconnected' : 'Checking...'}
-              </span>
-            </div>
-          </div>
-          {dbConnectionStatus === 'disconnected' && (
-            <div className="mt-2">
-              <p className="text-sm text-red-600 mb-2">
-                Warning: Database connection failed. Some features may not work properly.
-              </p>
-              {error && (
-                <p className="text-xs text-red-500 bg-red-50 p-2 rounded">
-                  Error: {error}
-                </p>
-              )}
-            </div>
-          )}
-          <button
-            onClick={checkDatabaseConnection}
-            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
-          >
-            Check Connection
-          </button>
-        </div>
-      </MobileCard>
+      {/* Database status moved into System Overview → System Status card */}
 
       <MobileCard>
         <div className="p-6">
@@ -907,34 +869,46 @@ export default function AdminDashboard({ setActiveTab }) {
                 <Shield className="w-8 h-8 text-purple-500 mx-auto mb-2" />
                 <h3 className="text-lg font-semibold text-gray-900">Active</h3>
                 <p className="text-sm text-gray-600">System Status</p>
+                <div className="mt-3 space-y-1">
+                  <div className="flex items-center justify-center gap-2 text-xs">
+                    <span className="text-gray-500">Backend:</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
+                      dbConnectionStatus === 'connected' ? 'bg-green-100 text-green-700' :
+                      dbConnectionStatus === 'disconnected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${
+                        dbConnectionStatus === 'connected' ? 'bg-green-500' :
+                        dbConnectionStatus === 'disconnected' ? 'bg-red-500' : 'bg-yellow-500'
+                      }`}></span>
+                      {dbConnectionStatus === 'connected' ? 'Connected' : dbConnectionStatus === 'disconnected' ? 'Disconnected' : 'Checking...'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-xs">
+                    <span className="text-gray-500">Database:</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
+                      dbConnectionStatus === 'connected' ? 'bg-green-100 text-green-700' :
+                      dbConnectionStatus === 'disconnected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${
+                        dbConnectionStatus === 'connected' ? 'bg-green-500' :
+                        dbConnectionStatus === 'disconnected' ? 'bg-red-500' : 'bg-yellow-500'
+                      }`}></span>
+                      {dbConnectionStatus === 'connected' ? 'Connected' : dbConnectionStatus === 'disconnected' ? 'Disconnected' : 'Checking...'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={checkDatabaseConnection}
+                    className="block mx-auto mt-1 text-[11px] text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Check connection
+                  </button>
+                </div>
               </div>
             </MobileCard>
           </div>
           
-          <div className="mt-6 space-y-3">
-            <MobileButton
-              onClick={() => setActiveSection('content')}
-              className="bg-[#21a1ce] hover:bg-[#1a8bb8] text-white"
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Manage Content
-            </MobileButton>
-            
-            <MobileButton
-              onClick={() => setActiveSection('users')}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Manage Users
-            </MobileButton>
-            
-            <MobileButton
-              onClick={() => setActiveSection('reports')}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
-            >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              View Reports
-            </MobileButton>
+          <div className="mt-6 text-sm text-gray-500">
+            Quick links have been removed from this section. Use the tabs above to navigate.
           </div>
         </div>
       </MobileCard>
