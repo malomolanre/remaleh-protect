@@ -449,7 +449,7 @@ export default function LearnHub({ setActiveTab }) {
               return (
                 <MobileCard 
                   key={module.id}
-                  className="cursor-pointer transition-colors hover:bg-gray-50"
+                  className="cursor-pointer transition-colors hover:bg-gray-50 overflow-hidden"
                   padding="p-3"
                   onClick={() => setSelectedModule(module)}
                 >
@@ -459,9 +459,9 @@ export default function LearnHub({ setActiveTab }) {
                         <div className="w-9 h-9 bg-[#21a1ce] rounded-lg flex items-center justify-center flex-shrink-0">
                           <BookOpen className="w-4 h-4 text-white" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 break-words">
                           <h3 className="text-base font-semibold text-gray-900 truncate">{module.title}</h3>
-                          <p className="text-xs text-gray-600 truncate">{module.description}</p>
+                          <p className="text-xs text-gray-600 leading-5 max-h-[2.5rem] overflow-hidden break-words">{module.description}</p>
                           <div className="flex items-center space-x-3 text-[11px] text-gray-500 mt-1">
                             <span>{lessonCount} lessons</span>
                             <span>{module.estimated_time} min</span>
