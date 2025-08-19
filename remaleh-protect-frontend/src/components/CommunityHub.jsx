@@ -1019,7 +1019,7 @@ export default function CommunityHub({ setActiveTab }) {
           {showNewReport && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
-                <h2 className="text-xl font-semibold mb-4">Report New Threat</h2>
+                <h2 className="text-xl font-semibold mb-4">Report New Scam</h2>
                 {!isAuthenticated ? (
                   <div className="text-center text-gray-600">
                     Please log in to submit a community report.
@@ -1064,22 +1064,26 @@ export default function CommunityHub({ setActiveTab }) {
                       rows={4}
                     />
                     <div className="grid grid-cols-2 gap-4">
-                      <select
-                        value={newReport.threat_type}
-                        onChange={(e) => setNewReport({ ...newReport, threat_type: e.target.value })}
-                        className="border border-gray-300 rounded-md px-3 py-2"
-                      >
-                        <option value="PHISHING">Phishing</option>
-                        <option value="MALWARE">Malware</option>
-                        <option value="SCAM">Scam</option>
-                        <option value="SOCIAL_ENGINEERING">Social Engineering</option>
-                        <option value="OTHER">Other</option>
-                      </select>
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">Category</label>
+                        <select
+                          value={newReport.threat_type}
+                          onChange={(e) => setNewReport({ ...newReport, threat_type: e.target.value })}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2"
+                        >
+                          <option value="PHISHING">Phishing</option>
+                          <option value="MALWARE">Malware</option>
+                          <option value="SCAM">Scam</option>
+                          <option value="SOCIAL_ENGINEERING">Social Engineering</option>
+                          <option value="OTHER">Other</option>
+                        </select>
+                      </div>
                       <div className="relative">
+                        <label className="block text-sm text-gray-700 mb-1">Category</label>
                         <select
                         value={newReport.urgency}
                         onChange={(e) => setNewReport({ ...newReport, urgency: e.target.value })}
-                        className="border border-gray-300 rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2"
                         aria-describedby="urgency-help"
                       >
                         <option value="LOW">Caution</option>
