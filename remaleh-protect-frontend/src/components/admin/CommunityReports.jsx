@@ -105,32 +105,66 @@ const CommunityReports = ({ initialFilters }) => {
         if (!window.confirm(`Delete ${selectedReports.length} report(s)? This cannot be undone.`)) return;
       }
 
-      const results = await Promise.allSettled(selectedReports.map(async (id) => {
-        if (bulkAction === 'verify') {
-          const response = await api.request({ method: 'POST', url: `/api/community/reports/${id}/verify` });
+      let results;
+      if (bulkAction === 'delete') {
+        // Sequential delete with existence pre-check and fallback to community endpoint
+        results = [];
+        for (const id of selectedReports) {
+          try {
+            // Pre-check existence via community GET (admin is authorized)
+            let exists = true;
+            try {
+              const head = await api.request({ method: 'GET', url: `/api/community/reports/${id}` });
+              exists = head.ok;
+            } catch (_) {
+              exists = false; // treat failure as missing
+            }
+            if (!exists) {
+              results.push({ status: 'fulfilled', value: { id } });
+              continue;
+            }
+
+            // Attempt admin delete first
+            let response = await api.request({ method: 'DELETE', url: `/api/admin/reports/${id}` });
+            if (!response.ok) {
+              // Fallback to community delete (admin allowed)
+              await response.json().catch(() => ({}));
+              response = await api.request({ method: 'DELETE', url: `/api/community/reports/${id}` });
+            }
+            if (!response.ok) {
+              const errData = await response.json().catch(() => ({}));
+              // If 404 from either endpoint, treat as success (already gone)
+              if (response.status === 404) {
+                results.push({ status: 'fulfilled', value: { id } });
+              } else {
+                throw new Error(errData.error || errData.details || `Failed to delete report ${id}`);
+              }
+            }
+            results.push({ status: 'fulfilled', value: { id } });
+          } catch (e) {
+            results.push({ status: 'rejected', reason: e });
+          }
+        }
+      } else {
+        results = await Promise.allSettled(selectedReports.map(async (id) => {
+          if (bulkAction === 'verify') {
+            const response = await api.request({ method: 'POST', url: `/api/community/reports/${id}/verify` });
+            if (!response.ok) {
+              const errData = await response.json().catch(() => ({}));
+              throw new Error(errData.error || `Failed to verify report ${id}`);
+            }
+            return { id };
+          }
+          const actionMap = { reject: 'REJECTED', approve: 'APPROVED' };
+          const mapped = actionMap[bulkAction] || actionMap['approve'];
+          const response = await api.request({ method: 'PUT', url: `/api/admin/reports/${id}/moderate`, data: { action: mapped } });
           if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `Failed to verify report ${id}`);
+            throw new Error(errData.error || `Failed to ${bulkAction} report ${id}`);
           }
           return { id };
-        }
-        if (bulkAction === 'delete') {
-          const response = await api.request({ method: 'DELETE', url: `/api/admin/reports/${id}` });
-          if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `Failed to delete report ${id}`);
-          }
-          return { id };
-        }
-        const actionMap = { reject: 'REJECTED', approve: 'APPROVED' };
-        const mapped = actionMap[bulkAction] || actionMap['approve'];
-        const response = await api.request({ method: 'PUT', url: `/api/admin/reports/${id}/moderate`, data: { action: mapped } });
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || `Failed to ${bulkAction} report ${id}`);
-        }
-        return { id };
-      }));
+        }));
+      }
 
       const failed = results
         .map((r, idx) => ({ r, id: selectedReports[idx] }))
