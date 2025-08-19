@@ -1283,7 +1283,7 @@ function App() {
               </div>
               
               {/* API Status Indicator */}
-              <div className="flex items-center space-x-2 text-sm">
+              <div className="flex items-center justify-center space-x-2 text-sm mt-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-gray-600">Connected to Remaleh Protect Security Engine</span>
                 <button 
@@ -1679,7 +1679,7 @@ function App() {
             {/* Recent forwarded email scans (only show for Email content type) */}
             {isAuthenticated && scamType === 'email' && (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold text-black mb-3">Recent forwarded scans</h3>
+                <h3 className="text-lg font-semibold text-black mb-3">Recently forwarded emails</h3>
                 {recentScans.length === 0 ? (
                   <p className="text-sm text-gray-500">No forwarded emails analyzed yet.</p>
                 ) : (
