@@ -24,6 +24,38 @@ export default function LearnHub({ setActiveTab }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   
+  const getLessonTypeLabel = (lesson) => {
+    const rawType = (lesson?.type || '').toLowerCase()
+    if (rawType === 'quiz') return 'Quiz'
+    if (rawType === 'assessment') return 'Assessment'
+    const ct = (lesson?.contentType || '').toLowerCase()
+    switch (ct) {
+      case 'info':
+        return 'Information'
+      case 'tips':
+        return 'Tips'
+      case 'example':
+        return 'Example'
+      case 'list':
+        return 'List'
+      case 'warning':
+        return 'Warning'
+      case 'warning-signs':
+        return 'Warning Signs'
+      case 'steps':
+        return 'Steps'
+      case 'action-list':
+        return 'Actions'
+      case 'warning-list':
+        return 'Warning List'
+      case 'markdown':
+      case 'html':
+        return 'Information'
+      default:
+        return 'Information'
+    }
+  }
+  
   // Load data from backend APIs
   useEffect(() => {
     if (isAuthenticated) {
@@ -537,7 +569,7 @@ export default function LearnHub({ setActiveTab }) {
                         )}
                         <div>
                           <h4 className="font-medium">{lesson.title}</h4>
-                          <p className="text-sm text-gray-600">{lesson.duration} min • {lesson.contentType}</p>
+                          <p className="text-sm text-gray-600">{lesson.duration} • {getLessonTypeLabel(lesson)}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -549,10 +581,7 @@ export default function LearnHub({ setActiveTab }) {
                         )}
                         <ArrowLeft className="w-4 h-4 text-gray-400 transform rotate-180" />
                       </div>
-                      {/* Debug info for each lesson */}
-                      <div className="text-xs text-gray-400 ml-2">
-                        {lessonKey}
-                      </div>
+                      
                     </div>
                   )
                 })}
@@ -588,7 +617,7 @@ export default function LearnHub({ setActiveTab }) {
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <span>{selectedLesson.duration}</span>
                 <span>•</span>
-                <span className="capitalize">{selectedLesson.contentType}</span>
+                <span>{getLessonTypeLabel(selectedLesson)}</span>
               </div>
             </MobileCardHeader>
             
