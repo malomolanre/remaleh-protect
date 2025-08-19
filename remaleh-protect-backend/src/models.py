@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import backref
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
@@ -155,6 +156,7 @@ class CommunityReport(db.Model):
     votes = db.relationship('ReportVote', backref='report', lazy=True, cascade="all, delete-orphan")
     media = db.relationship('CommunityReportMedia', backref='report', lazy=True, cascade="all, delete-orphan")
     comments = db.relationship('CommunityReportComment', backref='report', lazy=True, cascade="all, delete-orphan")
+    point_logs = db.relationship('UserPointLog', backref=backref('report', lazy=True), lazy=True, cascade="all, delete-orphan")
     
     def to_dict(self):
         return {
@@ -175,7 +177,7 @@ class ReportVote(db.Model):
     __tablename__ = 'report_votes'
     
     id = db.Column(db.Integer, primary_key=True)
-    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id'), nullable=False)
+    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id', ondelete='CASCADE'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     vote_type = db.Column(db.String(10), nullable=False)  # 'up' or 'down'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -186,7 +188,7 @@ class CommunityReportMedia(db.Model):
     __tablename__ = 'community_report_media'
     
     id = db.Column(db.Integer, primary_key=True)
-    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id'), nullable=False)
+    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id', ondelete='CASCADE'), nullable=False)
     media_url = db.Column(db.String(512), nullable=False)
     media_type = db.Column(db.String(50))  # image, video, other
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -204,7 +206,7 @@ class CommunityReportComment(db.Model):
     __tablename__ = 'community_report_comments'
 
     id = db.Column(db.Integer, primary_key=True)
-    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id'), nullable=False)
+    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id', ondelete='CASCADE'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     comment = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -226,7 +228,7 @@ class UserPointLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id'))
+    report_id = db.Column(db.Integer, db.ForeignKey('community_reports.id', ondelete='CASCADE'))
     points = db.Column(db.Integer, nullable=False)
     reason = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

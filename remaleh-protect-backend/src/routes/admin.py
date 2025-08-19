@@ -637,6 +637,48 @@ def admin_delete_report(current_user, report_id):
         db.session.rollback()
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
+@admin_bp.route('/reports/cleanup/orphans', methods=['POST'])
+@token_required
+@admin_required
+def cleanup_orphan_records(current_user):
+    """Admin-only: cleanup orphan point logs and media with missing parent report.
+    Does not remove local files; only DB rows for safety.
+    """
+    try:
+        removed = { 'point_logs': 0, 'media': 0, 'comments': 0, 'votes': 0 }
+        # Delete UserPointLogs with report_id not existing
+        try:
+            missing_point_logs = db.session.execute(text(
+                """
+                DELETE FROM user_point_logs
+                WHERE report_id IS NOT NULL AND report_id NOT IN (SELECT id FROM community_reports)
+                """
+            ))
+            removed['point_logs'] = getattr(missing_point_logs, 'rowcount', 0) or 0
+        except Exception:
+            pass
+
+        # Delete child tables orphans via raw SQL for speed/safety
+        for table_name, key in [
+            ('community_report_media','media'),
+            ('community_report_comments','comments'),
+            ('report_votes','votes')
+        ]:
+            try:
+                result = db.session.execute(text(f"""
+                    DELETE FROM {table_name}
+                    WHERE report_id NOT IN (SELECT id FROM community_reports)
+                """))
+                removed[key] = getattr(result, 'rowcount', 0) or removed.get(key, 0)
+            except Exception:
+                pass
+
+        db.session.commit()
+        return jsonify({'message': 'Orphan cleanup complete', 'removed': removed}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
+
 @admin_bp.route('/reports/<int:report_id>/moderate', methods=['PUT'])
 @token_required
 @moderator_or_admin_required
