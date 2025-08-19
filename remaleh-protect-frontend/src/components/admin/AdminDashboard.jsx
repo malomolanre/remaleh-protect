@@ -828,8 +828,13 @@ export default function AdminDashboard({ setActiveTab }) {
                 <Users className="w-8 h-8 text-green-500 mx-auto mb-2" />
                 <h3 className="text-lg font-semibold text-gray-900">{userStats.total}</h3>
                 <p className="text-sm text-gray-600">Total Users</p>
-                <div className="text-xs text-gray-500 mt-1">
-                  {userStats.active} active, {userStats.admins} admins
+                <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600">
+                  <span>Active: <span className="font-medium">{userStats.active ?? 0}</span></span>
+                  <span>Admins: <span className="font-medium">{userStats.admins ?? 0}</span></span>
+                  <span>Moderators: <span className="font-medium">{userStats.moderators ?? 0}</span></span>
+                  <span>Deleted: <span className="font-medium">{deletedUsers?.length ?? 0}</span></span>
+                  <span>Suspended: <span className="font-medium">{userStats.suspended ?? 0}</span></span>
+                  <span>Banned: <span className="font-medium">{userStats.banned ?? 0}</span></span>
                 </div>
               </div>
             </MobileCard>
@@ -839,8 +844,16 @@ export default function AdminDashboard({ setActiveTab }) {
                 <h3 className="text-lg font-semibold text-gray-900">{adminStats?.reports?.total ?? 0}</h3>
                 <p className="text-sm text-gray-600">Community Reports</p>
                 {adminStats?.reports && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {adminStats.reports.pending} pending, {adminStats.reports.approved} approved
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <span className="px-2 py-1 rounded-full bg-yellow-50 text-yellow-700 text-center">
+                      Pending: <span className="font-medium">{adminStats.reports.pending ?? 0}</span>
+                    </span>
+                    <span className="px-2 py-1 rounded-full bg-green-50 text-green-700 text-center">
+                      Approved: <span className="font-medium">{adminStats.reports.approved ?? 0}</span>
+                    </span>
+                    <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-center">
+                      Verified: <span className="font-medium">{adminStats.reports.verified ?? 0}</span>
+                    </span>
                   </div>
                 )}
                 <div className="mt-3 flex items-center justify-center gap-2">
@@ -907,9 +920,7 @@ export default function AdminDashboard({ setActiveTab }) {
             </MobileCard>
           </div>
           
-          <div className="mt-6 text-sm text-gray-500">
-            Quick links have been removed from this section. Use the tabs above to navigate.
-          </div>
+          
         </div>
       </MobileCard>
     </div>
