@@ -836,7 +836,6 @@ export default function CommunityHub({ setActiveTab }) {
           <div className="space-y-4">
             <div className="text-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Latest Scams</h3>
-              <p className="text-sm text-gray-600">10 most recent approved or verified reports marked as Ongoing Scam</p>
             </div>
             
             <div className="space-y-3">
