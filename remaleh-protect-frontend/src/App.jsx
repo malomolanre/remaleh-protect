@@ -142,6 +142,7 @@ function App() {
         // 2) Fallback: fetch RSS directly via a public CORS passthrough
         const feedUrl = 'https://www.remaleh.com.au/blog/blog-feed.xml'
         const proxies = [
+          (u) => `${API}/api/public/rss-proxy?url=${encodeURIComponent(u)}`,
           (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
           (u) => `https://r.jina.ai/http://www.remaleh.com.au/blog/blog-feed.xml`,
         ]
