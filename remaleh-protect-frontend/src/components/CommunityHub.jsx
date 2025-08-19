@@ -654,6 +654,9 @@ export default function CommunityHub({ setActiveTab }) {
                             }`}>
                               {report.status}
                             </span>
+                            {report.urgency === 'HIGH' && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">Ongoing Scam</span>
+                            )}
                             {report.verified && (
                               <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">Verified</span>
                             )}
@@ -833,7 +836,7 @@ export default function CommunityHub({ setActiveTab }) {
           <div className="space-y-4">
             <div className="text-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Latest Scams</h3>
-              <p className="text-sm text-gray-600">10 most recent approved or verified reports</p>
+              <p className="text-sm text-gray-600">10 most recent approved or verified reports marked as Ongoing Scam</p>
             </div>
             
             <div className="space-y-3">

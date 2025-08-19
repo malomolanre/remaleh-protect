@@ -74,17 +74,21 @@ export const useCommunity = () => {
     }
   }, []);
 
-  // Fetch latest reports (10 most recent, approved or verified)
+  // Fetch latest reports: 10 most recent with status APPROVED or VERIFIED and urgency HIGH
   const fetchLatestReports = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const params = new URLSearchParams({ per_page: 10, sort: 'newest', verified_only: 'true' }).toString();
+      // Fetch a larger page and filter client-side to meet multi-status and urgency criteria
+      const params = new URLSearchParams({ per_page: 50, sort: 'newest', include_all: 'true' }).toString();
       const response = await apiGet(`${API_ENDPOINTS.COMMUNITY.REPORTS}?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setLatestReports(data.reports || []);
-        return data;
+        const all = data.reports || [];
+        const filtered = all.filter(r => (r.status === 'APPROVED' || r.status === 'VERIFIED') && r.verified === true && r.urgency === 'HIGH');
+        const topTen = filtered.slice(0, 10);
+        setLatestReports(topTen);
+        return { reports: topTen };
       } else {
         throw new Error('Failed to fetch latest reports');
       }
