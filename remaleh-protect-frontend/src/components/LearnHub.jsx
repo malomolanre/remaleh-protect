@@ -261,36 +261,26 @@ export default function LearnHub({ setActiveTab }) {
 
   return (
     <div className="space-y-4 p-4">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#21a1ce] to-[#1a8bb8] rounded-2xl p-6 mb-6 text-white shadow-lg">
-        <div className="text-center">
-          {/* Icon and Title */}
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-white bg-opacity-20 p-3 rounded-full mr-3">
-              <BookOpen className="w-8 h-8 text-white" />
+      {/* Header (matches style of Community/Scam sections) */}
+      <div className="rounded-2xl p-4 mb-6 bg-white border border-gray-200">
+        <div className="flex items-start">
+          <div className="w-10 h-10 bg-[#21a1ce] rounded-lg flex items-center justify-center mr-3">
+            <BookOpen className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">Learning Hub</h1>
+              <button
+                onClick={loadData}
+                disabled={loading}
+                className="ml-4 p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all disabled:opacity-50"
+                title="Refresh content"
+              >
+                <RefreshCw className={`w-5 h-5 text-gray-600 ${loading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
-            <h1 className="text-3xl font-bold">Learning Hub</h1>
-            <button
-              onClick={loadData}
-              disabled={loading}
-              className="ml-4 bg-white bg-opacity-20 p-2 rounded-full hover:bg-opacity-30 transition-all disabled:opacity-50"
-              title="Refresh content"
-            >
-              <RefreshCw className={`w-5 h-5 text-white ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-          
-          {/* Main Message */}
-          <div className="bg-white bg-opacity-10 rounded-xl p-4 mb-4 backdrop-blur-sm">
-            <p className="text-white text-base leading-relaxed font-medium">
+            <p className="text-gray-600 mt-1">
               Remaleh isn't just about learning it's about doing. Stuck or unsure? A Remaleh Guardian will guide you step-by-step until you're confident, capable, and ready to take action.
-            </p>
-          </div>
-          
-          {/* Cheeky Driving Analogy */}
-          <div className="bg-white bg-opacity-15 rounded-lg p-3 inline-block">
-            <p className="text-white text-sm italic font-medium">
-              🚗 No one ever learns driving by reading alone - they were guided by an expert. Let us be your guide! ✨
             </p>
           </div>
         </div>
