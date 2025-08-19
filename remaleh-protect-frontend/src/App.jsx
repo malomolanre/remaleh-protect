@@ -886,8 +886,8 @@ function App() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-black mb-1">Learn Hub</h3>
-                    <p className="text-gray-600 text-sm">Educational content to improve your digital security</p>
+                    <h3 className="text-lg font-semibold text-black mb-1">Learning Hub</h3>
+                    <p className="text-gray-600 text-sm">Learn how to stay safe online, the easy way.</p>
                   </div>
                   <div className="text-gray-400">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -906,7 +906,7 @@ function App() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-black mb-1">Community</h3>
-                    <p className="text-gray-600 text-sm">Report scams and stay updated on latest threats</p>
+                    <p className="text-gray-600 text-sm">Report scams. Protect your community.</p>
                   </div>
                   <div className="text-gray-400">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -925,7 +925,7 @@ function App() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-black mb-1">Chat</h3>
-                    <p className="text-gray-600 text-sm">Get instant help and answers to security questions</p>
+                    <p className="text-gray-600 text-sm">Chat with our Cyber Assistant and a Remaleh Guardian’s just a message away</p>
                   </div>
                   <div className="text-gray-400">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
