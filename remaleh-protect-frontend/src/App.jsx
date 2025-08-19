@@ -766,6 +766,9 @@ function App() {
               <h1 className="text-3xl font-bold text-black mb-2">{greeting}</h1>
               <p className="text-gray-600">Welcome to Remaleh Protect</p>
             </div>
+            <div className="text-center mt-2">
+              <p className="text-xs text-gray-500">Sometimes our scanners miss the mark, so double check to stay safe.</p>
+            </div>
 
             {/* For You Today Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
