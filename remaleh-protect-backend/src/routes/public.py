@@ -238,7 +238,7 @@ def blog_feed():
                         if not desc_html and atom_content is not None and atom_content.text:
                             desc_html = atom_content.text
                     if desc_html:
-                        m = re.search(r'<img[^>]+src=["']([^"']+)["']', desc_html, re.IGNORECASE)
+                        m = re.search(r"<img[^>]+src=['\"]([^'\"]+)['\"]", desc_html, re.IGNORECASE)
                         if m:
                             return m.group(1)
                     return None
