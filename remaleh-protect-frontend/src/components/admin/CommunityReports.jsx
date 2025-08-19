@@ -486,12 +486,21 @@ const CommunityReports = ({ initialFilters }) => {
                 onClick={async () => {
                   if (!confirm('Delete this report?')) return;
                   try {
-                    const response = await api.request({ method: 'DELETE', url: `/api/admin/reports/${selectedReport.id}` });
-                    if (!response.ok) throw new Error('Delete failed');
+                    let response = await api.request({ method: 'DELETE', url: `/api/admin/reports/${selectedReport.id}` });
+                    if (!response.ok) {
+                      await response.json().catch(() => ({}));
+                      response = await api.request({ method: 'DELETE', url: `/api/community/reports/${selectedReport.id}` });
+                    }
+                    if (!response.ok && response.status !== 404) {
+                      // Last resort: set status to REJECTED then try admin delete again
+                      await api.request({ method: 'PUT', url: `/api/admin/reports/${selectedReport.id}/moderate`, data: { action: 'REJECTED' } }).catch(() => ({}));
+                      response = await api.request({ method: 'DELETE', url: `/api/admin/reports/${selectedReport.id}` });
+                    }
+                    if (!response.ok && response.status !== 404) throw new Error('Delete failed');
                     setShowReportModal(false);
                     fetchReports();
                   } catch (e) {
-                    alert('Failed to delete report');
+                    alert('Failed to delete report: ' + (e.message || 'Unknown error'));
                   }
                 }}
                 className="bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700"
