@@ -8,10 +8,21 @@ import string
 import math
 from collections import Counter
 from datetime import datetime
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
+import secrets
+import base64
 
 # Create the blueprint
 enhanced_scam_bp = Blueprint('enhanced_scam', __name__)
+try:
+    from ..models import db, User, UserScan
+except Exception:
+    from models import db, User, UserScan
+try:
+    from ..auth import token_required
+except Exception:
+    from auth import token_required
+
 
 # Enhanced scam indicators with weights
 SCAM_INDICATORS = {
@@ -322,6 +333,61 @@ def enhanced_scam_health():
         'service': 'enhanced_scam_detection',
         'version': '2.0'
     })
+
+@enhanced_scam_bp.route('/forwarding-address', methods=['GET'])
+@token_required
+def get_forwarding_address(current_user):
+    """Return a per-user email forwarding address like forward+<token>@remalehprotect.mail"""
+    # Ensure user has a token
+    if not getattr(current_user, 'email_forward_token', None):
+        current_user.email_forward_token = secrets.token_urlsafe(24).replace('-', '').replace('_', '')[:48]
+        db.session.commit()
+    local_part = f"forward+{current_user.email_forward_token}"
+    domain = current_app.config.get('EMAIL_FORWARD_DOMAIN', 'mail.remalehprotect.remaleh.com.au')
+    return jsonify({
+        'forwarding_address': f"{local_part}@{domain}",
+        'token': current_user.email_forward_token
+    })
+
+@enhanced_scam_bp.route('/inbound-email', methods=['POST'])
+def inbound_email_webhook():
+    """
+    Minimal inbound email webhook.
+    Expect JSON with: token, subject, text, html (optional), attachments (array of {filename, content_base64})
+    This endpoint should be wired to your email provider webhook to parse incoming forwards.
+    """
+    data = request.get_json(silent=True) or {}
+    token = data.get('token')
+    if not token:
+        return jsonify({'success': False, 'error': 'Missing token'}), 400
+    user = User.query.filter_by(email_forward_token=token).first()
+    if not user:
+        return jsonify({'success': False, 'error': 'Invalid token'}), 404
+
+    # Build text to analyze: subject + text or html stripped
+    subject = (data.get('subject') or '').strip()
+    text_body = (data.get('text') or '').strip()
+    if not text_body and data.get('html'):
+        # naive strip tags
+        import re as _re
+        text_body = _re.sub('<[^<]+?>', ' ', data['html'])
+    combined = (subject + "\n\n" + text_body).strip()
+    result = analyze_enhanced_scam(combined)
+
+    # Save a UserScan record
+    scan = UserScan(
+        user_id=user.id,
+        message=combined[:10000],
+        risk_level=result.get('risk_level') or 'SAFE',
+        risk_score=int(result.get('risk_score', 0) * 100),
+        threat_type='EMAIL_FORWARD',
+        analysis_result=result
+    )
+    db.session.add(scan)
+    db.session.commit()
+
+    # TODO: attachments could be uploaded to Cloudinary if needed
+    return jsonify({'success': True, 'scan_id': scan.id, 'result': result})
 
 @enhanced_scam_bp.route('/test', methods=['POST'])
 def test_analysis():

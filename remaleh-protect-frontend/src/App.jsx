@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
-import { apiPost, API_ENDPOINTS, API } from './lib/api'
+import { apiPost, apiGet, API_ENDPOINTS, API } from './lib/api'
 import PasswordGenerator from './components/PasswordGenerator'
 import ChatAssistant from './components/ChatAssistant'
 import LearnHub from './components/LearnHub'
@@ -31,6 +31,8 @@ function App() {
   
   // Get authentication state
   const { user, isAuthenticated, logout } = useAuth()
+  const [forwardingAddress, setForwardingAddress] = useState('')
+  const [copiedForward, setCopiedForward] = useState(false)
 
   // Global logout function
   const handleGlobalLogout = async () => {
@@ -88,6 +90,23 @@ function App() {
     }
     setGreeting(getGreeting())
   }, [])
+
+  // Fetch user-specific email forwarding address for scam analysis (when logged in)
+  useEffect(() => {
+    const fetchForwarding = async () => {
+      try {
+        if (!isAuthenticated) return
+        const res = await apiGet('/api/enhanced-scam/forwarding-address')
+        if (res.ok) {
+          const data = await res.json()
+          setForwardingAddress(data.forwarding_address || '')
+        }
+      } catch (_) {
+        // ignore
+      }
+    }
+    fetchForwarding()
+  }, [isAuthenticated])
   
   // Load blog headlines
   useEffect(() => {
@@ -1219,6 +1238,33 @@ function App() {
                   Check Status
                 </button>
               </div>
+
+              {/* Forwarded Email Address (user-specific) */}
+              {isAuthenticated && (
+                <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">Forward emails for analysis:</span>
+                      <div className="mt-1 select-all break-all">{forwardingAddress || 'Generating...'}</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (!forwardingAddress) return
+                        navigator.clipboard.writeText(forwardingAddress).then(() => {
+                          setCopiedForward(true)
+                          setTimeout(() => setCopiedForward(false), 1500)
+                        })
+                      }}
+                      className="ml-3 text-xs bg-[#21a1ce] text-white px-3 py-2 rounded-lg hover:bg-[#1a8bb8]"
+                    >
+                      {copiedForward ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Forward suspicious emails (including attachments) to this address. We’ll analyze them and show results in the app.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Input Section */}

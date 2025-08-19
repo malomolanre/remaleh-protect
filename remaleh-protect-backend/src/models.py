@@ -23,6 +23,8 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     role = db.Column(db.String(20), default='USER')  # USER, MODERATOR, ADMIN
     account_status = db.Column(db.String(20), default='ACTIVE')  # ACTIVE, SUSPENDED, BANNED
+    # Email forwarding for scam analysis
+    email_forward_token = db.Column(db.String(64), unique=True)
     # Email verification
     email_verified = db.Column(db.Boolean, default=False)
     email_verification_code = db.Column(db.String(12))

@@ -77,6 +77,8 @@ class Config:
 
     # Email (verification/notifications)
     EMAIL_SENDER = os.getenv('EMAIL_SENDER')
+    # Inbound email forwarding domain for user-specific scan addresses
+    EMAIL_FORWARD_DOMAIN = os.getenv('EMAIL_FORWARD_DOMAIN', 'mail.remalehprotect.remaleh.com.au')
     # Choice of provider; default to SMTP for flexibility on Render
     EMAIL_PROVIDER = os.getenv('EMAIL_PROVIDER', 'SMTP')  # SMTP, RESEND, SENDGRID
     SMTP_HOST = os.getenv('SMTP_HOST')

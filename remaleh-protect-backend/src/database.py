@@ -138,6 +138,15 @@ class DatabaseManager:
                         conn.rollback()
                     except Exception:
                         pass
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_forward_token VARCHAR(64) UNIQUE"))
+                    logger.info("Ensured 'email_forward_token' column on users table")
+                except Exception as e:
+                    logger.debug(f"email_forward_token column add skipped/failed: {e}")
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
                 
                 # LearningProgress table indexes
                 conn.execute(text("""
