@@ -121,7 +121,7 @@ export default function ContentAdmin({ setActiveTab }) {
       setActionLoading(true)
       const newLessonData = {
         title: 'New Lesson',
-        type: 'info',
+        type: 'content',
         content: 'Lesson content here...',
         contentType: 'info',
         contentStyle: 'default',
@@ -232,7 +232,7 @@ export default function ContentAdmin({ setActiveTab }) {
         setActionLoading(true)
         const updateData = {
           title: editingLesson.title.trim(),
-          type: editingLesson.type || 'info',
+          type: editingLesson.type || 'content',
           content: editingLesson.content.trim(),
           contentType: editingLesson.contentType || 'info',
           contentStyle: editingLesson.contentStyle || 'default',
@@ -732,20 +732,38 @@ export default function ContentAdmin({ setActiveTab }) {
                   placeholder="Enter lesson content"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Content Type</label>
-                <select
-                  value={editingLesson.contentType || 'info'}
-                  onChange={(e) => setEditingLesson({ ...editingLesson, contentType: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="info">Information</option>
-                  <option value="tips">Tips</option>
-                  <option value="warning-signs">Warning Signs</option>
-                  <option value="steps">Steps</option>
-                  <option value="example">Example</option>
-                  <option value="warning">Warning</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Lesson Type</label>
+                  <select
+                    value={editingLesson.type || 'content'}
+                    onChange={(e) => setEditingLesson({ ...editingLesson, type: e.target.value })}
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="content">Information</option>
+                    <option value="quiz">Quiz</option>
+                    <option value="assessment">Assessment</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Content Format</label>
+                  <select
+                    value={editingLesson.contentType || 'info'}
+                    onChange={(e) => setEditingLesson({ ...editingLesson, contentType: e.target.value })}
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="info">Information</option>
+                    <option value="tips">Tips</option>
+                    <option value="warning-signs">Warning Signs</option>
+                    <option value="steps">Steps</option>
+                    <option value="example">Example</option>
+                    <option value="warning">Warning</option>
+                    <option value="list">List</option>
+                    <option value="action-list">Actions</option>
+                    <option value="markdown">Markdown</option>
+                    <option value="html">HTML</option>
+                  </select>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
