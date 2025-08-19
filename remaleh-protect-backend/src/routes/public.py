@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime, timezone
 import urllib.request
+import requests
 import xml.etree.ElementTree as ET
 import re
 import html as html_lib
@@ -24,17 +25,26 @@ def blog_feed():
     last_error = None
     for feed_url in feed_candidates:
         try:
-            # Use a modern UA and explicit TLS context to avoid TLS/SNI quirks
-            req = urllib.request.Request(
-                feed_url,
-                headers={
-                    'User-Agent': 'Mozilla/5.0 (compatible; RemalehProtect/1.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36',
+            # Try requests first (often handles SNI/certs better)
+            try:
+                r = requests.get(feed_url, headers={
+                    'User-Agent': 'Mozilla/5.0 (compatible; RemalehProtect/1.0)',
                     'Accept': 'application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5'
-                }
-            )
-            ctx = ssl.create_default_context()
-            with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
-                data = resp.read()
+                }, timeout=10)
+                r.raise_for_status()
+                data = r.content
+            except Exception:
+                # Fallback to urllib
+                req = urllib.request.Request(
+                    feed_url,
+                    headers={
+                        'User-Agent': 'Mozilla/5.0 (compatible; RemalehProtect/1.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36',
+                        'Accept': 'application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5'
+                    }
+                )
+                ctx = ssl.create_default_context()
+                with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+                    data = resp.read()
             # Parse RSS XML
             root = ET.fromstring(data)
             items = []
