@@ -130,11 +130,63 @@ function App() {
   useEffect(() => {
     const loadBlog = async () => {
       try {
+        // 1) Try backend first
         const res = await fetch(`${API}${API_ENDPOINTS.PUBLIC.BLOG_FEED}?limit=8`)
         if (res.ok) {
           const data = await res.json()
-          setBlogItems(Array.isArray(data.items) ? data.items : [])
+          if (Array.isArray(data.items) && data.items.length > 0) {
+            setBlogItems(data.items)
+            return
+          }
         }
+        // 2) Fallback: fetch RSS directly via a public CORS passthrough
+        const feedUrl = 'https://www.remaleh.com.au/blog/blog-feed.xml'
+        const proxies = [
+          (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+          (u) => `https://r.jina.ai/http://www.remaleh.com.au/blog/blog-feed.xml`,
+        ]
+        let xmlText = ''
+        for (const make of proxies) {
+          try {
+            const r = await fetch(make(feedUrl), { cache: 'no-store' })
+            if (r.ok) {
+              xmlText = await r.text()
+              if (xmlText && xmlText.length > 100) break
+            }
+          } catch (_) {}
+        }
+        if (!xmlText) return
+        // Parse XML client-side
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(xmlText, 'text/xml')
+        const rssChannel = doc.querySelector('rss > channel')
+        let entries = []
+        if (rssChannel) {
+          entries = Array.from(rssChannel.querySelectorAll('item'))
+        } else {
+          entries = Array.from(doc.querySelectorAll('entry'))
+        }
+        const pick = (el, sel) => {
+          const n = el.querySelector(sel)
+          return n && n.textContent ? n.textContent.trim() : ''
+        }
+        const items = entries.slice(0, 8).map((el) => {
+          const title = pick(el, 'title')
+          let link = ''
+          const linkEl = el.querySelector('link')
+          if (linkEl) {
+            link = linkEl.getAttribute('href') || linkEl.textContent || ''
+          }
+          const pubDate = pick(el, 'pubDate') || pick(el, 'updated') || pick(el, 'published')
+          const desc = pick(el, 'description') || pick(el, 'content\\:encoded') || pick(el, 'summary') || pick(el, 'content')
+          const excerpt = desc ? desc.replace(/<[^>]+>/g, '').slice(0, 240) : ''
+          // Try to find an image
+          let img = ''
+          const imgInHtml = (desc || '').match(/<img[^>]+src=["']([^"']+)["']/i)
+          if (imgInHtml) img = imgInHtml[1]
+          return { title, link, pubDate, excerpt, image: img }
+        })
+        setBlogItems(items)
       } catch (e) {
         // ignore if offline
       }
