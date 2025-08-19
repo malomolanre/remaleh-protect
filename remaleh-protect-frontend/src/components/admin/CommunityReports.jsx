@@ -474,6 +474,8 @@ const CommunityReports = ({ initialFilters }) => {
       isOpen={showBulkModal}
       onClose={() => setShowBulkModal(false)}
       title="Bulk Actions"
+      hideOnDesktop={false}
+      fullScreen
     >
       <div className="space-y-4">
         <div>
@@ -526,7 +528,11 @@ const CommunityReports = ({ initialFilters }) => {
           <div className="mt-4 sm:mt-0 flex space-x-2">
             {selectedReports.length > 0 && (
               <button
-                onClick={() => setShowBulkModal(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowBulkModal(true);
+                }}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
               >
                 Bulk Actions ({selectedReports.length})
