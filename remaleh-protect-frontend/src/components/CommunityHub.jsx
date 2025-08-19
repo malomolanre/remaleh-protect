@@ -312,7 +312,7 @@ export default function CommunityHub({ setActiveTab }) {
                     value={filterThreatType}
                     onChange={(e) => setFilterThreatType(e.target.value)}
                     options={[
-                      { value: 'ALL', label: 'All types' },
+                      { value: 'ALL', label: 'All categories' },
                       { value: 'PHISHING', label: 'Phishing' },
                       { value: 'MALWARE', label: 'Malware' },
                       { value: 'SCAM', label: 'Scam' },
@@ -325,7 +325,7 @@ export default function CommunityHub({ setActiveTab }) {
                     value={filterUrgency}
                     onChange={(e) => setFilterUrgency(e.target.value)}
                     options={[
-                      { value: 'ALL', label: 'All urgency' },
+                      { value: 'ALL', label: 'All severity' },
                       { value: 'LOW', label: 'Caution' },
                       { value: 'MEDIUM', label: 'Scam' },
                       { value: 'HIGH', label: 'Ongoing Scam' }
@@ -1008,7 +1008,7 @@ export default function CommunityHub({ setActiveTab }) {
                 <ul className="text-sm text-gray-600 space-y-1">
                   <li>• Report scams to protect others</li>
                   <li>• Earn points and climb the leaderboard</li>
-                  <li>• Stay updated on latest threats</li>
+                  <li>• Stay updated on latest scams</li>
                   <li>• Build a safer digital community</li>
                 </ul>
               </div>
@@ -1079,12 +1079,12 @@ export default function CommunityHub({ setActiveTab }) {
                         </select>
                       </div>
                       <div className="relative">
-                        <label className="block text-sm text-gray-700 mb-1">Category</label>
+                        <label className="block text-sm text-gray-700 mb-1">Severity</label>
                         <select
                         value={newReport.urgency}
                         onChange={(e) => setNewReport({ ...newReport, urgency: e.target.value })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2"
-                        aria-describedby="urgency-help"
+                        aria-describedby="severity-help"
                       >
                         <option value="LOW">Caution</option>
                         <option value="MEDIUM">Scam</option>
@@ -1092,10 +1092,10 @@ export default function CommunityHub({ setActiveTab }) {
                       </select>
                         <button
                           type="button"
-                          aria-label="Urgency help"
-                          title="What do these mean?"
+                          aria-label="Severity help"
+                          title="About severity levels"
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                          onClick={() => alert('Caution: suspicious or low-risk; Scam: confirmed scam but not active; Ongoing Scam: active scam happening now or immediate risk.')}
+                          onClick={() => alert('Severity levels:\n• Caution: suspicious or low-risk\n• Scam: confirmed scam but not active\n• Ongoing Scam: active scam happening now or immediate risk')}
                         >
                           <HelpCircle className="w-4 h-4" />
                         </button>

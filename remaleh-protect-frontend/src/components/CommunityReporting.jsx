@@ -354,7 +354,7 @@ export default function CommunityReporting({ setActiveTab }) {
                   value={filterThreatType}
                   onChange={(e) => setFilterThreatType(e.target.value)}
                   options={[
-                    { value: 'ALL', label: 'All types' },
+                    { value: 'ALL', label: 'All categories' },
                     { value: 'PHISHING', label: 'Phishing' },
                     { value: 'MALWARE', label: 'Malware' },
                     { value: 'SCAM', label: 'Scam' },
@@ -367,10 +367,10 @@ export default function CommunityReporting({ setActiveTab }) {
                   value={filterUrgency}
                   onChange={(e) => setFilterUrgency(e.target.value)}
                   options={[
-                    { value: 'ALL', label: 'All urgency' },
-                    { value: 'LOW', label: 'Low' },
-                    { value: 'MEDIUM', label: 'Medium' },
-                    { value: 'HIGH', label: 'High' }
+                    { value: 'ALL', label: 'All severity' },
+                    { value: 'LOW', label: 'Caution' },
+                    { value: 'MEDIUM', label: 'Scam' },
+                    { value: 'HIGH', label: 'Ongoing Scam' }
                   ]}
                   className="flex-1"
                 />
