@@ -334,6 +334,26 @@ def enhanced_scam_health():
         'version': '2.0'
     })
 
+@enhanced_scam_bp.route('/recent-scans', methods=['GET'])
+@token_required
+def recent_scans(current_user):
+    """Return the most recent forwarded email scans for the current user."""
+    try:
+        limit = int(request.args.get('limit', 20))
+    except Exception:
+        limit = 20
+    q = UserScan.query.filter_by(user_id=current_user.id).order_by(UserScan.scanned_at.desc()).limit(limit)
+    items = []
+    for s in q.all():
+        items.append({
+            'id': s.id,
+            'subject': (s.analysis_result or {}).get('debug_info', {}).get('subject') if isinstance(s.analysis_result, dict) else None,
+            'risk_level': s.risk_level,
+            'risk_score': s.risk_score,
+            'scanned_at': s.scanned_at.isoformat() if s.scanned_at else None
+        })
+    return jsonify({'items': items})
+
 @enhanced_scam_bp.route('/forwarding-address', methods=['GET'])
 @token_required
 def get_forwarding_address(current_user):
