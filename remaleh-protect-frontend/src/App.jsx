@@ -942,19 +942,17 @@ function App() {
           <div className="space-y-6">
             {/* Header Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+              <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <div className="w-10 h-10 bg-[#21a1ce] rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-black">Breach Checker</h1>
-                  <p className="text-gray-600">Secure email verification</p>
-                </div>
+                <h1 className="text-2xl font-bold text-black mb-2">Breach Checker</h1>
+                <p className="text-gray-600 text-sm">Check if your email has been compromised</p>
               </div>
-              
-              <p className="text-gray-700 mb-6">Check if your email has been compromised in data breaches and get personalized security recommendations.</p>
             </div>
 
             {/* Email Input Section */}
@@ -1272,19 +1270,17 @@ function App() {
           <div className="space-y-6">
             {/* Header Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-[#21a1ce] rounded-xl flex items-center justify-center mr-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
+              <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <div className="w-10 h-10 bg-[#21a1ce] rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-black">Scam Analysis</h1>
-                  <p className="text-gray-600">Advanced threat detection</p>
-                </div>
+                <h1 className="text-2xl font-bold text-black mb-2">Scam Analysis</h1>
+                <p className="text-gray-600 text-sm">Analyze suspicious content for potential scams</p>
               </div>
-              
-              <p className="text-gray-700 mb-6">Analyze suspicious messages, links, and emails for potential scams using advanced pattern recognition and threat intelligence.</p>
               
               {/* API Status Indicator */}
               <div className="flex items-center space-x-2 text-sm">
