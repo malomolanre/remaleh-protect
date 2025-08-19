@@ -190,6 +190,11 @@ export default function ScamAnalysis({ setActiveTab }) {
             <p className="text-red-700 text-sm">{error}</p>
           </div>
         </MobileCard>
+
+      {/* Safety Note */}
+      <div className="text-center mt-3">
+        <p className="text-xs text-gray-500">Sometimes our scanners miss the mark, so double check to stay safe.</p>
+      </div>
     </div>
   )
 }
