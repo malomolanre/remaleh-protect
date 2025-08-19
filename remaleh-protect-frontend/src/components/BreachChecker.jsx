@@ -19,14 +19,14 @@ export default function BreachChecker({ setActiveTab }) {
   return (
     <div className="space-y-4 p-4">
       {/* Header centered like Community Hub */}
-      <div className="mb-6">
-        <div className="flex items-center justify-center">
-          <div className="w-10 h-10 bg-[#21a1ce] rounded-lg flex items-center justify-center mr-3">
-            <Search className="w-5 h-5 text-white" />
+      <div className="text-center mb-6">
+        <div className="flex justify-center mb-3">
+          <div className="w-10 h-10 bg-[#21a1ce] rounded-lg flex items-center justify-center">
+            <Search className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Breach Checker</h1>
         </div>
-        <p className="text-gray-600 text-sm text-center mt-1">Check if your email has been compromised</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Breach Checker</h1>
+        <p className="text-gray-600 text-sm">Check if your email has been compromised</p>
       </div>
 
       {/* Search Form */}
