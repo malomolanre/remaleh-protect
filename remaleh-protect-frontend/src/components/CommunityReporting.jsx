@@ -398,6 +398,9 @@ export default function CommunityReporting({ setActiveTab }) {
             </div>
 
             {/* Scrollable + pull-to-refresh list */}
+            <div className="text-center text-xs text-gray-500 mb-1">
+              Showing {filteredReports.length}{Array.isArray(reports) ? ' of ' + reports.length : ''} reports
+            </div>
             <MobilePullToRefresh onRefresh={loadAllData} className="h-[60vh] sm:h-[65vh] md:h-[70vh]">
               <div className="space-y-4">
                 {filteredReports && filteredReports.length > 0 ? (
