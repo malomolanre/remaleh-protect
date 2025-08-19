@@ -1234,6 +1234,9 @@ function App() {
                   <p className="text-gray-600 text-sm">Instant results and recommendations</p>
                 </div>
               </div>
+              <div className="mt-4 text-center">
+                <p className="text-xs text-gray-500">Sometimes our scanners miss the mark, so double check to stay safe.</p>
+              </div>
             </div>
 
             {/* Security Features */}
@@ -1732,7 +1735,7 @@ function App() {
                     <span className="text-[#21a1ce] font-bold text-lg">1</span>
                   </div>
                   <h3 className="font-medium text-gray-800 mb-2">Input Content</h3>
-                  <p className="text-gray-600 text-sm">Paste suspicious messages, links, or emails</p>
+                  <p className="text-gray-600 text-sm">Paste suspicious messages, links, or forward email</p>
                 </div>
                 
                 <div className="text-center p-4">
