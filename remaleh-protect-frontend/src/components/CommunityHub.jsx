@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle, ThumbsUp, ThumbsDown, MessageSquare, Trash2, Award } from 'lucide-react';
+import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle, ThumbsUp, ThumbsDown, MessageSquare, Trash2, HelpingHand, Shield, Eye } from 'lucide-react';
 import { MobileCard } from './ui/mobile-card';
 import { MobileButton } from './ui/mobile-button';
 import { useAuth } from '../hooks/useAuth';
@@ -200,16 +200,36 @@ export default function CommunityHub({ setActiveTab }) {
                   // Determine tier styling
                 }
                 {(() => {
-                  const tier = (myStats?.tier || '').toString();
-                  const t = tier.toLowerCase();
-                  let colorNumber = 'gray';
-                  if (t.includes('bronze')) colorNumber = 'amber';
-                  else if (t.includes('silver')) colorNumber = 'gray';
-                  else if (t.includes('gold')) colorNumber = 'yellow';
-                  else if (t.includes('platinum')) colorNumber = 'cyan';
-                  else if (t.includes('diamond')) colorNumber = 'blue';
-                  const hasTier = !!myStats?.tier;
+                  const tierRaw = (myStats?.tier || '').toString();
+                  const t = tierRaw.toLowerCase();
+                  const hasTier = !!tierRaw;
                   const gridCols = hasTier ? 'grid-cols-4' : 'grid-cols-3';
+                  let badgeBg = 'bg-gray-100 text-gray-700';
+                  let iconColor = 'text-gray-600';
+                  let iconEl = null;
+                  if (t.includes('helper')) {
+                    badgeBg = 'bg-blue-100 text-blue-700';
+                    iconColor = 'text-blue-600';
+                    iconEl = <HelpingHand className={`w-4 h-4 ${iconColor}`} />;
+                  } else if (t.includes('ally')) {
+                    badgeBg = 'bg-purple-100 text-purple-700';
+                    iconColor = 'text-purple-600';
+                    iconEl = <Shield className={`w-4 h-4 ${iconColor}`} />;
+                  } else if (t.includes('champion')) {
+                    badgeBg = 'bg-yellow-100 text-yellow-700';
+                    iconColor = 'text-yellow-600';
+                    iconEl = <Trophy className={`w-4 h-4 ${iconColor}`} />;
+                  } else if (t.includes('guardian')) {
+                    badgeBg = 'bg-emerald-100 text-emerald-700';
+                    iconColor = 'text-emerald-600';
+                    iconEl = (
+                      <span className="relative inline-block w-5 h-5">
+                        <Shield className={`w-5 h-5 absolute inset-0 ${iconColor}`} />
+                        <Eye className="w-3 h-3 absolute bottom-0 right-0 text-emerald-700" />
+                      </span>
+                    );
+                  }
+
                   return (
                     <div className={`grid ${gridCols} gap-4 text-center`}>
                       <div>
@@ -226,9 +246,9 @@ export default function CommunityHub({ setActiveTab }) {
                       </div>
                       {hasTier && (
                         <div className="flex flex-col items-center justify-center">
-                          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-${colorNumber}-100 text-${colorNumber}-700`}> 
-                            <Award className={`w-4 h-4 text-${colorNumber}-600`} />
-                            <span className="text-xs font-medium">{myStats.tier}</span>
+                          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${badgeBg}`}>
+                            {iconEl}
+                            <span className="text-xs font-medium">{tierRaw}</span>
                           </div>
                           <div className="text-xs text-gray-600 mt-1">Tier</div>
                         </div>
