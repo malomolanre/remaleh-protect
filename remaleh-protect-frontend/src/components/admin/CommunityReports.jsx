@@ -284,6 +284,7 @@ const CommunityReports = ({ initialFilters }) => {
         onClose={() => setShowReportModal(false)}
         title="Report Details"
         hideOnDesktop={false}
+        fullScreen
       >
         {selectedReport && (
         <div className="space-y-4">
