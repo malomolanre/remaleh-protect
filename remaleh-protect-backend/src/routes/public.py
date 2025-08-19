@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import re
 import html as html_lib
 import email.utils as email_utils
+import ssl
 
 public_bp = Blueprint('public', __name__)
 
@@ -15,12 +16,24 @@ def blog_feed():
     # Prefer the provided blog RSS; fallback to legacy path
     feed_candidates = [
         'https://www.remaleh.com.au/blog/blog-feed.xml',
-        'https://www.remaleh.com.au/blog/feed/'
+        'https://www.remaleh.com.au/blog/feed/',
+        # Non-www fallbacks in case of SNI/cert differences
+        'https://remaleh.com.au/blog/blog-feed.xml',
+        'https://remaleh.com.au/blog/feed/'
     ]
     last_error = None
     for feed_url in feed_candidates:
         try:
-            with urllib.request.urlopen(feed_url, timeout=8) as resp:
+            # Use a modern UA and explicit TLS context to avoid TLS/SNI quirks
+            req = urllib.request.Request(
+                feed_url,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (compatible; RemalehProtect/1.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36',
+                    'Accept': 'application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5'
+                }
+            )
+            ctx = ssl.create_default_context()
+            with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
                 data = resp.read()
             # Parse RSS XML
             root = ET.fromstring(data)
