@@ -1257,32 +1257,7 @@ function App() {
                 </button>
               </div>
 
-              {/* Forwarded Email Address (user-specific) */}
-              {isAuthenticated && (
-                <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
-                      <span className="font-medium">Forward emails for analysis:</span>
-                      <div className="mt-1 select-all break-all">{forwardingAddress || 'Generating...'}</div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (!forwardingAddress) return
-                        navigator.clipboard.writeText(forwardingAddress).then(() => {
-                          setCopiedForward(true)
-                          setTimeout(() => setCopiedForward(false), 1500)
-                        })
-                      }}
-                      className="ml-3 text-xs bg-[#21a1ce] text-white px-3 py-2 rounded-lg hover:bg-[#1a8bb8]"
-                    >
-                      {copiedForward ? 'Copied' : 'Copy'}
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Forward suspicious emails (including attachments) to this address. We’ll analyze them and show results in the app.
-                  </p>
-                </div>
-              )}
+              {/* Email forwarding UI moved into the Email tab below */}
             </div>
 
             {/* Input Section */}
@@ -1319,70 +1294,66 @@ function App() {
                   </div>
                 </div>
 
-                {/* Content Input */}
-                <div>
-                  <label htmlFor="scamInput" className="block text-sm font-medium text-gray-700 mb-2">
-                    {scamType === 'message' ? 'Message Content' : scamType === 'link' ? 'URL or Link' : 'Email Content'}
-                  </label>
-                  <div className="relative">
-                    {scamType === 'link' ? (
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                      </div>
-                    ) : scamType === 'email' ? (
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                        </svg>
+                {/* Content Input or Email Forwarding */}
+                {scamType === 'email' ? (
+                  <div className="space-y-3">
+                    {isAuthenticated ? (
+                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-gray-700">
+                            <span className="font-medium">Forward emails for analysis:</span>
+                            <div className="mt-1 select-all break-all">{forwardingAddress || 'Generating...'}</div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (!forwardingAddress) return
+                              navigator.clipboard.writeText(forwardingAddress).then(() => {
+                                setCopiedForward(true)
+                                setTimeout(() => setCopiedForward(false), 1500)
+                              })
+                            }}
+                            className="ml-3 text-xs bg-[#21a1ce] text-white px-3 py-2 rounded-lg hover:bg-[#1a8bb8]"
+                          >
+                            {copiedForward ? 'Copied' : 'Copy'}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">Forward suspicious emails (including attachments) to this address. We’ll analyze them and show results below.</p>
                       </div>
                     ) : (
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                      </div>
+                      <p className="text-sm text-gray-600">Sign in to get your personal forwarding address.</p>
                     )}
-                    <textarea
-                      id="scamInput"
-                      value={scamInput}
-                      onChange={(e) => setScamInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.ctrlKey && !isAnalyzing && scamInput.trim()) {
-                          handleScamAnalysis()
-                        }
-                      }}
-                      placeholder={
-                        scamType === 'message' 
-                          ? 'Paste the suspicious message here...' 
-                          : scamType === 'link' 
-                          ? 'Enter the URL or link to analyze...' 
-                          : 'Paste the email content here...'
-                      }
-                      rows={4}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent transition-all duration-200 resize-none"
-                      disabled={isAnalyzing}
-                    />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Press Ctrl+Enter to analyze quickly
-                  </p>
-                  <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-600">
-                      <strong>Content Guide:</strong> {
-                        scamType === 'link' 
-                          ? 'Paste a single URL (e.g., https://example.com) or a message containing URLs'
-                          : scamType === 'email' 
-                          ? 'Paste email content with headers (From:, To:, Subject:) or email body text'
-                          : 'Paste any suspicious message, text, or content for analysis'
-                      }
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      💡 <strong>Smart Detection:</strong> The system automatically detects content type and routes to the best analysis method
-                    </p>
+                ) : (
+                  <div>
+                    <label htmlFor="scamInput" className="block text-sm font-medium text-gray-700 mb-2">
+                      {scamType === 'message' ? 'Message Content' : 'URL or Link'}
+                    </label>
+                    <div className="relative">
+                      {scamType === 'link' ? (
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </div>
+                      )}
+                      <textarea
+                        id="scamInput"
+                        value={scamInput}
+                        onChange={(e) => setScamInput(e.target.value)}
+                        placeholder={scamType === 'message' ? 'Paste the suspicious message here...' : 'Enter the URL or link to analyze...'}
+                        rows={4}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#21a1ce] focus:border-transparent transition-all duration-200 resize-none"
+                        disabled={isAnalyzing}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Error Display */}
                 {scamError && (
@@ -1664,9 +1635,17 @@ function App() {
                   <div className="space-y-2">
                     {recentScans.map(item => (
                       <div key={item.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                        <div className="mr-3">
-                          <div className="text-sm font-medium text-gray-800 line-clamp-1">{item.subject || 'Email'}</div>
-                          <div className="text-xs text-gray-500">{item.scanned_at?.replace('T',' ').slice(0,16)}</div>
+                        <div className="mr-3 flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-800 truncate">{item.subject || 'Email'}</div>
+                          <div className="text-xs text-gray-500 flex items-center gap-2">
+                            <span>{item.scanned_at?.replace('T',' ').slice(0,16)}</span>
+                            {typeof item.attachments === 'number' && (
+                              <span>• {item.attachments} attachment{item.attachments === 1 ? '' : 's'}</span>
+                            )}
+                          </div>
+                          {item.preview && (
+                            <div className="text-xs text-gray-600 mt-1 line-clamp-2">{item.preview}</div>
+                          )}
                         </div>
                         <span className={`text-xs px-2 py-1 rounded-full ${item.risk_level === 'SCAM' ? 'bg-red-100 text-red-700' : item.risk_level === 'SUSPICIOUS' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
                           {item.risk_level} {typeof item.risk_score === 'number' ? `(${item.risk_score})` : ''}

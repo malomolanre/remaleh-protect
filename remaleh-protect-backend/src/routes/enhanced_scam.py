@@ -393,6 +393,15 @@ def inbound_email_webhook():
         text_body = _re.sub('<[^<]+?>', ' ', data['html'])
     combined = (subject + "\n\n" + text_body).strip()
     result = analyze_enhanced_scam(combined)
+    # Enrich debug info so the app can display context (subject/preview/attachments)
+    try:
+        if isinstance(result, dict):
+            result.setdefault('debug_info', {})
+            result['debug_info']['subject'] = subject
+            result['debug_info']['preview'] = (text_body or '')[:200]
+            result['debug_info']['attachments'] = len(data.get('attachments') or [])
+    except Exception:
+        pass
 
     # Save a UserScan record
     scan = UserScan(
