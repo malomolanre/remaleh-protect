@@ -16,13 +16,25 @@ export default function ChatAssistant({ setActiveTab }) {
     handleChatSubmit,
   } = useChatAssistant()
 
+  const scrollRef = useRef(null)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) {
+      try {
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+      } catch (_) {
+        el.scrollTop = el.scrollHeight
+      }
+    }
+  }, [chatMessages, isTyping])
+
   return (
     <div className="p-2 md:p-4">
 
       <MobileCard className="mb-2">
         <MobileCardContent>
           <div className="border border-gray-200 rounded-lg h-96 md:h-[32rem] flex flex-col">
-            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+            <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4">
               {chatMessages.length === 0 && (
                 <div className="text-center text-gray-500 mt-8">
                   <MessageSquare className="mx-auto mb-2 text-gray-300" size={48} />
