@@ -15,10 +15,10 @@ except ImportError:
 
 # Import production modules - try relative imports first, then absolute
 try:
-    from ..models import db, User, CommunityReport, CommunityReportMedia, UserPointLog
+    from ..models import db, User, CommunityReport, CommunityReportMedia, UserPointLog, ReportVote, CommunityReportComment, LearningProgress, LessonProgress, ProtectionStatus
     from ..auth import token_required, admin_required
 except ImportError:
-    from models import db, User, CommunityReport, CommunityReportMedia, UserPointLog
+    from models import db, User, CommunityReport, CommunityReportMedia, UserPointLog, ReportVote, CommunityReportComment, LearningProgress, LessonProgress, ProtectionStatus
     from auth import token_required, admin_required
 
 logger = logging.getLogger(__name__)
@@ -467,6 +467,89 @@ def delete_user(current_user, user_id):
         logger.error(f"Error deleting user: {e}")
         db.session.rollback()
         return jsonify({'error': 'Internal server error'}), 500
+
+@admin_bp.route('/users/<int:user_id>/hard-delete', methods=['DELETE'])
+@token_required
+@admin_required
+def hard_delete_user(current_user, user_id):
+    """Permanently delete a user and associated data. Use with caution."""
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Delete user's community reports (and media)
+        try:
+            reports = CommunityReport.query.filter_by(user_id=user.id).all()
+            for report in reports:
+                for m in list(getattr(report, 'media', [])):
+                    media_url = getattr(m, 'media_url', '') or ''
+                    if media_url.startswith('/api/community/uploads/'):
+                        try:
+                            filename = media_url.split('/api/community/uploads/', 1)[1]
+                            upload_folder = current_app.config.get('UPLOAD_FOLDER')
+                            if upload_folder:
+                                file_path = os.path.join(upload_folder, filename)
+                                if os.path.exists(file_path):
+                                    os.remove(file_path)
+                        except Exception:
+                            pass
+                    else:
+                        if cloudinary and ('res.cloudinary.com' in media_url):
+                            try:
+                                cloud_name = current_app.config.get('CLOUDINARY_CLOUD_NAME')
+                                api_key = current_app.config.get('CLOUDINARY_API_KEY')
+                                api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
+                                if cloud_name and api_key and api_secret:
+                                    cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
+                                    parsed = urlparse(media_url)
+                                    parts = parsed.path.split('/')
+                                    if 'upload' in parts:
+                                        upload_idx = parts.index('upload')
+                                        public_parts = parts[upload_idx+2:]
+                                        public_id_with_ext = '/'.join(public_parts)
+                                        if public_id_with_ext:
+                                            public_id = os.path.splitext(public_id_with_ext)[0]
+                                            cloudinary.uploader.destroy(public_id)
+                            except Exception:
+                                pass
+                db.session.delete(report)
+        except Exception:
+            pass
+
+        # Delete other dependent records
+        try:
+            db.session.query(ReportVote).where(ReportVote.user_id == user.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            db.session.query(CommunityReportComment).where(CommunityReportComment.user_id == user.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            db.session.query(UserPointLog).where(UserPointLog.user_id == user.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            db.session.query(LessonProgress).where(LessonProgress.user_id == user.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            db.session.query(LearningProgress).where(LearningProgress.user_id == user.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            db.session.query(ProtectionStatus).where(ProtectionStatus.user_id == user.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+
+        # Finally delete the user
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'message': 'User permanently deleted', 'user_id': user_id}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 @admin_bp.route('/users/<int:user_id>/restore', methods=['PUT'])
 @token_required

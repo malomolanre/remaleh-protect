@@ -18,7 +18,7 @@ import { MobileButton } from '../ui/mobile-button'
 import { MobileInput } from '../ui/mobile-input'
 import { Textarea } from '../ui/textarea'
 import { createModule, getAllModules, updateModule, deleteModule, addLesson, updateLesson, deleteLesson, uploadLessonMedia } from '../../utils/contentManager'
-import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword, restoreUser, getDeletedUsers } from '../../utils/userManager'
+import { getAllUsers, updateUserStatus, updateUserRole, deleteUser, hardDeleteUser, getUserStats, createUser, updateUserInfo, updateUserPassword, restoreUser, getDeletedUsers } from '../../utils/userManager'
 import CommunityReports from './CommunityReports'
 import { apiGet } from '../../lib/api'
 
@@ -66,6 +66,75 @@ export default function AdminDashboard({ setActiveTab }) {
   // Error state
   const [error, setError] = useState(null)
   const [dbConnectionStatus, setDbConnectionStatus] = useState('checking')
+  const [selectedDeletedUserIds, setSelectedDeletedUserIds] = useState([])
+  const isDeletedUserSelected = (id) => selectedDeletedUserIds.includes(id)
+  const toggleDeletedUserSelected = (id) => setSelectedDeletedUserIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  const selectAllDeletedUsersOnPage = () => {
+    const pageIds = deletedUsers.map(u => u.id)
+    const allSelected = pageIds.every(id => selectedDeletedUserIds.includes(id))
+    setSelectedDeletedUserIds(allSelected ? selectedDeletedUserIds.filter(id => !pageIds.includes(id)) : Array.from(new Set([...selectedDeletedUserIds, ...pageIds])))
+  }
+  const clearDeletedSelection = () => setSelectedDeletedUserIds([])
+  const [selectedUserIds, setSelectedUserIds] = useState([])
+  const [bulkActionType, setBulkActionType] = useState('')
+  const [bulkActionValue, setBulkActionValue] = useState('')
+  const isUserSelected = (id) => selectedUserIds.includes(id)
+  const toggleUserSelected = (id) => {
+    setSelectedUserIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+  const selectAllUsersOnPage = () => {
+    const pageIds = users.map(u => u.id)
+    const allSelected = pageIds.every(id => selectedUserIds.includes(id))
+    setSelectedUserIds(allSelected ? selectedUserIds.filter(id => !pageIds.includes(id)) : Array.from(new Set([...selectedUserIds, ...pageIds])))
+  }
+  const clearBulkSelection = () => {
+    setSelectedUserIds([])
+    setBulkActionType('')
+    setBulkActionValue('')
+  }
+  const handleBulkApply = async () => {
+    if (selectedUserIds.length === 0) {
+      alert('Select at least one user')
+      return
+    }
+    if (!bulkActionType) {
+      alert('Choose a bulk action')
+      return
+    }
+    if ((bulkActionType === 'status' || bulkActionType === 'role') && !bulkActionValue) {
+      alert('Choose a value for the selected action')
+      return
+    }
+    if (bulkActionType === 'delete' && !confirm(`Delete ${selectedUserIds.length} user(s)?`)) {
+      return
+    }
+    setActionLoading(true)
+    const results = { success: 0, failed: 0, errors: [] }
+    for (const userId of selectedUserIds) {
+      try {
+        if (bulkActionType === 'status') {
+          const res = await updateUserStatus(userId, bulkActionValue)
+          if (!res.success) throw new Error(res.error || 'Failed')
+        } else if (bulkActionType === 'role') {
+          const res = await updateUserRole(userId, bulkActionValue)
+          if (!res.success) throw new Error(res.error || 'Failed')
+        } else if (bulkActionType === 'delete') {
+          const res = await deleteUser(userId)
+          if (!res.success) throw new Error(res.error || 'Failed')
+        }
+        results.success += 1
+      } catch (e) {
+        results.failed += 1
+        results.errors.push(`#${userId}: ${e.message || 'Error'}`)
+      }
+    }
+    await loadUsers()
+    await loadDeletedUsers()
+    setActionLoading(false)
+    clearBulkSelection()
+    const summary = `Bulk ${bulkActionType}: ${results.success} succeeded, ${results.failed} failed${results.errors.length ? `\n${results.errors.join('\n')}` : ''}`
+    alert(summary)
+  }
   
   // Admin stats (includes reports totals)
   const [adminStats, setAdminStats] = useState(null)
@@ -361,6 +430,29 @@ export default function AdminDashboard({ setActiveTab }) {
       alert(`Failed to restore user: ${error.message}`)
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  const handleBulkRestoreDeleted = async () => {
+    if (selectedDeletedUserIds.length === 0) { alert('Select at least one user to restore'); return }
+    try {
+      setActionLoading(true)
+      const results = { success: 0, failed: 0, errors: [] }
+      for (const id of selectedDeletedUserIds) {
+        try {
+          const r = await restoreUser(id)
+          if (!r.success) throw new Error(r.error || 'Failed')
+          results.success++
+        } catch (e) {
+          results.failed++
+          results.errors.push(`#${id}: ${e.message || 'Error'}`)
+        }
+      }
+      await loadUsers(); await loadDeletedUsers()
+      alert(`Bulk restore: ${results.success} succeeded, ${results.failed} failed${results.errors.length ? `\n${results.errors.join('\n')}` : ''}`)
+    } finally {
+      setActionLoading(false)
+      setSelectedDeletedUserIds([])
     }
   }
   
@@ -1044,24 +1136,62 @@ export default function AdminDashboard({ setActiveTab }) {
         </MobileCard>
       ) : (
         <div className="space-y-4">
+          <div className="bg-white border rounded-lg p-3 flex flex-wrap items-center gap-2">
+            <button onClick={selectAllUsersOnPage} className="px-2 py-1 text-sm border rounded">
+              {users.every(u => selectedUserIds.includes(u.id)) && users.length > 0 ? 'Unselect All' : 'Select All'}
+            </button>
+            <span className="text-sm text-gray-600">Selected: {selectedUserIds.length}</span>
+            <select value={bulkActionType} onChange={(e) => { setBulkActionType(e.target.value); setBulkActionValue('') }} className="text-sm border rounded px-2 py-1">
+              <option value="">Bulk action...</option>
+              <option value="status">Set Status</option>
+              <option value="role">Set Role</option>
+              <option value="delete">Delete</option>
+            </select>
+            {bulkActionType === 'status' && (
+              <select value={bulkActionValue} onChange={(e) => setBulkActionValue(e.target.value)} className="text-sm border rounded px-2 py-1">
+                <option value="">Choose status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="SUSPENDED">Suspended</option>
+                <option value="BANNED">Banned</option>
+              </select>
+            )}
+            {bulkActionType === 'role' && (
+              <select value={bulkActionValue} onChange={(e) => setBulkActionValue(e.target.value)} className="text-sm border rounded px-2 py-1">
+                <option value="">Choose role</option>
+                <option value="USER">User</option>
+                <option value="MODERATOR">Moderator</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            )}
+            <MobileButton onClick={handleBulkApply} disabled={actionLoading || selectedUserIds.length === 0 || !bulkActionType || ((bulkActionType === 'status' || bulkActionType === 'role') && !bulkActionValue)} className="px-3 py-1">
+              Apply
+            </MobileButton>
+            {selectedUserIds.length > 0 && (
+              <button onClick={clearBulkSelection} className="text-sm text-gray-600 hover:underline ml-auto">Clear</button>
+            )}
+          </div>
           {users.map((user) => (
             <MobileCard key={user.id}>
               <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {user.first_name && user.last_name 
-                        ? `${user.first_name} ${user.last_name}` 
-                        : user.email?.split('@')[0] || 'Unknown User'
-                      }
-                    </h3>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                    {user.created_at && (
-                      <p className="text-xs text-gray-500">
-                        Joined: {new Date(user.created_at).toLocaleDateString()}
-                      </p>
-                    )}
+                  <div className="flex items-start gap-3">
+                    <input type="checkbox" checked={isUserSelected(user.id)} onChange={() => toggleUserSelected(user.id)} className="mt-1 h-4 w-4" />
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        {user.first_name && user.last_name 
+                          ? `${user.first_name} ${user.last_name}` 
+                          : user.email?.split('@')[0] || 'Unknown User'
+                        }
+                      </h3>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                      {user.created_at && (
+                        <p className="text-xs text-gray-500">
+                          Joined: {new Date(user.created_at).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setEditingUser(user)}
@@ -1163,11 +1293,56 @@ export default function AdminDashboard({ setActiveTab }) {
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-900">Deleted Users</h2>
       <div className="space-y-4">
+        {/* Bulk restore toolbar */}
+        <div className="bg-white border rounded-lg p-3 flex flex-wrap items-center gap-2">
+          <button onClick={selectAllDeletedUsersOnPage} className="px-2 py-1 text-sm border rounded">
+            {deletedUsers.every(u => selectedDeletedUserIds.includes(u.id)) && deletedUsers.length > 0 ? 'Unselect All' : 'Select All'}
+          </button>
+          <span className="text-sm text-gray-600">Selected: {selectedDeletedUserIds.length}</span>
+          <MobileButton onClick={handleBulkRestoreDeleted} disabled={actionLoading || selectedDeletedUserIds.length === 0} className="px-3 py-1">
+            Restore Selected
+          </MobileButton>
+          <MobileButton onClick={async () => {
+            if (selectedDeletedUserIds.length === 0) { alert('Select at least one user'); return }
+            if (!confirm(`Permanently delete ${selectedDeletedUserIds.length} user(s)? This cannot be undone.`)) return
+            try {
+              setActionLoading(true)
+              const results = { success: 0, failed: 0, errors: [] }
+              for (const id of selectedDeletedUserIds) {
+                try {
+                  const r = await hardDeleteUser(id)
+                  if (!r.success) throw new Error(r.error || 'Failed')
+                  results.success++
+                } catch (e) {
+                  results.failed++
+                  results.errors.push(`#${id}: ${e.message || 'Error'}`)
+                }
+              }
+              await loadUsers(); await loadDeletedUsers()
+              alert(`Bulk permanent delete: ${results.success} succeeded, ${results.failed} failed${results.errors.length ? `\n${results.errors.join('\n')}` : ''}`)
+            } finally {
+              setActionLoading(false)
+              setSelectedDeletedUserIds([])
+            }
+          }} disabled={actionLoading || selectedDeletedUserIds.length === 0} className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white">
+            Permanently Delete
+          </MobileButton>
+          {selectedDeletedUserIds.length > 0 && (
+            <button onClick={clearDeletedSelection} className="text-sm text-gray-600 hover:underline ml-auto">Clear</button>
+          )}
+        </div>
         {deletedUsers.map((user) => (
           <MobileCard key={user.id}>
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <div>
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={isDeletedUserSelected(user.id)}
+                    onChange={() => toggleDeletedUserSelected(user.id)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <div>
                   <h4 className="font-medium text-gray-900">
                     {user.first_name && user.last_name 
                       ? `${user.first_name} ${user.last_name}`
@@ -1180,6 +1355,7 @@ export default function AdminDashboard({ setActiveTab }) {
                       Joined: {new Date(user.created_at).toLocaleDateString()}
                     </p>
                   )}
+                  </div>
                 </div>
                 <div className="flex space-x-2">
                   <button

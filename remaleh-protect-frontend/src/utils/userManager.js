@@ -12,6 +12,7 @@ const USER_ENDPOINTS = {
   UPDATE_STATUS: (id) => `/api/admin/users/${id}/status`,
   UPDATE_ROLE: (id) => `/api/admin/users/${id}/role`,
   DELETE_USER: (id) => `/api/admin/users/${id}`,
+  HARD_DELETE_USER: (id) => `/api/admin/users/${id}/hard-delete`,
   DELETED_USERS: '/api/admin/users/deleted',
 }
 
@@ -237,6 +238,29 @@ export const deleteUser = async (userId) => {
     }
   } catch (error) {
     console.error('Error deleting user:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Permanently delete a user (hard delete)
+export const hardDeleteUser = async (userId) => {
+  try {
+    const response = await apiDelete(USER_ENDPOINTS.HARD_DELETE_USER(userId))
+    if (response.ok) {
+      const data = await response.json()
+      return {
+        success: true,
+        message: data.message || 'User permanently deleted'
+      }
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Request failed. Please try again.')
+    }
+  } catch (error) {
+    console.error('Error hard-deleting user:', error)
     return {
       success: false,
       error: error.message
