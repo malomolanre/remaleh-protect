@@ -294,7 +294,7 @@ export default function LearnHub({ setActiveTab }) {
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4 max-w-3xl mx-auto w-full overflow-x-hidden break-words">
       {/* Header centered like Community Hub */}
       <div className="text-center mb-6">
         <div className="flex justify-center mb-3">
@@ -721,7 +721,7 @@ function LessonContent({ lesson }) {
       case 'tips':
         return (
           <div className="space-y-4">
-            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
+            <div className="text-gray-700 whitespace-pre-line break-words">{lesson.content}</div>
             <div className="space-y-3">
               {lesson.tips?.map((tip, index) => (
                 <div key={index} className="flex items-start">
@@ -741,7 +741,7 @@ function LessonContent({ lesson }) {
       case 'warning-signs':
         return (
           <div className="space-y-4">
-            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
+            <div className="text-gray-700 whitespace-pre-line break-words">{lesson.content}</div>
             <div className="space-y-3">
               {lesson.signs?.map((sign, index) => (
                 <div key={index} className="flex items-start">
@@ -761,7 +761,7 @@ function LessonContent({ lesson }) {
       case 'steps':
         return (
           <div className="space-y-4">
-            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
+            <div className="text-gray-700 whitespace-pre-line break-words">{lesson.content}</div>
             <div className="space-y-2">
               {lesson.steps?.map((step, index) => (
                 <div key={index} className="flex items-start">
@@ -790,9 +790,9 @@ function LessonContent({ lesson }) {
       case 'warning':
       case 'warning-list':
         return (
-          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
+          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)} break-words`}>
             <h4 className="font-bold mb-2 text-red-800">Important</h4>
-            <div className="text-red-700 mb-3 whitespace-pre-line">{lesson.content}</div>
+            <div className="text-red-700 mb-3 whitespace-pre-line break-words">{lesson.content}</div>
             {lesson.items && (
               <ul className="space-y-1 text-red-700">
                 {lesson.items.map((item, index) => (
@@ -805,9 +805,9 @@ function LessonContent({ lesson }) {
       
       case 'action-list':
         return (
-          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
+          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)} break-words`}>
             <h4 className="font-bold mb-2 text-green-800">Actions to Take</h4>
-            <div className="text-green-700 mb-3 whitespace-pre-line">{lesson.content}</div>
+            <div className="text-green-700 mb-3 whitespace-pre-line break-words">{lesson.content}</div>
             <ul className="space-y-1 text-green-700">
               {lesson.actions?.map((action, index) => (
                 <li key={index} className="whitespace-pre-line">• {action}</li>
@@ -818,37 +818,37 @@ function LessonContent({ lesson }) {
       
       case 'example':
         return (
-          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
+          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)} break-words`}>
             <h4 className="font-bold mb-2">Real-World Example</h4>
-            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
+            <div className="text-gray-700 whitespace-pre-line break-words">{lesson.content}</div>
           </div>
         )
       
       case 'markdown':
         return (
-          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
-            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(markdownToHtml(lesson.content)) }} />
+          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)} break-words`}>
+            <div className="prose prose-sm max-w-none break-words" dangerouslySetInnerHTML={{ __html: sanitizeHtml(markdownToHtml(lesson.content)) }} />
           </div>
         )
 
       case 'html':
         return (
-          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
-            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.content) }} />
+          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)} break-words`}>
+            <div className="prose prose-sm max-w-none break-words" dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.content) }} />
           </div>
         )
 
       default:
         return (
-          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)}`}>
-            <div className="text-gray-700 whitespace-pre-line">{lesson.content}</div>
+          <div className={`p-4 rounded-lg border ${getContentStyle(lesson.contentStyle)} break-words`}>
+            <div className="text-gray-700 whitespace-pre-line break-words">{lesson.content}</div>
           </div>
         )
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 break-words">
       {renderContent()}
       {Array.isArray(lesson.media) && lesson.media.length > 0 && (
         <div className="space-y-3">
