@@ -997,20 +997,22 @@ export default function CommunityHub({ setActiveTab }) {
           {/* Content */}
           {renderContent()}
 
-          {/* Community Benefits */}
-          <div className="mt-6">
-            <MobileCard className="bg-orange-50 border-orange-200">
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">🤝 Community Benefits</h3>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Report scams to protect others</li>
-                  <li>• Earn points and climb the leaderboard</li>
-                  <li>• Stay updated on latest scams</li>
-                  <li>• Build a safer digital community</li>
-                </ul>
-              </div>
-            </MobileCard>
-          </div>
+          {/* Community Benefits - hide on feed to avoid obstructing the scrollable list */}
+          {activeTab !== 'feed' && (
+            <div className="mt-6">
+              <MobileCard className="bg-orange-50 border-orange-200">
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2">🤝 Community Benefits</h3>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Report scams to protect others</li>
+                    <li>• Earn points and climb the leaderboard</li>
+                    <li>• Stay updated on latest scams</li>
+                    <li>• Build a safer digital community</li>
+                  </ul>
+                </div>
+              </MobileCard>
+            </div>
+          )}
 
           {/* New Report Modal */}
           {showNewReport && (
