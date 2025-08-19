@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle, ThumbsUp, ThumbsDown, MessageSquare, Trash2 } from 'lucide-react';
+import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle, ThumbsUp, ThumbsDown, MessageSquare, Trash2, Award } from 'lucide-react';
 import { MobileCard } from './ui/mobile-card';
 import { MobileButton } from './ui/mobile-button';
 import { useAuth } from '../hooks/useAuth';
@@ -196,26 +196,46 @@ export default function CommunityHub({ setActiveTab }) {
                     <option value="all">All time</option>
                   </select>
                 </div>
-                
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-blue-600">{myStats?.report_count ?? 0}</div>
-                    <div className="text-xs text-gray-600">Reports</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">{myStats?.points ?? 0}</div>
-                    <div className="text-xs text-gray-600">Points</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-orange-600">{myStats?.rank ? `#${myStats.rank}` : '—'}</div>
-                    <div className="text-xs text-gray-600">Rank</div>
-                  </div>
-                </div>
-                {myStats?.tier && (
-                  <div className="mt-3 text-center">
-                    <span className="inline-block text-xs font-medium px-3 py-1 rounded-full bg-purple-100 text-purple-700">Tier: {myStats.tier}</span>
-                  </div>
-                )}
+                {
+                  // Determine tier styling
+                }
+                {(() => {
+                  const tier = (myStats?.tier || '').toString();
+                  const t = tier.toLowerCase();
+                  let colorNumber = 'gray';
+                  if (t.includes('bronze')) colorNumber = 'amber';
+                  else if (t.includes('silver')) colorNumber = 'gray';
+                  else if (t.includes('gold')) colorNumber = 'yellow';
+                  else if (t.includes('platinum')) colorNumber = 'cyan';
+                  else if (t.includes('diamond')) colorNumber = 'blue';
+                  const hasTier = !!myStats?.tier;
+                  const gridCols = hasTier ? 'grid-cols-4' : 'grid-cols-3';
+                  return (
+                    <div className={`grid ${gridCols} gap-4 text-center`}>
+                      <div>
+                        <div className="text-2xl font-bold text-blue-600">{myStats?.report_count ?? 0}</div>
+                        <div className="text-xs text-gray-600">Reports</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-green-600">{myStats?.points ?? 0}</div>
+                        <div className="text-xs text-gray-600">Points</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-orange-600">{myStats?.rank ? `#${myStats.rank}` : '—'}</div>
+                        <div className="text-xs text-gray-600">Rank</div>
+                      </div>
+                      {hasTier && (
+                        <div className="flex flex-col items-center justify-center">
+                          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-${colorNumber}-100 text-${colorNumber}-700`}> 
+                            <Award className={`w-4 h-4 text-${colorNumber}-600`} />
+                            <span className="text-xs font-medium">{myStats.tier}</span>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">Tier</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </MobileCard>
 
