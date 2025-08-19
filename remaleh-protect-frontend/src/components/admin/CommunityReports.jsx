@@ -171,15 +171,17 @@ const CommunityReports = ({ initialFilters }) => {
               }`}>
                 {report.urgency === 'HIGH' ? 'Ongoing Scam' : report.urgency === 'MEDIUM' ? 'Scam' : 'Caution'}
               </span>
-              <span className={`px-2 py-1 text-xs rounded-full ${
-                report.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                report.status === 'VERIFIED' ? 'bg-green-100 text-green-800' :
-                report.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {report.status}
-              </span>
-              {report.verified && (
+              {report.status !== 'VERIFIED' && (
+                <span className={`px-2 py-1 text-xs rounded-full ${
+                  report.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                  report.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                  report.status === 'ESCALATED' ? 'bg-orange-100 text-orange-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {report.status}
+                </span>
+              )}
+              {(report.verified || report.status === 'VERIFIED') && (
                 <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
                   ✓ Verified
                 </span>
