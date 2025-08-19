@@ -613,8 +613,8 @@ export default function CommunityHub({ setActiveTab }) {
           {/* Header */}
           <div className="text-center mb-6">
             <div className="flex justify-center mb-3">
-              <div className="p-3 bg-orange-100 rounded-full">
-                <Users className="w-8 h-8 text-orange-600" />
+              <div className="w-10 h-10 bg-[#21a1ce] rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
               </div>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Community Hub</h1>
