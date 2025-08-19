@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle, ThumbsUp, ThumbsDown, MessageSquare, Trash2, HelpingHand, Shield, Eye } from 'lucide-react';
+import { Users, Flag, Trophy, TrendingUp, Plus, Star, CheckCircle, ThumbsUp, ThumbsDown, MessageSquare, Trash2, HelpingHand, Shield, Eye, HelpCircle } from 'lucide-react';
 import { MobileCard } from './ui/mobile-card';
 import { MobileButton } from './ui/mobile-button';
 import { useAuth } from '../hooks/useAuth';
@@ -326,9 +326,9 @@ export default function CommunityHub({ setActiveTab }) {
                     onChange={(e) => setFilterUrgency(e.target.value)}
                     options={[
                       { value: 'ALL', label: 'All urgency' },
-                      { value: 'LOW', label: 'Low' },
-                      { value: 'MEDIUM', label: 'Medium' },
-                      { value: 'HIGH', label: 'High' }
+                      { value: 'LOW', label: 'Caution' },
+                      { value: 'MEDIUM', label: 'Scam' },
+                      { value: 'HIGH', label: 'Ongoing Scam' }
                     ]}
                     className="flex-1"
                   />
@@ -1073,15 +1073,27 @@ export default function CommunityHub({ setActiveTab }) {
                         <option value="SOCIAL_ENGINEERING">Social Engineering</option>
                         <option value="OTHER">Other</option>
                       </select>
-                      <select
+                      <div className="relative">
+                        <select
                         value={newReport.urgency}
                         onChange={(e) => setNewReport({ ...newReport, urgency: e.target.value })}
                         className="border border-gray-300 rounded-md px-3 py-2"
+                        aria-describedby="urgency-help"
                       >
-                        <option value="LOW">Low</option>
-                        <option value="MEDIUM">Medium</option>
-                        <option value="HIGH">High</option>
+                        <option value="LOW">Caution</option>
+                        <option value="MEDIUM">Scam</option>
+                        <option value="HIGH">Ongoing Scam</option>
                       </select>
+                        <button
+                          type="button"
+                          aria-label="Urgency help"
+                          title="What do these mean?"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          onClick={() => alert('Caution: suspicious or low-risk; Scam: confirmed scam but not active; Ongoing Scam: active scam happening now or immediate risk.')}
+                        >
+                          <HelpCircle className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm text-gray-700 mb-1">Attach Photos (optional)</label>
