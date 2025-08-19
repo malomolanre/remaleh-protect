@@ -1238,6 +1238,9 @@ function App() {
               <div className="mt-4 text-center">
                 <p className="text-xs text-gray-500">Sometimes our scanners miss the mark, so double check to stay safe.</p>
               </div>
+              <div className="mt-3 text-center">
+                <p className="text-xs text-gray-500">Sometimes our scanners miss the mark, so double check to stay safe.</p>
+              </div>
             </div>
 
             {/* Security Features */}
