@@ -281,7 +281,7 @@ export default function CommunityHub({ setActiveTab }) {
 
       case 'feed':
         return (
-          <div className="space-y-4">
+          <div className="flex flex-col min-h-[70vh]">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="text-center flex-1">
@@ -361,230 +361,232 @@ export default function CommunityHub({ setActiveTab }) {
               </div>
             </div>
             {/* Pull-to-refresh container around feed list */}
-            <MobilePullToRefresh
-              onRefresh={async () => {
-                await fetchReports({}, false);
-              }}
-              className="h-[60vh] sm:h-[65vh] md:h-[70vh]"
-            >
-              {/* Pagination info */}
-              {pagination && (
-                <div className="text-center text-xs text-gray-500 mb-2">
-                  Showing {filteredFeedReports.length} of {pagination.total} reports
-                  {hasMore && <span className="ml-2">• Scroll to load more</span>}
-                </div>
-              )}
-              <div className="space-y-3">
-                {filteredFeedReports && filteredFeedReports.length > 0 ? (
-                  filteredFeedReports.map((report) => (
-                    <MobileCard key={report.id} className="border-gray-200">
-                      <div className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{report.threat_type}</span>
-                            <span className="text-xs text-gray-500">{report.created_at ? new Date(report.created_at).toLocaleDateString() : ''}</span>
-                            {report.verified && <CheckCircle className="w-3.5 h-3.5 text-green-600" />}
-                          </div>
-                          <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
-                            <span>by {report.creator?.name || 'Anonymous'}</span>
-                            {(() => {
-                              const tierRaw = (report.creator?.tier || '').toString();
-                              if (!tierRaw) return null;
-                              const t = tierRaw.toLowerCase();
-                              let badgeBg = 'bg-gray-100 text-gray-700';
-                              let iconColor = 'text-gray-600';
-                              let iconEl = null;
-                              if (t.includes('helper')) {
-                                badgeBg = 'bg-blue-100 text-blue-700';
-                                iconColor = 'text-blue-600';
-                                iconEl = <HelpingHand className={`w-3.5 h-3.5 ${iconColor}`} />;
-                              } else if (t.includes('ally')) {
-                                badgeBg = 'bg-purple-100 text-purple-700';
-                                iconColor = 'text-purple-600';
-                                iconEl = <Shield className={`w-3.5 h-3.5 ${iconColor}`} />;
-                              } else if (t.includes('champion')) {
-                                badgeBg = 'bg-yellow-100 text-yellow-700';
-                                iconColor = 'text-yellow-600';
-                                iconEl = <Trophy className={`w-3.5 h-3.5 ${iconColor}`} />;
-                              } else if (t.includes('guardian')) {
-                                badgeBg = 'bg-emerald-100 text-emerald-700';
-                                iconColor = 'text-emerald-600';
-                                iconEl = (
-                                  <span className="relative inline-block w-4 h-4">
-                                    <Shield className={`w-4 h-4 absolute inset-0 ${iconColor}`} />
-                                    <Eye className="w-2.5 h-2.5 absolute bottom-0 right-0 text-emerald-700" />
-                                  </span>
-                                );
-                              }
-                              return (
-                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${badgeBg}`}>
-                                  {iconEl}
-                                  <span className="text-[10px] font-medium leading-none">{tierRaw}</span>
-                                </span>
-                              );
-                            })()}
-                          </div>
-                          {report.creator?.bio && (
-                            <div className="text-xs text-gray-500 italic mb-1">{report.creator.bio}</div>
-                          )}
-                          <p className="text-sm text-gray-800">{report.description}</p>
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <MobilePullToRefresh
+                onRefresh={async () => {
+                  await fetchReports({}, false);
+                }}
+                className="h-full"
+              >
+                {/* Pagination info */}
+                {pagination && (
+                  <div className="text-center text-xs text-gray-500 mb-2">
+                    Showing {filteredFeedReports.length} of {pagination.total} reports
+                    {hasMore && <span className="ml-2">• Scroll to load more</span>}
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {filteredFeedReports && filteredFeedReports.length > 0 ? (
+                    filteredFeedReports.map((report) => (
+                      <MobileCard key={report.id} className="border-gray-200">
+                        <div className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{report.threat_type}</span>
+                                <span className="text-xs text-gray-500">{report.created_at ? new Date(report.created_at).toLocaleDateString() : ''}</span>
+                                {report.verified && <CheckCircle className="w-3.5 h-3.5 text-green-600" />}
+                              </div>
+                              <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
+                                <span>by {report.creator?.name || 'Anonymous'}</span>
+                                {(() => {
+                                  const tierRaw = (report.creator?.tier || '').toString();
+                                  if (!tierRaw) return null;
+                                  const t = tierRaw.toLowerCase();
+                                  let badgeBg = 'bg-gray-100 text-gray-700';
+                                  let iconColor = 'text-gray-600';
+                                  let iconEl = null;
+                                  if (t.includes('helper')) {
+                                    badgeBg = 'bg-blue-100 text-blue-700';
+                                    iconColor = 'text-blue-600';
+                                    iconEl = <HelpingHand className={`w-3.5 h-3.5 ${iconColor}`} />;
+                                  } else if (t.includes('ally')) {
+                                    badgeBg = 'bg-purple-100 text-purple-700';
+                                    iconColor = 'text-purple-600';
+                                    iconEl = <Shield className={`w-3.5 h-3.5 ${iconColor}`} />;
+                                  } else if (t.includes('champion')) {
+                                    badgeBg = 'bg-yellow-100 text-yellow-700';
+                                    iconColor = 'text-yellow-600';
+                                    iconEl = <Trophy className={`w-3.5 h-3.5 ${iconColor}`} />;
+                                  } else if (t.includes('guardian')) {
+                                    badgeBg = 'bg-emerald-100 text-emerald-700';
+                                    iconColor = 'text-emerald-600';
+                                    iconEl = (
+                                      <span className="relative inline-block w-4 h-4">
+                                        <Shield className={`w-4 h-4 absolute inset-0 ${iconColor}`} />
+                                        <Eye className="w-2.5 h-2.5 absolute bottom-0 right-0 text-emerald-700" />
+                                      </span>
+                                    );
+                                  }
+                                  return (
+                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${badgeBg}`}>
+                                      {iconEl}
+                                      <span className="text-[10px] font-medium leading-none">{tierRaw}</span>
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+                              {report.creator?.bio && (
+                                <div className="text-xs text-gray-500 italic mb-1">{report.creator.bio}</div>
+                              )}
+                              <p className="text-sm text-gray-800">{report.description}</p>
 
-                          {report.media && report.media.length > 0 && (
-                            <div className="mt-2 grid grid-cols-3 gap-2">
-                              {(report.media.filter(m => isImageMedia(m) || isVideoMedia(m)).slice(0, 3)).map((m, idx, arr) => {
-                                const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
-                                const extraCount = report.media.length - 3;
-                                const src = resolveMediaUrl(m.media_url);
-                                return (
-                                  <button
-                                    key={m.id || idx}
-                                    type="button"
-                                    onClick={() => openLightbox(report.media, idx)}
-                                    className="relative w-full h-24 bg-gray-100 rounded overflow-hidden focus:outline-none"
-                                  >
-                                    {src && (
-                                      isVideoMedia(m) ? (
-                                        <video src={src} className="w-full h-full object-cover" muted playsInline />
-                                      ) : (
-                                        <img
-                                          src={src}
-                                          alt="report media"
-                                          className="w-full h-full object-cover"
-                                          loading="lazy"
-                                          onError={(e) => {
-                                            const fallback = m.media_url || '';
-                                            if (fallback && e.currentTarget.src !== fallback) {
-                                              e.currentTarget.src = fallback;
-                                            } else {
-                                              e.currentTarget.style.display = 'none';
-                                            }
-                                          }}
-                                        />
-                                      )
-                                    )}
-                                    {isLastAndExtra && extraCount > 0 && (
-                                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                                        <span className="text-white text-sm font-semibold">+{extraCount}</span>
-                                      </div>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          <div className="mt-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                onClick={() => voteOnReport(report.id, 'up')}
-                                variant="ghost"
-                                size="sm"
-                                className={report.user_vote === 'up' ? 'text-green-600' : ''}
-                              >
-                                <ThumbsUp className="w-4 h-4 mr-1" /> {report.votes_up || 0}
-                              </Button>
-                              <Button
-                                onClick={() => voteOnReport(report.id, 'down')}
-                                variant="ghost"
-                                size="sm"
-                                className={report.user_vote === 'down' ? 'text-red-600' : ''}
-                              >
-                                <ThumbsDown className="w-4 h-4 mr-1" /> {report.votes_down || 0}
-                              </Button>
-                            </div>
-                            <div className="text-xs text-gray-500 flex items-center gap-1">
-                              <MessageSquare className="w-3.5 h-3.5" /> {report.comments?.length || 0}
-                            </div>
-                          </div>
-
-                          {report.comments && report.comments.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              {report.comments.slice(0, 2).map((c, i) => (
-                                <div key={c.id || i} className="text-xs text-gray-700 bg-gray-50 p-2 rounded">
-                                  <span className="font-medium">{c.user_name || 'Anonymous'}:</span> {c.comment}
+                              {report.media && report.media.length > 0 && (
+                                <div className="mt-2 grid grid-cols-3 gap-2">
+                                  {(report.media.filter(m => isImageMedia(m) || isVideoMedia(m)).slice(0, 3)).map((m, idx, arr) => {
+                                    const isLastAndExtra = (idx === arr.length - 1) && (report.media.length > 3);
+                                    const extraCount = report.media.length - 3;
+                                    const src = resolveMediaUrl(m.media_url);
+                                    return (
+                                      <button
+                                        key={m.id || idx}
+                                        type="button"
+                                        onClick={() => openLightbox(report.media, idx)}
+                                        className="relative w-full h-24 bg-gray-100 rounded overflow-hidden focus:outline-none"
+                                      >
+                                        {src && (
+                                          isVideoMedia(m) ? (
+                                            <video src={src} className="w-full h-full object-cover" muted playsInline />
+                                          ) : (
+                                            <img
+                                              src={src}
+                                              alt="report media"
+                                              className="w-full h-full object-cover"
+                                              loading="lazy"
+                                              onError={(e) => {
+                                                const fallback = m.media_url || '';
+                                                if (fallback && e.currentTarget.src !== fallback) {
+                                                  e.currentTarget.src = fallback;
+                                                } else {
+                                                  e.currentTarget.style.display = 'none';
+                                                }
+                                              }}
+                                            />
+                                          )
+                                        )}
+                                        {isLastAndExtra && extraCount > 0 && (
+                                          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                                            <span className="text-white text-sm font-semibold">+{extraCount}</span>
+                                          </div>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
                                 </div>
-                              ))}
-                              <div>
-                                <Button variant="ghost" size="sm" onClick={() => handleViewAllComments(report.id)}>
-                                  View all comments
+                              )}
+
+                              <div className="mt-3 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    onClick={() => voteOnReport(report.id, 'up')}
+                                    variant="ghost"
+                                    size="sm"
+                                    className={report.user_vote === 'up' ? 'text-green-600' : ''}
+                                  >
+                                    <ThumbsUp className="w-4 h-4 mr-1" /> {report.votes_up || 0}
+                                  </Button>
+                                  <Button
+                                    onClick={() => voteOnReport(report.id, 'down')}
+                                    variant="ghost"
+                                    size="sm"
+                                    className={report.user_vote === 'down' ? 'text-red-600' : ''}
+                                  >
+                                    <ThumbsDown className="w-4 h-4 mr-1" /> {report.votes_down || 0}
+                                  </Button>
+                                </div>
+                                <div className="text-xs text-gray-500 flex items-center gap-1">
+                                  <MessageSquare className="w-3.5 h-3.5" /> {report.comments?.length || 0}
+                                </div>
+                              </div>
+
+                              {report.comments && report.comments.length > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {report.comments.slice(0, 2).map((c, i) => (
+                                    <div key={c.id || i} className="text-xs text-gray-700 bg-gray-50 p-2 rounded">
+                                      <span className="font-medium">{c.user_name || 'Anonymous'}:</span> {c.comment}
+                                    </div>
+                                  ))}
+                                  <div>
+                                    <Button variant="ghost" size="sm" onClick={() => handleViewAllComments(report.id)}>
+                                      View all comments
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="mt-2 flex items-center gap-2">
+                                <MobileInput
+                                  placeholder="Add a comment..."
+                                  value={commentTexts[report.id] || ''}
+                                  onChange={(e) => setCommentTexts(prev => ({ ...prev, [report.id]: e.target.value }))}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  size="sm"
+                                  disabled={!((commentTexts[report.id] || '').trim())}
+                                  onClick={async () => {
+                                    const text = (commentTexts[report.id] || '').trim();
+                                    if (!text) return;
+                                    await addComment(report.id, { comment: text });
+                                    setCommentTexts(prev => ({ ...prev, [report.id]: '' }));
+                                  }}
+                                >
+                                  Comment
                                 </Button>
                               </div>
+                              {/* Allow owner to delete their report */}
+                              {report.user_id === user?.id && (
+                                <div className="mt-2 text-right">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={async () => {
+                                      if (confirm('Delete this report? This cannot be undone.')) {
+                                        const res = await deleteReport(report.id);
+                                        if (!res.success) alert(res.error || 'Failed to delete');
+                                      }
+                                    }}
+                                  >
+                                    Delete report
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                          )}
-
-                          <div className="mt-2 flex items-center gap-2">
-                            <MobileInput
-                              placeholder="Add a comment..."
-                              value={commentTexts[report.id] || ''}
-                              onChange={(e) => setCommentTexts(prev => ({ ...prev, [report.id]: e.target.value }))}
-                              className="flex-1"
-                            />
-                            <Button
-                              size="sm"
-                              disabled={!((commentTexts[report.id] || '').trim())}
-                              onClick={async () => {
-                                const text = (commentTexts[report.id] || '').trim();
-                                if (!text) return;
-                                await addComment(report.id, { comment: text });
-                                setCommentTexts(prev => ({ ...prev, [report.id]: '' }));
-                              }}
-                            >
-                              Comment
-                            </Button>
-                          </div>
-                          {/* Allow owner to delete their report */}
-                          {report.user_id === user?.id && (
-                            <div className="mt-2 text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={async () => {
-                                  if (confirm('Delete this report? This cannot be undone.')) {
-                                    const res = await deleteReport(report.id);
-                                    if (!res.success) alert(res.error || 'Failed to delete');
-                                  }
-                                }}
-                              >
-                                Delete report
-                              </Button>
-                            </div>
-                          )}
                           </div>
                         </div>
-                      </div>
-                    </MobileCard>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-center py-6">No reports to display yet.</p>
-                )}
+                      </MobileCard>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-6">No reports to display yet.</p>
+                  )}
 
-                {/* Loading indicator for pagination */}
-                {isLoading && hasMore && (
-                  <div className="text-center py-4">
-                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <p className="text-sm text-gray-500 mt-2">Loading more reports...</p>
-                  </div>
-                )}
+                  {/* Loading indicator for pagination */}
+                  {isLoading && hasMore && (
+                    <div className="text-center py-4">
+                      <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <p className="text-sm text-gray-500 mt-2">Loading more reports...</p>
+                    </div>
+                  )}
 
-                {/* Fallback Load More button */}
-                {hasMore && !isLoading && (
-                  <div className="text-center py-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (pagination?.next_num) {
-                          fetchReports({ page: pagination.next_num }, true);
-                        }
-                      }}
-                    >
-                      Load more
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </MobilePullToRefresh>
+                  {/* Fallback Load More button */}
+                  {hasMore && !isLoading && (
+                    <div className="text-center py-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (pagination?.next_num) {
+                            fetchReports({ page: pagination.next_num }, true);
+                          }
+                        }}
+                      >
+                        Load more
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </MobilePullToRefresh>
+            </div>
           </div>
         );
 
@@ -943,7 +945,7 @@ export default function CommunityHub({ setActiveTab }) {
   };
 
   return (
-    <div className="space-y-4 p-4 max-w-3xl mx-auto">
+    <div className="space-y-4 p-4 max-w-none sm:max-w-3xl mx-auto min-h-screen">
       {!isAuthenticated ? (
         <div className="space-y-6">
           <MobileCard>

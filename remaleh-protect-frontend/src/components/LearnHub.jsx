@@ -294,7 +294,7 @@ export default function LearnHub({ setActiveTab }) {
   }
 
   return (
-    <div className="space-y-4 p-4 max-w-3xl mx-auto w-full overflow-x-hidden break-words">
+    <div className="flex flex-col p-4 max-w-none sm:max-w-3xl mx-auto w-full overflow-x-hidden break-words min-h-screen">
       {/* Header centered like Community Hub */}
       <div className="text-center mb-6">
         <div className="flex justify-center mb-3">
@@ -459,6 +459,7 @@ export default function LearnHub({ setActiveTab }) {
       </div>
 
       {/* Main Content */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
       {!selectedModule ? (
         /* Module Selection View */
         <div className="space-y-4">
@@ -652,6 +653,7 @@ export default function LearnHub({ setActiveTab }) {
           </MobileCard>
         </div>
       )}
+      </div>
     </div>
   )
 }
