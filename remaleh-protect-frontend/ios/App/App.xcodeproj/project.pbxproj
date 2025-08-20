@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -60,20 +60,6 @@
 		EFF350C19CB158E48A5F2CED /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		06D9DEAE2E474820005D87CD /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 06D9DE9F2E474820005D87CD /* ShareToRemaleh */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		06D9DEA12E474820005D87CD /* ShareToRemaleh */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (06D9DEAE2E474820005D87CD /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ShareToRemaleh; sourceTree = "<group>"; };
-/* End PBXFileSystemSynchronizedRootGroup section */
-
 /* Begin PBXFrameworksBuildPhase section */
 		06D9DE9D2E474820005D87CD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -114,7 +100,6 @@
 			isa = PBXGroup;
 			children = (
 				504EC3061FED79650016851F /* App */,
-				06D9DEA12E474820005D87CD /* ShareToRemaleh */,
 				504EC3051FED79650016851F /* Products */,
 				1CCD4206DAB241B34DFBD714 /* Pods */,
 				0F5F22FBFCECA326276A589E /* Frameworks */,
@@ -161,9 +146,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				06D9DEA12E474820005D87CD /* ShareToRemaleh */,
 			);
 			name = ShareToRemaleh;
 			packageProductDependencies = (
