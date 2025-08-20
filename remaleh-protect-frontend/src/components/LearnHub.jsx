@@ -294,7 +294,7 @@ export default function LearnHub({ setActiveTab }) {
   }
 
   return (
-    <div className="flex flex-col p-4 max-w-none sm:max-w-3xl mx-auto w-full overflow-x-hidden break-words min-h-screen">
+    <div className="flex flex-col p-4 max-w-none mx-auto w-full overflow-x-hidden break-words min-h-screen">
       {/* Header centered like Community Hub */}
       <div className="text-center mb-6">
         <div className="flex justify-center mb-3">

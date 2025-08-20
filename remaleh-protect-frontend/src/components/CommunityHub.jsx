@@ -945,7 +945,7 @@ export default function CommunityHub({ setActiveTab }) {
   };
 
   return (
-    <div className="space-y-4 p-4 max-w-none sm:max-w-3xl mx-auto min-h-screen">
+    <div className="space-y-4 p-4 max-w-none mx-auto min-h-screen">
       {!isAuthenticated ? (
         <div className="space-y-6">
           <MobileCard>
