@@ -6,9 +6,10 @@
 	objectVersion = 54;
 	objects = {
 
+
 /* Begin PBXBuildFile section */
-		06D9DEAB2E474820005D87CD /* ShareToRemaleh.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 06D9DEA02E474820005D87CD /* ShareToRemaleh.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		06D9DEB82E4749D0005D87CD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D9DEB72E4749D0005D87CD /* AppDelegate.swift */; };
+		06D9DEB92E4749D2005D87CE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D9DEB92E4749D2005D87CE /* SceneDelegate.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
@@ -29,23 +30,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		06D9DEAA2E474820005D87CD /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				06D9DEAB2E474820005D87CD /* ShareToRemaleh.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		06D9DEA02E474820005D87CD /* ShareToRemaleh.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareToRemaleh.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		06D9DEB12E4748BE005D87CD /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		06D9DEB72E4749D0005D87CD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		06D9DEB92E4749D2005D87CE /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		06D9DEB92E4749D2005D87CD /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -127,6 +118,7 @@
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
 				06D9DEB72E4749D0005D87CD /* AppDelegate.swift */,
+				06D9DEB92E4749D2005D87CE /* SceneDelegate.swift */,
 				06D9DEB92E4749D2005D87CD /* App-Bridging-Header.h */,
 			);
 			path = App;
@@ -163,12 +155,10 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				2653D7A2F6A08290B30C5F21 /* [CP] Embed Pods Frameworks */,
-				06D9DEAA2E474820005D87CD /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				06D9DEA92E474820005D87CD /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
@@ -292,17 +282,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				06D9DEB82E4749D0005D87CD /* AppDelegate.swift in Sources */,
+				06D9DEB92E4749D2005D87CE /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		06D9DEA92E474820005D87CD /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 06D9DE9F2E474820005D87CD /* ShareToRemaleh */;
-			targetProxy = 06D9DEA82E474820005D87CD /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
