@@ -1953,7 +1953,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="px-6 py-6 pb-24">
+      <main className="px-6 py-6 pb-24 max-w-none">
         {renderContent()}
       </main>
 
