@@ -4,6 +4,7 @@ import { MobileCard } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput, MobileTextarea } from './ui/mobile-input'
 import { useScamAnalysis } from '../hooks/useScamAnalysis'
+import MobilePullToRefresh from './MobilePullToRefresh'
 
 export default function ScamAnalysis({ setActiveTab }) {
   const [inputType, setInputType] = useState('message')
@@ -24,7 +25,8 @@ export default function ScamAnalysis({ setActiveTab }) {
   ]
 
   return (
-    <div className="space-y-4 p-4">
+    <MobilePullToRefresh onRefresh={async () => { /* no data fetch needed; noop */ }} className="p-4">
+    <div className="space-y-4">
       {/* Header centered like Community Hub */}
       <div className="text-center mb-6">
         <div className="flex justify-center mb-3">
@@ -196,5 +198,6 @@ export default function ScamAnalysis({ setActiveTab }) {
         <p className="text-xs text-gray-500">Sometimes our scanners miss the mark, so double check to stay safe.</p>
       </div>
     </div>
+    </MobilePullToRefresh>
   )
 }

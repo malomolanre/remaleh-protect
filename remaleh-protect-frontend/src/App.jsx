@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { apiPost, apiGet, API_ENDPOINTS, API } from './lib/api'
 import PasswordGenerator from './components/PasswordGenerator'
@@ -11,6 +11,7 @@ import ProfileSettings from './components/ProfileSettings'
 import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth } from './hooks/useAuth'
+import MobilePullToRefresh from './components/MobilePullToRefresh'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
@@ -760,6 +761,7 @@ function App() {
     switch (activeTab) {
       case 'home':
         return (
+          <MobilePullToRefresh onRefresh={async () => { try { await loadBlogFeed?.(); await loadRecentScans?.(); } catch {} }} className="">
           <div className="space-y-6">
             {/* Welcome Message */}
             <div className="text-center">
@@ -926,7 +928,7 @@ function App() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-black mb-1">Chat</h3>
-                    <p className="text-gray-600 text-sm">Chat with our Cyber Assistant and a Remaleh Guardian’s just a message away</p>
+                    <p className="text-gray-600 text-sm">Chat with our Cyber Assistant and a Remaleh Guardian's just a message away</p>
                   </div>
                   <div className="text-gray-400">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -937,6 +939,7 @@ function App() {
               </div>
             </div>
           </div>
+          </MobilePullToRefresh>
         )
       case 'breach':
         return (
@@ -1369,7 +1372,7 @@ function App() {
                             {copiedForward ? 'Copied' : 'Copy'}
                           </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">Forward suspicious emails (including attachments) to this address. We’ll analyze them and show results below.</p>
+                        <p className="text-xs text-gray-500 mt-2">Forward suspicious emails (including attachments) to this address. We'll analyze them and show results below.</p>
                       </div>
                     ) : (
                       <p className="text-sm text-gray-600">Sign in to get your personal forwarding address.</p>

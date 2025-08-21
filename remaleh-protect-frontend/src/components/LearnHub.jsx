@@ -9,6 +9,7 @@ import {
   getOverallProgress,
   computeNextRecommendedLesson
 } from '../utils/contentManager'
+import MobilePullToRefresh from './MobilePullToRefresh'
 
 export default function LearnHub({ setActiveTab }) {
   const { isAuthenticated } = useAuth()
@@ -458,7 +459,8 @@ export default function LearnHub({ setActiveTab }) {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content with Pull-to-Refresh */}
+      <MobilePullToRefresh onRefresh={loadData} className="flex-1 min-h-0">
       <div className="flex-1 min-h-0 overflow-y-auto">
       {!selectedModule ? (
         /* Module Selection View */
@@ -654,6 +656,7 @@ export default function LearnHub({ setActiveTab }) {
         </div>
       )}
       </div>
+      </MobilePullToRefresh>
     </div>
   )
 }

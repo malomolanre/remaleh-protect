@@ -4,6 +4,7 @@ import { MobileCard } from './ui/mobile-card'
 import { MobileButton } from './ui/mobile-button'
 import { MobileInput } from './ui/mobile-input'
 import { useBreachCheck } from '../hooks/useBreachCheck'
+import MobilePullToRefresh from './MobilePullToRefresh'
 
 export default function BreachChecker({ setActiveTab }) {
   const [email, setEmail] = useState('')
@@ -17,7 +18,8 @@ export default function BreachChecker({ setActiveTab }) {
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <MobilePullToRefresh onRefresh={async () => { if (email.trim()) await check(email.trim()) }} className="p-4">
+    <div className="space-y-4">
       {/* Header centered like Community Hub */}
       <div className="text-center mb-6">
         <div className="flex justify-center mb-3">
@@ -149,5 +151,6 @@ export default function BreachChecker({ setActiveTab }) {
         </MobileCard>
       )}
     </div>
+    </MobilePullToRefresh>
   )
 }
