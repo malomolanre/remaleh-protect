@@ -51,5 +51,24 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>remalehprotect</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>remalehprotect</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.453799187435-8omnd1nnnb92c3g2qos0qd43ch7c3h3r</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

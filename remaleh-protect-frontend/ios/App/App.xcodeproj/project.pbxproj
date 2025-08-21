@@ -9,6 +9,9 @@
 
 /* Begin PBXBuildFile section */
 		06D9DEB82E4749D0005D87CD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D9DEB72E4749D0005D87CD /* AppDelegate.swift */; };
+		A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */; };
+		A1B2C3D4E5F60123456789AB /* AppleSignInPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60123456789A8 /* AppleSignInPlugin.m */; };
+		A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
@@ -37,6 +40,8 @@
 		06D9DEB72E4749D0005D87CD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		/* removed SceneDelegate.swift file reference */
 		06D9DEB92E4749D2005D87CD /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
+		A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60123456789A8 /* AppleSignInPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppleSignInPlugin.m; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -117,6 +122,8 @@
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
 				06D9DEB72E4749D0005D87CD /* AppDelegate.swift */,
+				A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */,
+				A1B2C3D4E5F60123456789A8 /* AppleSignInPlugin.m */,
 				06D9DEB92E4749D2005D87CD /* App-Bridging-Header.h */,
 			);
 			path = App;
@@ -280,6 +287,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				06D9DEB82E4749D0005D87CD /* AppDelegate.swift in Sources */,
+				A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */,
+				A1B2C3D4E5F60123456789AB /* AppleSignInPlugin.m in Sources */,
+				A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

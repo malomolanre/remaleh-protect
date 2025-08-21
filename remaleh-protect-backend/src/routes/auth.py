@@ -349,7 +349,10 @@ def request_password_reset():
 def oauth_google_start():
     try:
         client_id = current_app.config.get('GOOGLE_CLIENT_ID')
-        redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
+        redirect_uri = request.args.get('redirect_uri') or current_app.config.get('GOOGLE_REDIRECT_URI')
+        # Allow override only for our domain
+        if redirect_uri and not redirect_uri.startswith('https://api.remalehprotect.remaleh.com.au/auth/google/callback'):
+            redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
         if not client_id or not redirect_uri:
             return jsonify({'error': 'Google OAuth not configured'}), 400
         scope = 'openid email profile'
@@ -371,6 +374,17 @@ def oauth_google_start():
 def oauth_google_callback():
     try:
         code = request.args.get('code')
+        state = request.args.get('state', '')
+        # If deeplink flag present, bounce code back to app for exchange
+        if request.args.get('deeplink') == '1':
+            # Include original redirect in deep link so the app can exchange properly
+            original_redirect = request.base_url
+            if request.query_string:
+                # Reconstruct original redirect without params that vary (keep ?deeplink=1)
+                # But Google validated this exact URI including '?deeplink=1'
+                original_redirect = request.url.split('?')[0] + '?deeplink=1'
+            deep = f"remalehprotect://auth-callback?provider=google&code={code or ''}&state={state}&redir={requests.utils.quote(original_redirect)}"
+            return redirect(deep, code=302)
         if not code:
             return jsonify({'error': 'Missing code'}), 400
         client_id = current_app.config.get('GOOGLE_CLIENT_ID')
@@ -430,6 +444,60 @@ def oauth_google_callback():
         frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
         return redirect(f"{frontend}/?oauth=google&error=oauth_failed", code=302)
 
+@auth_bp.route('/oauth/google/exchange', methods=['POST'])
+def oauth_google_exchange():
+    try:
+        data = request.get_json() or {}
+        code = data.get('code')
+        redirect_uri = data.get('redirect_uri') or current_app.config.get('GOOGLE_REDIRECT_URI')
+        if not code or not redirect_uri:
+            return jsonify({'error': 'Missing code or redirect_uri'}), 400
+        client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+        client_secret = current_app.config.get('GOOGLE_CLIENT_SECRET')
+        if not client_id or not client_secret:
+            return jsonify({'error': 'Google OAuth not configured'}), 400
+        token_resp = requests.post('https://oauth2.googleapis.com/token', data={
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'code': code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': redirect_uri
+        }, timeout=10)
+        if token_resp.status_code != 200:
+            return jsonify({'error': 'Token exchange failed'}), 400
+        tokens = token_resp.json()
+        # Fetch user profile
+        userinfo_resp = requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers={
+            'Authorization': f"Bearer {tokens.get('access_token')}"
+        }, timeout=10)
+        if userinfo_resp.status_code != 200:
+            return jsonify({'error': 'Failed to fetch user info'}), 400
+        profile = userinfo_resp.json()
+        email = (profile.get('email') or '').lower()
+        if not email:
+            return jsonify({'error': 'Email not available'}), 400
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                email=email,
+                first_name=profile.get('given_name') or '',
+                last_name=profile.get('family_name') or '',
+                is_active=True,
+                role='USER'
+            )
+            try:
+                user.email_verified = True
+            except Exception:
+                pass
+            user.set_password(_generate_code(12))
+            db.session.add(user)
+            db.session.commit()
+        access_token, refresh_token = create_tokens(user.id)
+        return jsonify({'token': access_token, 'refresh_token': refresh_token})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 def _create_apple_client_secret():
     try:
         team_id = current_app.config.get('APPLE_TEAM_ID')
@@ -484,6 +552,13 @@ def oauth_apple_start():
 def oauth_apple_callback():
     try:
         code = request.args.get('code') or request.form.get('code')
+        # If deeplink flag present, bounce code back to app
+        if request.args.get('deeplink') == '1':
+            original_redirect = request.base_url
+            if request.method == 'GET' and request.query_string:
+                original_redirect = request.url.split('?')[0] + '?deeplink=1'
+            deep = f"remalehprotect://auth-callback?provider=apple&code={code or ''}&redir={requests.utils.quote(original_redirect)}"
+            return redirect(deep, code=302)
         if not code:
             return jsonify({'error': 'Missing code'}), 400
         client_id = current_app.config.get('APPLE_CLIENT_ID')
@@ -535,6 +610,50 @@ def oauth_apple_callback():
         db.session.rollback()
         frontend = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
         return redirect(f"{frontend}/?oauth=apple&error=oauth_failed", code=302)
+
+@auth_bp.route('/oauth/apple/exchange', methods=['POST'])
+def oauth_apple_exchange():
+    try:
+        data = request.get_json() or {}
+        code = data.get('code')
+        redirect_uri = data.get('redirect_uri') or current_app.config.get('APPLE_REDIRECT_URI') or current_app.config.get('GOOGLE_REDIRECT_URI')
+        client_id = current_app.config.get('APPLE_CLIENT_ID')
+        client_secret = _create_apple_client_secret()
+        if not all([code, redirect_uri, client_id, client_secret]):
+            return jsonify({'error': 'Apple OAuth not configured or missing code'}), 400
+        token_resp = requests.post('https://appleid.apple.com/auth/token', data={
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'code': code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': redirect_uri
+        }, timeout=10)
+        if token_resp.status_code != 200:
+            return jsonify({'error': 'Token exchange failed'}), 400
+        tokens = token_resp.json()
+        id_token = tokens.get('id_token')
+        profile = jwt.decode(id_token, options={"verify_signature": False, "verify_aud": False}) if id_token else {}
+        email = (profile.get('email') or '').lower()
+        sub = profile.get('sub')
+        if not email and sub:
+            email = f"{sub}@apple.local"
+        if not email:
+            return jsonify({'error': 'Email unavailable'}), 400
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(email=email, first_name='', last_name='', is_active=True, role='USER')
+            try:
+                user.email_verified = True
+            except Exception:
+                pass
+            user.set_password(_generate_code(12))
+            db.session.add(user)
+            db.session.commit()
+        access_token, refresh_token = create_tokens(user.id)
+        return jsonify({'token': access_token, 'refresh_token': refresh_token})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @auth_bp.route('/profile', methods=['GET'])
 @token_required

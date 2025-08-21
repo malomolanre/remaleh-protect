@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Browser } from '@capacitor/browser';
+import { App as CapApp } from '@capacitor/app';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+const AppleSignIn = registerPlugin('AppleSignInPlugin');
 import { useAuth } from '../hooks/useAuth';
 
 const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
@@ -11,12 +15,75 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   const [infoMsg, setInfoMsg] = useState('');
   const [oauthLoading, setOauthLoading] = useState(false);
 
+  const deepLinkListenerRef = useRef(null)
+
+  const finalizeOAuthFromUrl = async (url) => {
+    try {
+      if (!url) return false
+      const googleReversed = 'com.googleusercontent.apps.453799187435-8omnd1nnnb92c3g2qos0qd43ch7c3h3r:/oauthredirect'
+      const isAppScheme = url.startsWith('remalehprotect://auth-callback')
+      const isGoogleScheme = url.startsWith(googleReversed)
+      if (!isAppScheme && !isGoogleScheme) return false
+      const qsIndex = url.indexOf('?')
+      const params = new URLSearchParams(qsIndex >= 0 ? url.slice(qsIndex) : '')
+      const provider = params.get('provider') || 'google'
+      const token = params.get('token') || params.get('access_token') || params.get('id_token')
+      const refreshToken = params.get('refresh_token') || ''
+      const code = params.get('code')
+      const state = params.get('state') || ''
+      const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
+
+      if (token) {
+        localStorage.setItem('authToken', token)
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
+        window.dispatchEvent(new Event('remaleh-auth-changed'))
+        return true
+      }
+
+      if (code) {
+        const resp = await fetch(`${apiBase}/api/auth/oauth/${provider}/exchange`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, redirect_uri: isGoogleScheme ? `${googleReversed}` : 'remalehprotect://auth-callback', state })
+        })
+        if (resp.ok) {
+          const data = await resp.json()
+          if (data.token) {
+            localStorage.setItem('authToken', data.token)
+            if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
+            window.dispatchEvent(new Event('remaleh-auth-changed'))
+            return true
+          }
+        }
+      }
+      return false
+    } catch (err) {
+      console.error('OAuth finalize error:', err)
+      return false
+    }
+  }
+
   // Watch for authentication changes and redirect accordingly
   useEffect(() => {
     if (isAuthenticated && user && onLoginSuccess) {
       onLoginSuccess();
     }
   }, [isAuthenticated, user, onLoginSuccess]);
+
+  useEffect(() => {
+    if (Capacitor.getPlatform() === 'ios') {
+      deepLinkListenerRef.current = CapApp.addListener('appUrlOpen', async ({ url }) => {
+        const ok = await finalizeOAuthFromUrl(url)
+        if (ok) {
+          try { await Browser.close() } catch {}
+          window.location.reload()
+        }
+      })
+    }
+    return () => {
+      if (deepLinkListenerRef.current && deepLinkListenerRef.current.remove) deepLinkListenerRef.current.remove()
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -177,12 +244,26 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                   try {
                     setOauthLoading(true)
                     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
+                    // Ask backend to use HTTPS callback that will bounce code back via deeplink
                     const resp = await fetch(`${apiBase}/api/auth/oauth/google/start`)
-                    if (resp.ok) {
-                      const data = await resp.json()
-                      if (data.auth_url) window.location.href = data.auth_url
+                    if (!resp.ok) throw new Error('google start failed')
+                    const data = await resp.json()
+                    if (!data.auth_url) throw new Error('no auth url')
+
+                    if (Capacitor.getPlatform() === 'ios') {
+                      const listener = await CapApp.addListener('appUrlOpen', async ({ url }) => {
+                        try {
+                          const ok = await finalizeOAuthFromUrl(url)
+                          await Browser.close()
+                          if (ok) window.location.reload()
+                        } catch {}
+                      })
+                      // Append deeplink=1 so our HTTPS callback bounces code back to the app
+                      const url = data.auth_url + (data.auth_url.includes('?') ? '&' : '?') + 'deeplink=1'
+                      await Browser.open({ url, presentationStyle: 'popover' })
+                      setTimeout(() => listener.remove && listener.remove(), 120000)
                     } else {
-                      setInfoMsg('Google sign-in is not available right now.')
+                      window.location.href = data.auth_url
                     }
                   } catch (e) {
                     setInfoMsg('Google sign-in is not available right now.')
@@ -202,12 +283,41 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                   try {
                     setOauthLoading(true)
                     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
-                    const resp = await fetch(`${apiBase}/api/auth/oauth/apple/start`)
-                    if (resp.ok) {
-                      const data = await resp.json()
-                      if (data.auth_url) window.location.href = data.auth_url
+                    if (Capacitor.getPlatform() === 'ios') {
+                      const res = await AppleSignIn.signIn()
+                      const body = {
+                        identity_token: res.identityToken,
+                        authorization_code: res.authorizationCode,
+                        nonce: res.nonce || undefined,
+                        email: res.email || undefined,
+                        name: res.fullName || undefined,
+                        apple_user: res.user || undefined
+                      }
+                      const exchange = await fetch(`${apiBase}/api/auth/oauth/apple/native`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                      })
+                      if (exchange.ok) {
+                        const data = await exchange.json()
+                        if (data.token) {
+                          localStorage.setItem('authToken', data.token)
+                          if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
+                          window.dispatchEvent(new Event('remaleh-auth-changed'))
+                          window.location.reload()
+                          return
+                        }
+                      }
+                      setInfoMsg('Apple sign-in could not complete.')
                     } else {
-                      setInfoMsg('Apple sign-in is not available right now.')
+                      // Fallback to web flow
+                      const resp = await fetch(`${apiBase}/api/auth/oauth/apple/start`)
+                      if (resp.ok) {
+                        const data = await resp.json()
+                        if (data.auth_url) window.location.href = data.auth_url
+                      } else {
+                        setInfoMsg('Apple sign-in is not available right now.')
+                      }
                     }
                   } catch (e) {
                     setInfoMsg('Apple sign-in is not available right now.')
