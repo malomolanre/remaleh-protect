@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Browser } from '@capacitor/browser';
 import { App as CapApp } from '@capacitor/app';
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor, registerPlugin, CapacitorHttp } from '@capacitor/core';
 import { SocialLogin } from '@capgo/capacitor-social-login';
 const AppleSignIn = registerPlugin('AppleSignInPlugin');
 import { useAuth } from '../hooks/useAuth';
@@ -362,39 +362,41 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                     if (Capacitor.getPlatform() === 'ios') {
                       try {
                         const res = await SocialLogin.login({ provider: 'apple', options: { scopes: ['email', 'name'] } })
-                        if (res && (res.authorizationCode || res.identityToken)) {
+                        const ar = res?.result || res
+                        if (ar && (ar.authorizationCode || ar.identityToken || ar.accessToken?.token)) {
                           // Prefer native authorizationCode exchange
-                          if (res.authorizationCode) {
-                            const exchange = await fetch(`${apiBase}/api/auth/oauth/apple/exchange`, {
+                          if (ar.authorizationCode) {
+                            const exchange = await CapacitorHttp.request({
+                              url: `${apiBase}/api/auth/oauth/apple/exchange`,
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ code: res.authorizationCode, redirect_uri: 'https://api.remalehprotect.remaleh.com.au/api/auth/oauth/apple/callback' })
+                              data: { code: ar.authorizationCode, redirect_uri: 'https://api.remalehprotect.remaleh.com.au/api/auth/oauth/apple/callback' }
                             })
-                            if (exchange.ok) {
-                              const data = await exchange.json()
+                            if (exchange.status >= 200 && exchange.status < 300) {
+                              const data = exchange.data
                               if (data.token) {
                                 localStorage.setItem('authToken', data.token)
                                 if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
                                 window.dispatchEvent(new Event('remaleh-auth-changed'))
-                                window.location.reload()
                                 return
                               }
                             }
                           }
                           // Fallback to identityToken verification endpoint if provided
-                          if (res.identityToken) {
-                            const verify = await fetch(`${apiBase}/api/auth/oauth/apple/idtoken`, {
+                          const possibleIdToken = ar.identityToken || ar.accessToken?.token
+                          if (possibleIdToken) {
+                            const verify = await CapacitorHttp.request({
+                              url: `${apiBase}/api/auth/oauth/apple/idtoken`,
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ id_token: res.identityToken, nonce: res.nonce || undefined })
+                              data: { id_token: possibleIdToken, nonce: ar.nonce || undefined }
                             })
-                            if (verify.ok) {
-                              const data = await verify.json()
+                            if (verify.status >= 200 && verify.status < 300) {
+                              const data = verify.data
                               if (data.token) {
                                 localStorage.setItem('authToken', data.token)
                                 if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
                                 window.dispatchEvent(new Event('remaleh-auth-changed'))
-                                window.location.reload()
                                 return
                               }
                             }
@@ -414,18 +416,18 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                         name: res.fullName || undefined,
                         apple_user: res.user || undefined
                       }
-                      const exchange = await fetch(`${apiBase}/api/auth/oauth/apple/native`, {
+                      const exchange = await CapacitorHttp.request({
+                        url: `${apiBase}/api/auth/oauth/apple/native`,
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body)
+                        data: body
                       })
-                      if (exchange.ok) {
-                        const data = await exchange.json()
+                      if (exchange.status >= 200 && exchange.status < 300) {
+                        const data = exchange.data
                         if (data.token) {
                           localStorage.setItem('authToken', data.token)
                           if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
                           window.dispatchEvent(new Event('remaleh-auth-changed'))
-                          window.location.reload()
                           return
                         }
                       }

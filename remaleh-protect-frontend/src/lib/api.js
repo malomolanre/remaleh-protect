@@ -1,4 +1,5 @@
 // Central API base for all fetch calls.
+import { Capacitor, CapacitorHttp } from '@capacitor/core'
 export const API = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || "https://api.remalehprotect.remaleh.com.au";
 
 // Log the API base URL for debugging (remove in production)
@@ -105,19 +106,38 @@ export const apiCall = async (endpoint, options = {}) => {
   console.log('🌐 API Call - Token present:', !!token);
   console.log('🌐 API Call - Token value:', token ? `${token.substring(0, 20)}...` : 'None');
   
-  const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
-    },
-    ...options
-  };
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` })
+  }
+  const defaultOptions = { headers: defaultHeaders, ...options }
 
   console.log('🌐 API Call - Request headers:', defaultOptions.headers);
   console.log('🌐 API Call - Full URL:', `${API}${endpoint}`);
 
   try {
-    const response = await fetch(`${API}${endpoint}`, defaultOptions);
+    // Use native HTTP on mobile to bypass CORS preflight limitations
+    let response
+    if (Capacitor && Capacitor.getPlatform() !== 'web') {
+      const method = (defaultOptions.method || 'GET').toUpperCase()
+      const data = defaultOptions.body ? JSON.parse(defaultOptions.body) : undefined
+      const nativeResp = await CapacitorHttp.request({
+        url: `${API}${endpoint}`,
+        method,
+        headers: defaultHeaders,
+        data
+      })
+      // Normalize to Fetch-like Response shim
+      response = {
+        ok: nativeResp.status >= 200 && nativeResp.status < 300,
+        status: nativeResp.status,
+        headers: new Map(Object.entries(nativeResp.headers || {})),
+        json: async () => nativeResp.data,
+        text: async () => (typeof nativeResp.data === 'string' ? nativeResp.data : JSON.stringify(nativeResp.data))
+      }
+    } else {
+      response = await fetch(`${API}${endpoint}`, defaultOptions);
+    }
     console.log('🌐 API Call - Response status:', response.status);
     console.log('🌐 API Call - Response headers:', Object.fromEntries(response.headers.entries()));
     

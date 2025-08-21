@@ -800,9 +800,19 @@ def oauth_apple_idtoken():
         if profile.get('iss') not in ('https://appleid.apple.com', 'https://appleid.apple.com/'):
             return jsonify({'error': 'Invalid token issuer'}), 401
 
-        expected_aud = current_app.config.get('APPLE_CLIENT_ID')
-        if expected_aud and profile.get('aud') != expected_aud:
-            return jsonify({'error': 'ID token audience mismatch'}), 401
+        # Accept multiple possible audiences: Services ID (web) and Bundle ID (native app)
+        aud = profile.get('aud')
+        allowed_auds = set()
+        if current_app.config.get('APPLE_CLIENT_ID'):
+            allowed_auds.add(current_app.config.get('APPLE_CLIENT_ID'))
+        # Optional explicit bundle id via env/config
+        bundle_id = current_app.config.get('APPLE_BUNDLE_ID') or os.getenv('APPLE_BUNDLE_ID')
+        if bundle_id:
+            allowed_auds.add(bundle_id)
+        # Fallback to known bundle id if configured elsewhere
+        allowed_auds.add('com.remaleh.protect')
+        if allowed_auds and aud not in allowed_auds:
+            return jsonify({'error': 'ID token audience mismatch', 'aud': aud, 'allowed': list(allowed_auds)}), 401
 
         email = (profile.get('email') or '').lower()
         sub = profile.get('sub')
