@@ -84,7 +84,7 @@ export default function MobileHeader({ setActiveTab }) {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b md:hidden">
+    <header className="bg-white shadow-sm border-b md:hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo and Title */}

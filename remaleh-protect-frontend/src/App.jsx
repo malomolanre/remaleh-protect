@@ -1841,7 +1841,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Profile Icon */}
-      <header className="bg-[#21a1ce] px-6 py-4">
+      <header className="bg-[#21a1ce] px-6 py-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
             <img 
@@ -1984,7 +1984,7 @@ function App() {
 
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex justify-around">
           {tabs
             .filter(tab => {
