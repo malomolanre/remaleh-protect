@@ -569,16 +569,34 @@ def oauth_google_access_token():
         if not access_token:
             return jsonify({'error': 'access_token is required'}), 400
 
-        userinfo_resp = requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers={
-            'Authorization': f"Bearer {access_token}"
-        }, timeout=10)
-        if userinfo_resp.status_code != 200:
-            return jsonify({'error': 'Failed to fetch user info from Google'}), 400
-        profile = userinfo_resp.json()
+        # Try Google UserInfo (v3), then OIDC userinfo as fallback
+        profile = None
+        endpoints = [
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            'https://openidconnect.googleapis.com/v1/userinfo'
+        ]
+        last_status = None
+        last_body = None
+        for ep in endpoints:
+            try:
+                resp = requests.get(ep, headers={ 'Authorization': f"Bearer {access_token}" }, timeout=10)
+                last_status = resp.status_code
+                last_body = resp.text
+                if resp.status_code == 200:
+                    profile = resp.json()
+                    break
+            except Exception as _:
+                continue
+        if not profile:
+            return jsonify({'error': 'Failed to fetch user info from Google', 'status': last_status, 'details': last_body}), 400
 
         email = (profile.get('email') or '').lower()
         if not email:
-            return jsonify({'error': 'Email not available from Google'}), 400
+            sub = profile.get('sub') or profile.get('id')
+            if sub:
+                email = f"{sub}@google.local"
+            else:
+                return jsonify({'error': 'Email not available from Google', 'profile': profile}), 400
 
         user = User.query.filter_by(email=email).first()
         if not user:
