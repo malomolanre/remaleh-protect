@@ -269,7 +269,6 @@
 			files = (
 				06D9DEB82E4749D0005D87CD /* AppDelegate.swift in Sources */,
 				A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */,
-				A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
