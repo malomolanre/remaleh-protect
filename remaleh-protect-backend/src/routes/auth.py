@@ -560,6 +560,49 @@ def oauth_google_idtoken():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@auth_bp.route('/oauth/google/access-token', methods=['POST'])
+def oauth_google_access_token():
+    """Exchange a Google OAuth access token for app tokens by fetching userinfo."""
+    try:
+        data = request.get_json() or {}
+        access_token = data.get('access_token') or data.get('token')
+        if not access_token:
+            return jsonify({'error': 'access_token is required'}), 400
+
+        userinfo_resp = requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers={
+            'Authorization': f"Bearer {access_token}"
+        }, timeout=10)
+        if userinfo_resp.status_code != 200:
+            return jsonify({'error': 'Failed to fetch user info from Google'}), 400
+        profile = userinfo_resp.json()
+
+        email = (profile.get('email') or '').lower()
+        if not email:
+            return jsonify({'error': 'Email not available from Google'}), 400
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                email=email,
+                first_name=profile.get('given_name') or '',
+                last_name=profile.get('family_name') or '',
+                is_active=True,
+                role='USER'
+            )
+            try:
+                user.email_verified = True
+            except Exception:
+                pass
+            user.set_password(_generate_code(12))
+            db.session.add(user)
+            db.session.commit()
+
+        token, refresh_token = create_tokens(user.id)
+        return jsonify({'token': token, 'refresh_token': refresh_token}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 def _create_apple_client_secret():
     try:
         team_id = current_app.config.get('APPLE_TEAM_ID')

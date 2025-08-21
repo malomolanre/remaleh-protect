@@ -248,7 +248,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                     if (Capacitor.getPlatform() === 'ios') {
                       try {
                         // Prefer native SocialLogin plugin on iOS
-                        const res = await SocialLogin.login({ provider: 'google', options: { scopes: ['email', 'profile'] } })
+                        const res = await SocialLogin.login({ provider: 'google', options: { scopes: ['openid', 'email', 'profile'] } })
                         // Prefer server-side exchange via backend if code is present
                         if (res && (res.serverAuthCode || res.authorizationCode)) {
                           const code = res.serverAuthCode || res.authorizationCode
@@ -259,8 +259,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                           })
                           if (exchange.ok) {
                             const data = await exchange.json()
-                            if (data.access_token) {
-                              localStorage.setItem('authToken', data.access_token)
+                            if (data.token) {
+                              localStorage.setItem('authToken', data.token)
                               if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
                               window.dispatchEvent(new Event('remaleh-auth-changed'))
                               window.location.reload()
@@ -269,11 +269,31 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                           }
                         }
                         // Fallback to idToken flow if available
-                        if (res && res.idToken) {
+                        // Try code -> id_token -> access_token
+                        const idTok = res?.idToken || res?.id_token || res?.authentication?.idToken
+                        if (idTok) {
                           const verify = await fetch(`${apiBase}/api/auth/oauth/google/idtoken`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id_token: res.idToken })
+                            body: JSON.stringify({ id_token: idTok })
+                          })
+                          if (verify.ok) {
+                            const data = await verify.json()
+                            if (data.token) {
+                              localStorage.setItem('authToken', data.token)
+                              if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
+                              window.dispatchEvent(new Event('remaleh-auth-changed'))
+                              window.location.reload()
+                              return
+                            }
+                          }
+                        }
+                        const accessTok = res?.accessToken?.token || res?.access_token
+                        if (accessTok) {
+                          const verify = await fetch(`${apiBase}/api/auth/oauth/google/access-token`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ access_token: accessTok })
                           })
                           if (verify.ok) {
                             const data = await verify.json()
