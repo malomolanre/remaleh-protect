@@ -13,14 +13,11 @@ function Root() {
       StatusBar.setStyle({ style: Style.Dark }).catch(() => {})
       StatusBar.setBackgroundColor({ color: '#21a1ce' }).catch(() => {})
 
-      // Initialize Social Login (Google/Apple) if config is provided
+      // Initialize Social Login (Google) on iOS if client ID is provided
       try {
         const googleClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID
-        const useSocial = import.meta.env.VITE_USE_SOCIAL_LOGIN === 'true'
-        if (useSocial && (googleClientId)) {
-          SocialLogin.initialize({
-            google: { iOSClientId: googleClientId },
-          }).catch(() => {})
+        if (googleClientId) {
+          SocialLogin.initialize({ google: { iOSClientId: googleClientId } }).catch(() => {})
         }
       } catch {}
     }

@@ -245,8 +245,9 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                   try {
                     setOauthLoading(true)
                     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
-                    if (Capacitor.getPlatform() === 'ios' && (import.meta.env.VITE_USE_SOCIAL_LOGIN === 'true')) {
+                    if (Capacitor.getPlatform() === 'ios') {
                       try {
+                        // Prefer native SocialLogin plugin on iOS
                         const res = await SocialLogin.login({ provider: 'google', options: { scopes: ['email', 'profile'] } })
                         // Prefer server-side exchange via backend if code is present
                         if (res && (res.serverAuthCode || res.authorizationCode)) {
@@ -276,8 +277,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                           })
                           if (verify.ok) {
                             const data = await verify.json()
-                            if (data.access_token) {
-                              localStorage.setItem('authToken', data.access_token)
+                            if (data.token) {
+                              localStorage.setItem('authToken', data.token)
                               if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
                               window.dispatchEvent(new Event('remaleh-auth-changed'))
                               window.location.reload()
@@ -328,7 +329,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                   try {
                     setOauthLoading(true)
                     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
-                    if (Capacitor.getPlatform() === 'ios' && (import.meta.env.VITE_USE_SOCIAL_LOGIN === 'true')) {
+                    if (Capacitor.getPlatform() === 'ios') {
                       try {
                         const res = await SocialLogin.login({ provider: 'apple', options: { scopes: ['email', 'name'] } })
                         if (res && (res.authorizationCode || res.identityToken)) {
@@ -341,8 +342,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                             })
                             if (exchange.ok) {
                               const data = await exchange.json()
-                              if (data.access_token) {
-                                localStorage.setItem('authToken', data.access_token)
+                              if (data.token) {
+                                localStorage.setItem('authToken', data.token)
                                 if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
                                 window.dispatchEvent(new Event('remaleh-auth-changed'))
                                 window.location.reload()
@@ -359,8 +360,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                             })
                             if (verify.ok) {
                               const data = await verify.json()
-                              if (data.access_token) {
-                                localStorage.setItem('authToken', data.access_token)
+                              if (data.token) {
+                                localStorage.setItem('authToken', data.token)
                                 if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token)
                                 window.dispatchEvent(new Event('remaleh-auth-changed'))
                                 window.location.reload()

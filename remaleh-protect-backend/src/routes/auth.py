@@ -514,9 +514,23 @@ def oauth_google_idtoken():
             return jsonify({'error': 'Invalid Google ID token'}), 401
         info = resp.json()
 
-        # Basic audience check
-        expected_aud = current_app.config.get('GOOGLE_CLIENT_ID')
-        if expected_aud and info.get('aud') != expected_aud:
+        # Audience check: allow any configured Google client IDs (web, iOS, Android)
+        aud = info.get('aud')
+        allowed_auds = set()
+        # Primary web client id
+        if current_app.config.get('GOOGLE_CLIENT_ID'):
+            allowed_auds.add(current_app.config.get('GOOGLE_CLIENT_ID'))
+        # iOS client id (config or env)
+        if current_app.config.get('GOOGLE_IOS_CLIENT_ID'):
+            allowed_auds.add(current_app.config.get('GOOGLE_IOS_CLIENT_ID'))
+        if os.getenv('GOOGLE_IOS_CLIENT_ID'):
+            allowed_auds.add(os.getenv('GOOGLE_IOS_CLIENT_ID'))
+        # Android client id (optional)
+        if current_app.config.get('GOOGLE_ANDROID_CLIENT_ID'):
+            allowed_auds.add(current_app.config.get('GOOGLE_ANDROID_CLIENT_ID'))
+        if os.getenv('GOOGLE_ANDROID_CLIENT_ID'):
+            allowed_auds.add(os.getenv('GOOGLE_ANDROID_CLIENT_ID'))
+        if allowed_auds and aud not in allowed_auds:
             return jsonify({'error': 'ID token audience mismatch'}), 401
 
         email = (info.get('email') or '').lower()
