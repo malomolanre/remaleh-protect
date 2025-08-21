@@ -6,42 +6,23 @@
 	objectVersion = 54;
 	objects = {
 
-
 /* Begin PBXBuildFile section */
 		06D9DEB82E4749D0005D87CD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D9DEB72E4749D0005D87CD /* AppDelegate.swift */; };
-		A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */; };
-		A1B2C3D4E5F60123456789AB /* AppleSignInPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60123456789A8 /* AppleSignInPlugin.m */; };
-		A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */; };
 		AD8BA858823F1C413921F9CA /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBED57B44C3F5547A4E385AA /* Pods_App.framework */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		06D9DEA82E474820005D87CD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 06D9DE9F2E474820005D87CD;
-			remoteInfo = ShareToRemaleh;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		06D9DEA02E474820005D87CD /* ShareToRemaleh.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareToRemaleh.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		06D9DEB12E4748BE005D87CD /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		06D9DEB72E4749D0005D87CD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		/* removed SceneDelegate.swift file reference */
 		06D9DEB92E4749D2005D87CD /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
-		A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60123456789A8 /* AppleSignInPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppleSignInPlugin.m; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -50,6 +31,7 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
 		A92BF8AF7E3C3921158B6B87 /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 		BBED57B44C3F5547A4E385AA /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EFF350C19CB158E48A5F2CED /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
@@ -123,7 +105,6 @@
 				50B271D01FEDC1A000F3C39B /* public */,
 				06D9DEB72E4749D0005D87CD /* AppDelegate.swift */,
 				A1B2C3D4E5F60123456789A9 /* AppleSignInPlugin.swift */,
-				A1B2C3D4E5F60123456789A8 /* AppleSignInPlugin.m */,
 				06D9DEB92E4749D2005D87CD /* App-Bridging-Header.h */,
 			);
 			path = App;
@@ -288,15 +269,11 @@
 			files = (
 				06D9DEB82E4749D0005D87CD /* AppDelegate.swift in Sources */,
 				A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */,
-				A1B2C3D4E5F60123456789AB /* AppleSignInPlugin.m in Sources */,
 				A1B2C3D4E5F60123456789AA /* AppleSignInPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
