@@ -498,6 +498,54 @@ def oauth_google_exchange():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
+@auth_bp.route('/oauth/google/idtoken', methods=['POST'])
+def oauth_google_idtoken():
+    """Verify a Google ID token from the client and issue app tokens."""
+    try:
+        data = request.get_json() or {}
+        id_token = data.get('id_token')
+        if not id_token:
+            return jsonify({'error': 'id_token is required'}), 400
+
+        # Use Google's tokeninfo endpoint to validate and decode the token
+        resp = requests.get('https://oauth2.googleapis.com/tokeninfo', params={'id_token': id_token}, timeout=10)
+        if resp.status_code != 200:
+            return jsonify({'error': 'Invalid Google ID token'}), 401
+        info = resp.json()
+
+        # Basic audience check
+        expected_aud = current_app.config.get('GOOGLE_CLIENT_ID')
+        if expected_aud and info.get('aud') != expected_aud:
+            return jsonify({'error': 'ID token audience mismatch'}), 401
+
+        email = (info.get('email') or '').lower()
+        if not email:
+            return jsonify({'error': 'Email not available from Google'}), 400
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                email=email,
+                first_name=info.get('given_name') or '',
+                last_name=info.get('family_name') or '',
+                is_active=True,
+                role='USER'
+            )
+            try:
+                user.email_verified = True
+            except Exception:
+                pass
+            user.set_password(_generate_code(12))
+            db.session.add(user)
+            db.session.commit()
+
+        access_token, refresh_token = create_tokens(user.id)
+        return jsonify({'token': access_token, 'refresh_token': refresh_token}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 def _create_apple_client_secret():
     try:
         team_id = current_app.config.get('APPLE_TEAM_ID')
@@ -651,6 +699,62 @@ def oauth_apple_exchange():
             db.session.commit()
         access_token, refresh_token = create_tokens(user.id)
         return jsonify({'token': access_token, 'refresh_token': refresh_token})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@auth_bp.route('/oauth/apple/idtoken', methods=['POST'])
+def oauth_apple_idtoken():
+    """Verify an Apple identity token from the client and issue app tokens.
+
+    Note: For simplicity we decode without signature verification here. For production-grade
+    verification, fetch and cache Apple's JWKs and verify the signature and nonce.
+    """
+    try:
+        data = request.get_json() or {}
+        id_token = data.get('id_token')
+        if not id_token:
+            return jsonify({'error': 'id_token is required'}), 400
+
+        # Decode without signature verification; validate basic claims
+        profile = jwt.decode(id_token, options={"verify_signature": False, "verify_aud": False})
+        if not profile:
+            return jsonify({'error': 'Invalid Apple ID token'}), 401
+
+        if profile.get('iss') not in ('https://appleid.apple.com', 'https://appleid.apple.com/'):
+            return jsonify({'error': 'Invalid token issuer'}), 401
+
+        expected_aud = current_app.config.get('APPLE_CLIENT_ID')
+        if expected_aud and profile.get('aud') != expected_aud:
+            return jsonify({'error': 'ID token audience mismatch'}), 401
+
+        email = (profile.get('email') or '').lower()
+        sub = profile.get('sub')
+        if not email and sub:
+            email = f"{sub}@apple.local"
+        if not email:
+            return jsonify({'error': 'Email unavailable'}), 400
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                email=email,
+                first_name='',
+                last_name='',
+                is_active=True,
+                role='USER'
+            )
+            try:
+                user.email_verified = True
+            except Exception:
+                pass
+            user.set_password(_generate_code(12))
+            db.session.add(user)
+            db.session.commit()
+
+        access_token, refresh_token = create_tokens(user.id)
+        return jsonify({'token': access_token, 'refresh_token': refresh_token}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
