@@ -118,6 +118,68 @@ npx cap open ios     # For iOS
 npx cap open android # For Android
 ```
 
+### iOS Social Login (Google + Apple)
+
+This app uses Capacitor with native networking for reliable OAuth on iOS.
+
+1) Install plugin and sync
+```
+npm i @capgo/capacitor-social-login
+npx cap sync ios
+```
+
+2) Google (iOS)
+- Create an iOS OAuth Client ID in Google Cloud.
+- Add to `ios/App/App/Info.plist`:
+  - URL scheme: your reversed client id (e.g. `com.googleusercontent.apps.xxxxx:/oauthredirect`).
+  - `GIDClientID` = your iOS client id.
+- Frontend env: add to `remaleh-protect-frontend/.env.production`:
+```
+VITE_USE_SOCIAL_LOGIN=true
+VITE_GOOGLE_IOS_CLIENT_ID=<your-ios-client-id>
+```
+
+3) Apple
+- Ensure Bundle ID matches your app (e.g., `com.remaleh.protect`).
+- Enable Sign in with Apple capability in Xcode.
+- Backend must accept Apple ID token audience including your Services ID and Bundle ID.
+
+4) Native networking on iOS
+- All authenticated requests use CapacitorHttp to bypass WKWebView CORS preflight.
+- This is necessary for Authorization headers (e.g., GET `/api/auth/profile`).
+
+5) Backend configuration (Render)
+- Set:
+  - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+  - `APPLE_CLIENT_ID` (Services ID)
+  - `APPLE_BUNDLE_ID` (e.g., `com.remaleh.protect`)
+  - `SECRET_KEY` (consistent across instances)
+- CORS allows `Authorization` header and your app origins (including `capacitor://localhost`).
+
+6) Test flow
+- Google: plugin returns `serverAuthCode` or `idToken`/`access_token`; app posts to
+  - `POST /api/auth/oauth/google/exchange`
+  - or `POST /api/auth/oauth/google/idtoken`
+  - or `POST /api/auth/oauth/google/access-token`
+- Apple: plugin returns `authorizationCode` or `identityToken`; app posts to
+  - `POST /api/auth/oauth/apple/exchange`
+  - or `POST /api/auth/oauth/apple/idtoken`
+- On success, app stores tokens and calls `GET /api/auth/profile`.
+
+#### Troubleshooting (iOS WKWebView/CORS)
+- Symptom: Render logs show only `OPTIONS /api/...` preflights but no `GET/POST` with Authorization header.
+  - Fix: Use CapacitorHttp for authenticated requests on iOS (already implemented in `src/lib/api.js`).
+  - Fix: Ensure server CORS allows and exposes `Authorization` header and includes `capacitor://localhost` origin.
+- Symptom: Google returns to app but not logged in.
+  - Check: POST `/api/auth/oauth/google/access-token` or `/idtoken` status and body.
+  - Ensure backend accepts both iOS client ID (audience) and web client ID.
+- Symptom: Apple returns tokens but backend 401 on `/oauth/apple/idtoken`.
+  - Fix: Allow Apple ID token `aud` to match your Bundle ID (e.g., `com.remaleh.protect`) as well as Services ID.
+- Symptom: Crash with "No active configuration. Make sure GIDClientID is set in Info.plist."
+  - Fix: Add `GIDClientID` to `ios/App/App/Info.plist` and add the reversed client ID URL scheme.
+- Symptom: 401/Invalid token on `/api/auth/profile` after login.
+  - Fix: Verify backend `SECRET_KEY` is consistent across instances (used to sign/verify JWTs).
+
 ## 🔧 Configuration
 
 ### **Environment Variables**
