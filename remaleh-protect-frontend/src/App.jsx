@@ -1985,7 +1985,7 @@ function App() {
 
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4 pb-safe">
+      <nav className="fixed left-0 right-0 bg-white border-t border-gray-200 px-4 pt-2 pb-3 pb-safe" style={{ bottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex justify-around">
           {tabs
             .filter(tab => {
