@@ -38,6 +38,19 @@
   }
 }
 
+/* Safe area utilities for iOS notch/home indicator */
+@layer utilities {
+  .pt-safe {
+    padding-top: calc(env(safe-area-inset-top) + 8px);
+  }
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+}
+
 /* Custom animations and effects */
 @keyframes float {
   0%, 100% {
