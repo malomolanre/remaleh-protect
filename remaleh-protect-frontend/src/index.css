@@ -49,6 +49,15 @@
   .mt-safe {
     margin-top: env(safe-area-inset-top);
   }
+  .safe-top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background: #21a1ce;
+    z-index: 40;
+  }
 }
 
 /* Custom animations and effects */

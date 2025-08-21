@@ -1840,8 +1840,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="safe-top-bar" />
       {/* Header with Profile Icon */}
-      <header className="bg-[#21a1ce] px-6 py-4 pt-safe" style={{ position: 'sticky', top: 0, zIndex: 30 }}>
+      <header className="bg-[#21a1ce] px-6 py-4" style={{ position: 'sticky', top: 0, zIndex: 30 }}>
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
             <img 
