@@ -249,9 +249,11 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                       try {
                         // Prefer native SocialLogin plugin on iOS
                         const res = await SocialLogin.login({ provider: 'google', options: { scopes: ['openid', 'email', 'profile'] } })
+                        const r = res?.result || res
+                        console.log('[OAuth][Google] plugin result keys:', Object.keys(r || {}))
                         // Prefer server-side exchange via backend if code is present
-                        if (res && (res.serverAuthCode || res.authorizationCode)) {
-                          const code = res.serverAuthCode || res.authorizationCode
+                        if (r && (r.serverAuthCode || r.authorizationCode)) {
+                          const code = r.serverAuthCode || r.authorizationCode
                           const exchange = await fetch(`${apiBase}/api/auth/oauth/google/exchange`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -270,8 +272,9 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                         }
                         // Fallback to idToken flow if available
                         // Try code -> id_token -> access_token
-                        const idTok = res?.idToken || res?.id_token || res?.authentication?.idToken
+                        const idTok = r?.idToken || r?.id_token || r?.authentication?.idToken
                         if (idTok) {
+                          console.log('[OAuth][Google] Posting id_token to backend')
                           const verify = await fetch(`${apiBase}/api/auth/oauth/google/idtoken`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -288,13 +291,15 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                             }
                           }
                         }
-                        const accessTok = res?.accessToken?.token || res?.access_token
+                        const accessTok = r?.accessToken?.token || r?.access_token
                         if (accessTok) {
+                          console.log('[OAuth][Google] Sending access_token to backend...', { url: `${apiBase}/api/auth/oauth/google/access-token` })
                           const verify = await fetch(`${apiBase}/api/auth/oauth/google/access-token`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ access_token: accessTok })
                           })
+                          console.log('[OAuth][Google] access-token response status:', verify.status)
                           if (verify.ok) {
                             const data = await verify.json()
                             if (data.token) {
@@ -304,6 +309,11 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                               window.location.reload()
                               return
                             }
+                          } else {
+                            try {
+                              const errText = await verify.text()
+                              console.log('[OAuth][Google] access-token error body:', errText)
+                            } catch (_) {}
                           }
                         }
                         setInfoMsg('Google sign-in could not complete.')

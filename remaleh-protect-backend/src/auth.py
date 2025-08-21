@@ -55,9 +55,11 @@ def token_required(f):
             try:
                 token = auth_header.split(" ")[1]
             except IndexError:
+                logger.info("Auth error: invalid Authorization header format")
                 return jsonify({'message': 'Invalid token format'}), 401
         
         if not token:
+            logger.info("Auth error: missing Bearer token")
             return jsonify({'message': 'Token is missing'}), 401
         
         try:
@@ -66,11 +68,14 @@ def token_required(f):
             current_user = User.query.get(data['user_id'])
             
             if not current_user:
+                logger.info("Auth error: user not found for token user_id=%s", data.get('user_id'))
                 return jsonify({'message': 'Invalid token'}), 401
                 
         except jwt.ExpiredSignatureError:
+            logger.info("Auth error: token expired")
             return jsonify({'message': 'Token has expired'}), 401
         except jwt.InvalidTokenError:
+            logger.info("Auth error: invalid token signature or payload")
             return jsonify({'message': 'Invalid token'}), 401
         
         return f(current_user, *args, **kwargs)

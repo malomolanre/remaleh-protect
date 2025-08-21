@@ -17,7 +17,9 @@ function Root() {
       try {
         const googleClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID
         if (googleClientId) {
-          SocialLogin.initialize({ google: { iOSClientId: googleClientId } }).catch(() => {})
+          SocialLogin.initialize({ google: { iOSClientId: googleClientId } }).then(() => {
+            console.log('[SocialLogin] Initialized with iOSClientId')
+          }).catch((e) => { console.log('[SocialLogin] init error', e) })
         }
       } catch {}
     }
