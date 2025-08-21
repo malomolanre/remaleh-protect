@@ -12,6 +12,7 @@ import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth } from './hooks/useAuth'
 import MobilePullToRefresh from './components/MobilePullToRefresh'
+import { User } from 'lucide-react'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
@@ -1866,9 +1867,7 @@ function App() {
                   {getUserInitials()}
                 </span>
               ) : (
-                <svg className="w-4 h-4 text-[#21a1ce]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1118.879 6.196M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                <User className="w-4 h-4 text-[#21a1ce]" aria-hidden="true" />
               )}
             </button>
             
