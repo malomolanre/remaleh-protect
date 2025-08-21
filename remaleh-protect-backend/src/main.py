@@ -313,6 +313,24 @@ def create_app():
         """Log response details and timing."""
         duration = time.time() - g.start_time
         logger.info(f"Response: {response.status_code} in {duration:.3f}s")
+        try:
+            if request.path.startswith('/api/'):
+                origin = request.headers.get('Origin')
+                if origin:
+                    response.headers['Access-Control-Allow-Origin'] = origin
+                    vary = response.headers.get('Vary')
+                    response.headers['Vary'] = (vary + ', Origin') if vary else 'Origin'
+                else:
+                    response.headers.setdefault('Access-Control-Allow-Origin', '*')
+                response.headers.setdefault('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+                acah = response.headers.get('Access-Control-Allow-Headers')
+                needed = 'Authorization, authorization, Content-Type, X-Requested-With'
+                if not acah:
+                    response.headers['Access-Control-Allow-Headers'] = needed
+                elif 'Authorization' not in acah:
+                    response.headers['Access-Control-Allow-Headers'] = f"{acah}, {needed}"
+        except Exception:
+            pass
         return response
 
     @app.get("/api/health")
