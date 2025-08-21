@@ -18,8 +18,8 @@ export default function BreachChecker({ setActiveTab }) {
   }
 
   return (
-    <MobilePullToRefresh onRefresh={async () => { if (email.trim()) await check(email.trim()) }} className="p-4">
-    <div className="space-y-4">
+    <MobilePullToRefresh onRefresh={async () => { if (email.trim()) await check(email.trim()) }} className="">
+    <div className="space-y-4 p-4">
       {/* Header centered like Community Hub */}
       <div className="text-center mb-6">
         <div className="flex justify-center mb-3">

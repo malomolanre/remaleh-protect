@@ -51,17 +51,35 @@ export function useChatAssistant() {
       let source = ''
       const lowercaseInput = messageToProcess.toLowerCase()
 
-      for (const key in CYBER_KB) {
-        const { keywords, response: kbResponse, source: kbSource } = CYBER_KB[key]
-        for (const k of keywords) {
-          if (lowercaseInput.includes(k.toLowerCase())) {
-            response = kbResponse
-            source = kbSource
-            responseFound = true
-            break
+      // Guardian contact intent
+      const guardianPhrases = [
+        'connect me with a remaleh guardian',
+        'connect me with remaleh guardian',
+        'remaleh guardian',
+        'speak to a guardian',
+        'contact guardian',
+        'talk to a guardian',
+        'connect me with a guardian'
+      ]
+      if (guardianPhrases.some(p => lowercaseInput.includes(p))) {
+        response = '**Remaleh Guardian Support**\n\nPlease contact us directly and a Guardian will assist you:\n\n[Contact Remaleh Guardian](https://www.remaleh.com.au/contact-us)'
+        source = 'Remaleh Guardians'
+        responseFound = true
+      }
+
+      if (!responseFound) {
+        for (const key in CYBER_KB) {
+          const { keywords, response: kbResponse, source: kbSource } = CYBER_KB[key]
+          for (const k of keywords) {
+            if (lowercaseInput.includes(k.toLowerCase())) {
+              response = kbResponse
+              source = kbSource
+              responseFound = true
+              break
+            }
           }
+          if (responseFound) break
         }
-        if (responseFound) break
       }
 
       if (!responseFound) {
