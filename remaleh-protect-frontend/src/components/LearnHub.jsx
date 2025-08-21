@@ -304,7 +304,6 @@ export default function LearnHub({ setActiveTab }) {
           </div>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Learning Hub</h1>
-        <p className="text-gray-600 text-sm">Remaleh isn't just about learning it's about doing. Stuck or unsure? A Remaleh Guardian will guide you step-by-step until you're confident, capable, and ready to take action.</p>
         <div className="mt-2">
           <button
             onClick={loadData}
