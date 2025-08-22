@@ -72,7 +72,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   }, [isAuthenticated, user, onLoginSuccess]);
 
   useEffect(() => {
-    if (Capacitor.getPlatform() === 'ios') {
+    // Handle deep links on both iOS and Android (not web)
+    if (Capacitor.getPlatform() !== 'web') {
       deepLinkListenerRef.current = CapApp.addListener('appUrlOpen', async ({ url }) => {
         const ok = await finalizeOAuthFromUrl(url)
         if (ok) {
@@ -321,12 +322,12 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                         setInfoMsg('Google sign-in is not available right now.')
                       }
                     } else {
-                      // Existing web/deeplink flow
+                      // Android/web deep link flow
                       const resp = await fetch(`${apiBase}/api/auth/oauth/google/start`)
                       if (!resp.ok) throw new Error('google start failed')
                       const data = await resp.json()
                       if (!data.auth_url) throw new Error('no auth url')
-                      if (Capacitor.getPlatform() === 'ios') {
+                      if (Capacitor.getPlatform() !== 'web') {
                         const listener = await CapApp.addListener('appUrlOpen', async ({ url }) => {
                           try {
                             const ok = await finalizeOAuthFromUrl(url)

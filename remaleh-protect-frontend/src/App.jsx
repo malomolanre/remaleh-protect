@@ -1844,12 +1844,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Spacer paints the safe area when iOS overlays the web view */}
-      <div className="safe-top-spacer" />
-      {/* Header with Profile Icon */}
+      {/* Header with Profile Icon (no extra safe-area painters; iOS overlay=false) */}
       <header className="bg-[#21a1ce] px-6 py-4" style={{ position: 'sticky', top: 0, zIndex: 30 }}>
-        <div className="flex items-center justify-between">
-          <div className="flex-1 text-center">
+        <div className="grid grid-cols-3 items-center">
+          {/* Left spacer to truly center the logo */}
+          <div aria-hidden="true" className="w-8 h-8" />
+          <div className="text-center">
             <img 
               src="/Remaleh-logo-full-2.jpg" 
               alt="Remaleh" 
@@ -1858,7 +1858,7 @@ function App() {
           </div>
           
           {/* Profile Icon - Clickable */}
-          <div className="relative">
+          <div className="relative justify-self-end">
             <button
               onClick={handleProfileClick}
               className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"

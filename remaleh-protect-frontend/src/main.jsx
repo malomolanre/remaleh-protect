@@ -10,14 +10,14 @@ function Root() {
   useEffect(() => {
     const platform = Capacitor.getPlatform()
     if (platform === 'ios' || platform === 'android') {
-      // iOS: overlay true to allow painting safe area; Android stays non-overlay
-      StatusBar.setOverlaysWebView({ overlay: platform === 'ios' }).catch(() => {})
+      // Revert iOS to non-overlay to avoid visual gaps; Android remains non-overlay
+      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
       StatusBar.setStyle({ style: Style.Dark }).catch(() => {})
       StatusBar.setBackgroundColor({ color: '#21a1ce' }).catch(() => {})
-      // Ensure spacer uses safe area height when overlaying on iOS
+      // Ensure no spacer is applied on iOS when not overlaying
       try {
         if (platform === 'ios') {
-          document.documentElement.style.setProperty('--statusbar-offset', 'env(safe-area-inset-top)')
+          document.documentElement.style.setProperty('--statusbar-offset', '0px')
         }
       } catch {}
       // On Android, EdgeToEdge plugin is native-only; avoid bundling in web build
