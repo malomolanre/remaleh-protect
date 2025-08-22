@@ -5,7 +5,6 @@ import './index.css'
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { SocialLogin } from '@capgo/capacitor-social-login'
-import { EdgeToEdge } from '@capawesome/capacitor-android-edge-to-edge-support'
 
 function Root() {
   useEffect(() => {
@@ -14,15 +13,19 @@ function Root() {
       StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
       StatusBar.setStyle({ style: Style.Dark }).catch(() => {})
       StatusBar.setBackgroundColor({ color: '#21a1ce' }).catch(() => {})
+      // On Android, EdgeToEdge plugin is native-only; avoid bundling in web build
       if (platform === 'android') {
-        EdgeToEdge.enable().catch(() => {})
+        try {
+          // eslint-disable-next-line no-new-func
+          const enableEdgeToEdge = new Function(
+            "return import('@capawesome/capacitor-android-edge-to-edge-support').then(m => m.EdgeToEdge.enable())"
+          )
+          enableEdgeToEdge().catch(() => {})
+        } catch {}
       }
       // Expose a CSS var for header spacer so it always starts below status bar
       try {
-        const offset = (window as any)?.Capacitor?.Plugins?.StatusBar?.getInfo
-          ? await (StatusBar as any).getInfo()
-          : null
-        // Fallback to 24px typical Android status bar height when env() is 0
+        // Use a conservative default that works well on most Android devices
         const px = 24
         document.documentElement.style.setProperty('--statusbar-offset', `${px}px`)
       } catch {}
