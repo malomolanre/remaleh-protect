@@ -16,10 +16,10 @@ except ImportError:
 # Import production modules - try relative imports first, then absolute
 try:
     from ..models import db, User, CommunityReport, CommunityReportMedia, UserPointLog, ReportVote, CommunityReportComment, LearningProgress, LessonProgress, ProtectionStatus
-    from ..auth import token_required, admin_required
+    from ..auth import token_required, admin_required, validate_password_strength
 except ImportError:
     from models import db, User, CommunityReport, CommunityReportMedia, UserPointLog, ReportVote, CommunityReportComment, LearningProgress, LessonProgress, ProtectionStatus
-    from auth import token_required, admin_required
+    from auth import token_required, admin_required, validate_password_strength
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint('admin', __name__)
@@ -166,6 +166,68 @@ def get_users(current_user):
         logger.error(f"Error getting users: {e}")
         import traceback
         logger.error(f"Full traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@admin_bp.route('/users', methods=['POST'])
+@token_required
+@admin_required
+def create_user(current_user):
+    """Admin: Create a new user"""
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        password = data.get('password') or ''
+        first_name = data.get('first_name') or ''
+        last_name = data.get('last_name') or ''
+        role = (data.get('role') or 'USER').upper()
+        account_status = (data.get('account_status') or 'ACTIVE').upper()
+        is_active = bool(data.get('is_active', True))
+        is_admin_flag = bool(data.get('is_admin', False))
+
+        if not email or not password or not first_name or not last_name:
+            return jsonify({'error': 'Email, password, first_name and last_name are required'}), 400
+
+        # Enforce role
+        if role not in ['USER', 'MODERATOR', 'ADMIN']:
+            return jsonify({'error': 'Invalid role'}), 400
+        if account_status not in ['ACTIVE', 'SUSPENDED', 'BANNED']:
+            return jsonify({'error': 'Invalid account status'}), 400
+
+        # Check duplicate email
+        if User.query.filter_by(email=email).first():
+            return jsonify({'error': 'Email already exists'}), 409
+
+        # Password policy
+        ok, msg = validate_password_strength(password)
+        if not ok:
+            return jsonify({'error': msg}), 400
+
+        user = User(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            is_active=is_active,
+            role=role,
+            account_status=account_status,
+            is_admin=(role == 'ADMIN') or is_admin_flag
+        )
+        try:
+            # Auto-verify when created by admin
+            setattr(user, 'email_verified', True)
+        except Exception:
+            pass
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify({
+            'message': 'User created successfully',
+            'user': user.to_dict()
+        }), 201
+    except Exception as e:
+        logger.error(f"Error creating user: {e}")
+        db.session.rollback()
         return jsonify({'error': 'Internal server error'}), 500
 
 @admin_bp.route('/users/deleted', methods=['GET'])
