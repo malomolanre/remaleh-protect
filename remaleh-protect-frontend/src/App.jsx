@@ -1844,6 +1844,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Spacer paints the safe area when iOS overlays the web view */}
       <div className="safe-top-spacer" />
       {/* Header with Profile Icon */}
       <header className="bg-[#21a1ce] px-6 py-4" style={{ position: 'sticky', top: 0, zIndex: 30 }}>
