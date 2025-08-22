@@ -1,5 +1,14 @@
 {
   "appId": "com.remaleh.protect",
   "appName": "Remaleh Protect",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "EdgeToEdge": {
+      "backgroundColor": "#21a1ce"
+    },
+    "StatusBar": {
+      "backgroundColor": "#21a1ce",
+      "style": "DARK"
+    }
+  }
 }

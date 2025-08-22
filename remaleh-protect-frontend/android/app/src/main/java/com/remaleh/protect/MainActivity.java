@@ -1,4 +1,4 @@
-package com.remalehprotect.app;
+package com.remaleh.protect;
 
 import android.content.Intent;
 import android.content.SharedPreferences;

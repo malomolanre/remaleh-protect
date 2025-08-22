@@ -85,7 +85,7 @@ export default function MobileHeader({ setActiveTab }) {
 
   return (
     <>
-      <div className="safe-top-bar" />
+      <div className="safe-top-spacer" />
       <header className="bg-white shadow-sm border-b md:hidden" style={{ position: 'sticky', top: 0, zIndex: 30 }}>
       <div className="px-4 py-3">
         <div className="flex items-center justify-between">
