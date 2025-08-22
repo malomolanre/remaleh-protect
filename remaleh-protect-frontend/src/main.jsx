@@ -38,38 +38,38 @@ function Root() {
       } catch {}
 
       // Initialize Social Login (Google/Apple) if IDs are provided
-      if (platform === 'ios') {
-        try {
-          const googleClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID
-          if (googleClientId) {
-            SocialLogin.initialize({ google: { iOSClientId: googleClientId } }).then(() => {
-              console.log('[SocialLogin] Initialized with iOSClientId')
-            }).catch((e) => { console.log('[SocialLogin] init error', e) })
+      try {
+        const cfg = {}
+        const providers = []
+        const googleIos = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID
+        const googleWeb = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || import.meta.env.VITE_GOOGLE_ANDROID_WEB_CLIENT_ID
+        // Configure Google with any available IDs (plugin tolerates extra fields)
+        if (googleIos || googleWeb) {
+          cfg.google = {}
+          if (googleIos) cfg.google.iOSClientId = googleIos
+          if (googleWeb) {
+            cfg.google.webClientId = googleWeb
+            cfg.google.clientId = googleWeb
           }
-        } catch {}
-      } else if (platform === 'android') {
-        try {
-          const webClientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || import.meta.env.VITE_GOOGLE_ANDROID_WEB_CLIENT_ID
-          const appleClientId = import.meta.env.VITE_APPLE_SERVICE_ID
-          const appleRedirect = import.meta.env.VITE_APPLE_REDIRECT_URI
-          const cfg = {}
-          if (webClientId) cfg.google = { webClientId }
-          if (appleClientId && appleRedirect) cfg.apple = { clientId: appleClientId, redirectUri: appleRedirect }
-          if (Object.keys(cfg).length) {
-            const enriched = { ...cfg }
-            try {
-              const providers = []
-              if (cfg.google) providers.push('google')
-              if (cfg.apple) providers.push('apple')
-              // Some versions expect a providers array
-              if (providers.length) enriched.providers = providers
-            } catch {}
-            SocialLogin.initialize(enriched).then(() => {
-              console.log('[SocialLogin] Android initialized', enriched)
-            }).catch((e) => { console.log('[SocialLogin] Android init error', e) })
-          }
-        } catch {}
-      }
+          // Default scopes to ensure profile/email access
+          cfg.google.scopes = ['profile', 'email']
+          providers.push('google')
+        }
+        // Apple can be initialized on both platforms when Service ID flow is used
+        const appleClientId = import.meta.env.VITE_APPLE_SERVICE_ID
+        const appleRedirect = import.meta.env.VITE_APPLE_REDIRECT_URI
+        if (appleClientId && appleRedirect) {
+          cfg.apple = { clientId: appleClientId, redirectUri: appleRedirect, scopes: ['email', 'name'] }
+          providers.push('apple')
+        }
+        if (providers.length) {
+          const initPayload = { ...cfg, providers }
+          console.log('[SocialLogin] Init payload providers:', providers, 'googleCfg:', cfg.google ? Object.keys(cfg.google) : 'none', 'apple:', !!cfg.apple)
+          SocialLogin.initialize(initPayload).then(() => {
+            console.log('[SocialLogin] Initialized with providers:', providers)
+          }).catch((e) => { console.log('[SocialLogin] init error', e) })
+        }
+      } catch {}
     }
   }, [])
   return <App />

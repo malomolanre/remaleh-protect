@@ -250,9 +250,12 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                       try {
                         // Ensure provider is initialized (fallback re-init)
                         try {
+                          const isIOS = Capacitor.getPlatform() === 'ios'
+                          const iosClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID
                           const webClientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || import.meta.env.VITE_GOOGLE_ANDROID_WEB_CLIENT_ID
-                          if (webClientId) {
-                            await SocialLogin.initialize({ google: { webClientId }, providers: ['google'] })
+                          const googleCfg = isIOS && iosClientId ? { iOSClientId: iosClientId, scopes: ['profile','email'] } : (webClientId ? { webClientId, clientId: webClientId, scopes: ['profile','email'] } : null)
+                          if (googleCfg) {
+                            await SocialLogin.initialize({ google: googleCfg, providers: ['google'] })
                           }
                         } catch (_) {}
                         // Prefer native SocialLogin plugin on mobile (iOS/Android)
@@ -326,18 +329,15 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                         }
                         setInfoMsg('Google sign-in could not complete.')
                       } catch (err) {
+                        // On any plugin error, fallback to backend web OAuth flow
                         try {
-                          const msg = String((err && err.message) || '')
-                          if (msg.toLowerCase().includes('cancel')) {
-                            // Fallback to web/deeplink flow when user/system cancels native sheet
-                            const resp = await fetch(`${apiBase}/api/auth/oauth/google/start`)
-                            if (resp.ok) {
-                              const data = await resp.json()
-                              if (data.auth_url) {
-                                const url = data.auth_url + (data.auth_url.includes('?') ? '&' : '?') + 'deeplink=1'
-                                await Browser.open({ url, presentationStyle: 'popover' })
-                                return
-                              }
+                          const resp = await fetch(`${apiBase}/api/auth/oauth/google/start`)
+                          if (resp.ok) {
+                            const data = await resp.json()
+                            if (data.auth_url) {
+                              const url = data.auth_url + (data.auth_url.includes('?') ? '&' : '?') + 'deeplink=1'
+                              await Browser.open({ url, presentationStyle: 'popover' })
+                              return
                             }
                           }
                         } catch (_) {}
@@ -390,7 +390,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                           const clientId = import.meta.env.VITE_APPLE_SERVICE_ID
                           const redirectUri = import.meta.env.VITE_APPLE_REDIRECT_URI
                           if (clientId && redirectUri) {
-                            await SocialLogin.initialize({ apple: { clientId, redirectUri }, providers: ['apple'] })
+                            await SocialLogin.initialize({ apple: { clientId, redirectUri, scopes: ['email','name'] }, providers: ['apple'] })
                           }
                         } catch (_) {}
                         const res = await SocialLogin.login({ provider: 'apple' })
@@ -436,18 +436,15 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                         }
                         setInfoMsg('Apple sign-in could not complete.')
                       } catch (err) {
+                        // On any plugin error, fallback to backend web OAuth flow
                         try {
-                          const msg = String((err && err.message) || '')
-                          if (msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('cannot find provider')) {
-                            // Fallback to web flow via backend
-                            const resp = await fetch(`${apiBase}/api/auth/oauth/apple/start`)
-                            if (resp.ok) {
-                              const data = await resp.json()
-                              if (data.auth_url) {
-                                const url = data.auth_url
-                                await Browser.open({ url, presentationStyle: 'popover' })
-                                return
-                              }
+                          const resp = await fetch(`${apiBase}/api/auth/oauth/apple/start`)
+                          if (resp.ok) {
+                            const data = await resp.json()
+                            if (data.auth_url) {
+                              const url = data.auth_url
+                              await Browser.open({ url, presentationStyle: 'popover' })
+                              return
                             }
                           }
                         } catch (_) {}
