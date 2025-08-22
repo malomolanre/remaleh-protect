@@ -54,9 +54,12 @@
     top: 0;
     left: 0;
     right: 0;
-    height: env(safe-area-inset-top);
+    height: var(--statusbar-offset, env(safe-area-inset-top));
     background: #21a1ce;
     z-index: 40;
+  }
+  .safe-top-spacer {
+    height: var(--statusbar-offset, env(safe-area-inset-top));
   }
 }
 
