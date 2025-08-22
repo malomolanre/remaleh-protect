@@ -34,12 +34,12 @@
                 <data android:scheme="remalehprotect" android:host="auth-callback" />
             </intent-filter>
 
-            <!-- Google reversed client id scheme for OAuth redirect (if used) -->
+            <!-- Google reversed client id scheme for OAuth redirect (matches web client id) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.googleusercontent.apps.453799187435-8omnd1nnnb92c3g2qos0qd43ch7c3h3r" android:host="oauthredirect" />
+                <data android:scheme="com.googleusercontent.apps.453799187435-mtc47gui3bi3m61s9efiue736kj6rf66" android:host="oauthredirect" />
             </intent-filter>
         </activity>
 

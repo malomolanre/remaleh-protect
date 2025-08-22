@@ -21,7 +21,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   const finalizeOAuthFromUrl = async (url) => {
     try {
       if (!url) return false
-      const googleReversed = 'com.googleusercontent.apps.453799187435-8omnd1nnnb92c3g2qos0qd43ch7c3h3r:/oauthredirect'
+      const googleReversed = 'com.googleusercontent.apps.453799187435-mtc47gui3bi3m61s9efiue736kj6rf66:/oauthredirect'
       const isAppScheme = url.startsWith('remalehprotect://auth-callback')
       const isGoogleScheme = url.startsWith(googleReversed)
       if (!isAppScheme && !isGoogleScheme) return false
@@ -246,10 +246,17 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                   try {
                     setOauthLoading(true)
                     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
-                    if (Capacitor.getPlatform() === 'ios') {
+                    if (Capacitor.getPlatform() !== 'web') {
                       try {
-                        // Prefer native SocialLogin plugin on iOS
-                        const res = await SocialLogin.login({ provider: 'google', options: { scopes: ['openid', 'email', 'profile'] } })
+                        // Ensure provider is initialized (fallback re-init)
+                        try {
+                          const webClientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || import.meta.env.VITE_GOOGLE_ANDROID_WEB_CLIENT_ID
+                          if (webClientId) {
+                            await SocialLogin.initialize({ google: { webClientId }, providers: ['google'] })
+                          }
+                        } catch (_) {}
+                        // Prefer native SocialLogin plugin on mobile (iOS/Android)
+                        const res = await SocialLogin.login({ provider: 'google' })
                         const r = res?.result || res
                         console.log('[OAuth][Google] plugin result keys:', Object.keys(r || {}))
                         // Prefer server-side exchange via backend if code is present
@@ -258,7 +265,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                           const exchange = await fetch(`${apiBase}/api/auth/oauth/google/exchange`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ code, redirect_uri: 'com.googleusercontent.apps.453799187435-8omnd1nnnb92c3g2qos0qd43ch7c3h3r:/oauthredirect' })
+                            body: JSON.stringify({ code, redirect_uri: 'com.googleusercontent.apps.453799187435-mtc47gui3bi3m61s9efiue736kj6rf66:/oauthredirect' })
                           })
                           if (exchange.ok) {
                             const data = await exchange.json()
@@ -319,6 +326,21 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                         }
                         setInfoMsg('Google sign-in could not complete.')
                       } catch (err) {
+                        try {
+                          const msg = String((err && err.message) || '')
+                          if (msg.toLowerCase().includes('cancel')) {
+                            // Fallback to web/deeplink flow when user/system cancels native sheet
+                            const resp = await fetch(`${apiBase}/api/auth/oauth/google/start`)
+                            if (resp.ok) {
+                              const data = await resp.json()
+                              if (data.auth_url) {
+                                const url = data.auth_url + (data.auth_url.includes('?') ? '&' : '?') + 'deeplink=1'
+                                await Browser.open({ url, presentationStyle: 'popover' })
+                                return
+                              }
+                            }
+                          }
+                        } catch (_) {}
                         setInfoMsg('Google sign-in is not available right now.')
                       }
                     } else {
@@ -354,15 +376,24 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4 mr-2" />
                 Continue with Google
               </button>
+              {Capacitor.getPlatform() !== 'android' && (
               <button
                 type="button"
                 onClick={async () => {
                   try {
                     setOauthLoading(true)
                     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:10000'
-                    if (Capacitor.getPlatform() === 'ios') {
+                    if (Capacitor.getPlatform() !== 'web') {
                       try {
-                        const res = await SocialLogin.login({ provider: 'apple', options: { scopes: ['email', 'name'] } })
+                        // Ensure provider is initialized (fallback re-init)
+                        try {
+                          const clientId = import.meta.env.VITE_APPLE_SERVICE_ID
+                          const redirectUri = import.meta.env.VITE_APPLE_REDIRECT_URI
+                          if (clientId && redirectUri) {
+                            await SocialLogin.initialize({ apple: { clientId, redirectUri }, providers: ['apple'] })
+                          }
+                        } catch (_) {}
+                        const res = await SocialLogin.login({ provider: 'apple' })
                         const ar = res?.result || res
                         if (ar && (ar.authorizationCode || ar.identityToken || ar.accessToken?.token)) {
                           // Prefer native authorizationCode exchange
@@ -405,6 +436,21 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                         }
                         setInfoMsg('Apple sign-in could not complete.')
                       } catch (err) {
+                        try {
+                          const msg = String((err && err.message) || '')
+                          if (msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('cannot find provider')) {
+                            // Fallback to web flow via backend
+                            const resp = await fetch(`${apiBase}/api/auth/oauth/apple/start`)
+                            if (resp.ok) {
+                              const data = await resp.json()
+                              if (data.auth_url) {
+                                const url = data.auth_url
+                                await Browser.open({ url, presentationStyle: 'popover' })
+                                return
+                              }
+                            }
+                          }
+                        } catch (_) {}
                         setInfoMsg('Apple sign-in is not available right now.')
                       }
                     } else if (Capacitor.getPlatform() === 'ios') {
@@ -455,6 +501,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                 <svg viewBox="0 0 24 24" className="w-4 h-4 mr-2" fill="currentColor" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.495 2.294-1.293 3.184-.822.914-2.2 1.622-3.364 1.53-.146-1.12.51-2.314 1.315-3.19.823-.892 2.26-1.646 3.342-1.524zM20.66 17.03c-.836 1.93-1.85 3.84-3.338 3.865-1.464.03-1.934-.93-3.607-.93-1.673 0-2.19.9-3.565.96-1.43.06-2.513-2.08-3.36-4.01-1.832-4.038-1.01-9.19 1.288-11.71.85-.94 1.98-1.55 3.168-1.58 1.3-.03 2.52.89 3.603.89 1.085 0 2.4-1.1 4.05-.94.69.03 2.62.28 3.864 2.12-.1.06-2.31 1.35-2.2 4.02.1 3.23 2.84 4.3 2.94 4.35z"/></svg>
                 Continue with Apple
               </button>
+              )}
             </div>
             {infoMsg && (
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">

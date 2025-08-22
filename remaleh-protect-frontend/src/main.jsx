@@ -37,7 +37,7 @@ function Root() {
         document.documentElement.style.setProperty('--statusbar-offset', `${px}px`)
       } catch {}
 
-      // Initialize Social Login (Google) on iOS if client ID is provided
+      // Initialize Social Login (Google/Apple) if IDs are provided
       if (platform === 'ios') {
         try {
           const googleClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID
@@ -45,6 +45,28 @@ function Root() {
             SocialLogin.initialize({ google: { iOSClientId: googleClientId } }).then(() => {
               console.log('[SocialLogin] Initialized with iOSClientId')
             }).catch((e) => { console.log('[SocialLogin] init error', e) })
+          }
+        } catch {}
+      } else if (platform === 'android') {
+        try {
+          const webClientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || import.meta.env.VITE_GOOGLE_ANDROID_WEB_CLIENT_ID
+          const appleClientId = import.meta.env.VITE_APPLE_SERVICE_ID
+          const appleRedirect = import.meta.env.VITE_APPLE_REDIRECT_URI
+          const cfg = {}
+          if (webClientId) cfg.google = { webClientId }
+          if (appleClientId && appleRedirect) cfg.apple = { clientId: appleClientId, redirectUri: appleRedirect }
+          if (Object.keys(cfg).length) {
+            const enriched = { ...cfg }
+            try {
+              const providers = []
+              if (cfg.google) providers.push('google')
+              if (cfg.apple) providers.push('apple')
+              // Some versions expect a providers array
+              if (providers.length) enriched.providers = providers
+            } catch {}
+            SocialLogin.initialize(enriched).then(() => {
+              console.log('[SocialLogin] Android initialized', enriched)
+            }).catch((e) => { console.log('[SocialLogin] Android init error', e) })
           }
         } catch {}
       }
