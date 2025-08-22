@@ -1638,12 +1638,23 @@ export default function AdminDashboard({ setActiveTab }) {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
                   <MobileInput
                     type="text"
-                    placeholder="Enter full name"
+                    placeholder="First name"
                     value={newUserData.first_name}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, first_name: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                  <MobileInput
+                    type="text"
+                    placeholder="Last name"
+                    value={newUserData.last_name}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, last_name: e.target.value }))}
                     className="w-full"
                   />
                 </div>
