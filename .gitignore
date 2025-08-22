@@ -4,3 +4,32 @@ remaleh-protect-frontend/ios/App/vendor/
 remaleh-protect-frontend/ios/App/Pods/
 # Ignore frontend env files
 remaleh-protect-frontend/.env*
+# Xcode/DerivedData and build outputs
+remaleh-protect-frontend/ios/build/
+remaleh-protect-frontend/ios/App/build/
+remaleh-protect-frontend/ios/App/DerivedData/
+remaleh-protect-frontend/ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+remaleh-protect-frontend/ios/App/App.xcworkspace/xcuserdata/
+remaleh-protect-frontend/ios/App/App.xcodeproj/xcuserdata/
+
+# Android/Gradle build outputs and IDE files
+remaleh-protect-frontend/android/.gradle/
+remaleh-protect-frontend/android/build/
+remaleh-protect-frontend/android/**/build/
+remaleh-protect-frontend/android/**/.cxx/
+remaleh-protect-frontend/android/local.properties
+remaleh-protect-frontend/android/.idea/
+remaleh-protect-frontend/android/**/.idea/
+remaleh-protect-frontend/android/**/*.iml
+remaleh-protect-frontend/android/**/captures/
+remaleh-protect-frontend/android/**/outputs/
+remaleh-protect-frontend/android/**/intermediates/
+remaleh-protect-frontend/android/**/generated/
+remaleh-protect-frontend/android/**/tmp/
+remaleh-protect-frontend/android/**/logs/
+remaleh-protect-frontend/android/**/reports/
+remaleh-protect-frontend/android/**/release/
+remaleh-protect-frontend/android/**/debug/
+remaleh-protect-frontend/android/**/apk/
+remaleh-protect-frontend/android/**/aab/
+remaleh-protect-frontend/android/**/*.keystore
