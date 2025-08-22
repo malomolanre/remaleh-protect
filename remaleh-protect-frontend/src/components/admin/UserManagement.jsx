@@ -124,8 +124,8 @@ const UserManagement = () => {
         return;
       }
 
-      if (passwordResetForm.new_password.length < 8) {
-        setError('Password must be at least 8 characters long');
+      if (passwordResetForm.new_password.length < 12) {
+        setError('Password must be at least 12 characters long');
         return;
       }
 
@@ -182,8 +182,8 @@ const UserManagement = () => {
         return;
       }
 
-      if (passwordResetForm.new_password.length < 8) {
-        setError('Password must be at least 8 characters long');
+      if (passwordResetForm.new_password.length < 12) {
+        setError('Password must be at least 12 characters long');
         return;
       }
 
@@ -536,7 +536,7 @@ const UserManagement = () => {
             placeholder="Enter new password"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Password must be at least 8 characters long
+            Password must be at least 12 characters long
           </p>
         </div>
         

@@ -462,6 +462,10 @@ export default function AdminDashboard({ setActiveTab }) {
       alert('Please fill in all required fields')
       return
     }
+    if (newUserData.password.length < 12) {
+      alert('Password must be at least 12 characters long')
+      return
+    }
     
     try {
       setActionLoading(true)

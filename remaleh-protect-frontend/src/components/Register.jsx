@@ -42,8 +42,8 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
     
     if (!formData.password) {
       errors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
+    } else if (formData.password.length < 12) {
+      errors.password = 'Password must be at least 12 characters';
     }
     
     if (formData.password !== formData.confirm_password) {
@@ -239,7 +239,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
                 <p className="mt-1 text-sm text-red-600">{formErrors.password}</p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Must be at least 8 characters long
+                Must be at least 12 characters long
               </p>
             </div>
 
