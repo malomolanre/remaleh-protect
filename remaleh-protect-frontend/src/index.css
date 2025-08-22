@@ -60,6 +60,7 @@
   }
   .safe-top-spacer {
     height: var(--statusbar-offset, env(safe-area-inset-top));
+    background: #21a1ce;
   }
 }
 
