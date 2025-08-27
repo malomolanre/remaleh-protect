@@ -29,10 +29,18 @@ export default function LearnHub({ setActiveTab }) {
     const rawType = (lesson?.type || '').toLowerCase()
     if (rawType === 'quiz') return 'Quiz'
     if (rawType === 'assessment') return 'Assessment'
+    if (rawType === 'interactive' || rawType.includes('interactive')) return 'Interactive'
+    // Treat any variant of "video" as Video, including when set via type, contentType, or media entries
+    if (rawType && rawType.includes('video')) return 'Video'
+    if (Array.isArray(lesson?.media) && lesson.media.some(m => (m?.type || '').toLowerCase() === 'video')) return 'Video'
     const ct = (lesson?.contentType || '').toLowerCase()
+    if (ct && ct.includes('interactive')) return 'Interactive'
+    if (ct && ct.includes('video')) return 'Video'
     switch (ct) {
       case 'info':
         return 'Information'
+      case 'video':
+        return 'Video'
       case 'tips':
         return 'Tips'
       case 'example':
